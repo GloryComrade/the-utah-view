@@ -1,0 +1,23 @@
+name = "utv-api"
+main = "worker.js"
+compatibility_date = "2024-01-01"
+
+[triggers]
+crons = ["0 9 1 * *"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "utv-db"
+database_id = "c52b6046-8f9c-42ab-a1c0-5bdcdcbfdc90"
+
+[[kv_namespaces]]
+binding = "UTV_DATA"
+id = "00ba0b258c3f4311a62ce568bc790e88"
+
+[[r2_buckets]]
+binding = "UTV_IMAGES"
+bucket_name = "utv-images"
+
+[vars]
+SITE_URL = "https://theutahview.com"
+R2_PUBLIC_URL = "https://api.theutahview.com"

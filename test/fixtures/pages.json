@@ -1,0 +1,44 @@
+{
+  "pages": [
+    {
+      "slug": "About Us",
+      "title": "About Us",
+      "subtitle": ""
+    },
+    {
+      "slug": "bi-monthly-news-letter",
+      "title": "Bi-Monthly News Letter",
+      "subtitle": "Updated Every month"
+    },
+    {
+      "slug": "contact",
+      "title": "Contact",
+      "subtitle": ""
+    },
+    {
+      "slug": "home-page",
+      "title": "Home Page",
+      "subtitle": ""
+    },
+    {
+      "slug": "our-mission",
+      "title": "Our Mission",
+      "subtitle": ""
+    },
+    {
+      "slug": "Privacy-Policy",
+      "title": "Privacy Policy",
+      "subtitle": ""
+    },
+    {
+      "slug": "terms-of-service",
+      "title": "Terms of Service",
+      "subtitle": ""
+    },
+    {
+      "slug": "the-communist-weekly",
+      "title": "The Labour Weekly",
+      "subtitle": "A View on Utah's Biggest Issues"
+    }
+  ]
+}

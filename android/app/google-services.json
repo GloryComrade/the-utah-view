@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "43158710642",
+    "project_id": "theutahview",
+    "storage_bucket": "theutahview.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:43158710642:android:b25c6eb9b193ea218d95eb",
+        "android_client_info": {
+          "package_name": "com.theutahview.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBxqkKFsHq4eVMYiVgwq99t_4g_xEKhU9Q"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

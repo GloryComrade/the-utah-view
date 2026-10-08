@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Associated Domains (universal links) removed so a FREE Apple ID
+	     "Personal Team" can sign device builds. The original is saved as
+	     Runner.entitlements.appstore.bak — restore it for a paid account /
+	     App Store build (see docs/RELEASE.md). -->
+</dict>
+</plist>

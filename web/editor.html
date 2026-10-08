@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Editor | The Utah View</title>
+<style>
+:root{
+  --red:#B53816; --rd:#902C11; --bk:#141414; --g7:#333; --g6:#555; --g5:#777; --g4:#9a9a9a;
+  --g3:#c9c9c9; --g2:#e3e3e3; --g1:#f0f0f0; --g0:#f7f6f4; --w:#fff; --ok:#1e7e34; --okbg:#e6f4ea;
+  --warn:#8a6d00; --warnbg:#fff6da;
+  --s:'Helvetica Neue',Arial,sans-serif; --f:Georgia,'Times New Roman',serif;
+  --sh:0 1px 2px rgba(0,0,0,.05),0 2px 8px rgba(0,0,0,.05); --rad:12px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
+body{font-family:var(--s);color:var(--bk);background:var(--g0);line-height:1.5;-webkit-font-smoothing:antialiased}
+button{font-family:inherit;cursor:pointer}
+input,select,textarea{font-family:inherit;font-size:15px}
+a{color:var(--red)}
+
+/* ---------- gate ---------- */
+.gate{display:flex;align-items:center;justify-content:center;min-height:100dvh;padding:24px;background:
+  radial-gradient(1200px 500px at 50% -10%, rgba(181,56,22,.06), transparent)}
+.gate-box{text-align:center;max-width:400px;width:100%;background:var(--w);border:1px solid var(--g2);
+  border-radius:16px;padding:40px 28px;box-shadow:var(--sh)}
+.gate-box img{width:64px;height:64px;display:block;margin:0 auto 14px}
+.gate-title{font-size:22px;font-weight:800;letter-spacing:1px;text-transform:uppercase}
+.gate-sub{font-size:14px;color:var(--g5);margin:6px 0 22px}
+#gBtn{display:flex;justify-content:center;margin-bottom:10px;min-height:44px}
+.gate-fallback{display:inline-flex;align-items:center;gap:10px;padding:11px 22px;font-size:14px;font-weight:600;
+  color:var(--g7);background:var(--w);border:1px solid var(--g2);border-radius:8px}
+.gate-note{display:block;margin-top:16px;font-size:12px;color:var(--g4)}
+.gate-err{margin-top:16px;font-size:13px;color:var(--red);display:none}.gate-err.show{display:block}
+.gate-home{display:inline-block;margin-top:20px;font-size:13px;color:var(--g4);text-decoration:none}
+
+/* ---------- shell ---------- */
+.shell{display:none;min-height:100dvh;grid-template-columns:240px 1fr;grid-template-rows:auto 1fr}
+.shell.on{display:grid}
+.topbar{grid-column:1/3;display:flex;align-items:center;gap:12px;height:58px;padding:0 16px;background:var(--w);
+  border-bottom:1px solid var(--g2);position:sticky;top:0;z-index:30}
+.hamburger{display:none;width:40px;height:40px;border:none;background:none;border-radius:8px;font-size:22px;color:var(--g6)}
+.hamburger:hover{background:var(--g1)}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--bk)}
+.brand img{width:30px;height:30px}
+.brand b{font-size:15px;font-weight:800;letter-spacing:.5px;text-transform:uppercase}
+.brand span{font-size:11px;font-weight:700;color:var(--g4);letter-spacing:1px;text-transform:uppercase;
+  border-left:1px solid var(--g2);padding-left:10px}
+.top-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+.viewsite{font-size:13px;color:var(--g5);text-decoration:none}.viewsite:hover{color:var(--red)}
+.userchip{display:flex;align-items:center;gap:8px;padding:5px 8px 5px 5px;border:1px solid var(--g2);border-radius:999px;background:var(--w);font-size:13px}
+.avatar{width:28px;height:28px;border-radius:50%;background:var(--red);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;background-position:center}
+.userchip .em{color:var(--g6);max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.signout{border:none;background:none;color:var(--g5);font-size:13px;font-weight:600;padding:4px 6px;border-radius:6px}
+.signout:hover{color:var(--red);background:var(--g1)}
+
+.side{grid-row:2;background:var(--w);border-right:1px solid var(--g2);padding:14px 10px;overflow-y:auto}
+.side-hd{padding:10px 12px 4px;font-size:10px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:var(--g4)}
+.nav{display:flex;align-items:center;gap:11px;width:100%;text-align:left;padding:11px 12px;margin:2px 0;border:none;
+  background:none;border-radius:10px;font-size:14px;font-weight:600;color:var(--g6)}
+.nav:hover{background:var(--g1);color:var(--bk)}
+.nav.on{background:var(--red);color:#fff}
+.nav .ic{width:18px;text-align:center;font-size:15px}
+.side-foot{margin-top:12px;padding:12px;font-size:11px;color:var(--g4);border-top:1px solid var(--g1);word-break:break-all}
+.scrim{display:none}
+
+.main{grid-row:2;overflow-y:auto;padding:22px}
+.wrap{max-width:960px;margin:0 auto}
+.page-head{display:flex;align-items:center;gap:12px;margin-bottom:18px;flex-wrap:wrap}
+.page-head h1{font-size:22px;font-weight:800;letter-spacing:.3px}
+.page-head .sp{flex:1}
+
+/* ---------- cards / bits ---------- */
+.card{background:var(--w);border:1px solid var(--g2);border-radius:var(--rad);box-shadow:var(--sh);padding:18px;margin-bottom:16px}
+.card h2{font-size:15px;font-weight:800;margin-bottom:4px;letter-spacing:.3px}
+.card .desc{font-size:13px;color:var(--g5);margin-bottom:12px}
+.grid{display:grid;gap:14px}
+.stats{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+.stat{background:var(--w);border:1px solid var(--g2);border-radius:var(--rad);padding:16px 18px;box-shadow:var(--sh)}
+.stat .n{font-size:30px;font-weight:800;line-height:1.1}
+.stat .l{font-size:12px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--g5);margin-top:4px}
+.stat .l.red{color:var(--red)}
+.quick{grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
+.qbtn{display:flex;align-items:center;gap:12px;padding:16px;border:1px solid var(--g2);border-radius:var(--rad);
+  background:var(--w);text-align:left;box-shadow:var(--sh)}
+.qbtn:hover{border-color:var(--red)}
+.qbtn .qic{width:40px;height:40px;border-radius:10px;background:#fbe9e3;color:var(--red);display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0}
+.qbtn b{display:block;font-size:14px}.qbtn small{color:var(--g5);font-size:12px}
+
+.bt{display:inline-flex;align-items:center;gap:7px;padding:9px 15px;font-size:14px;font-weight:600;border-radius:9px;border:1px solid transparent}
+.bp{background:var(--red);color:#fff}.bp:hover{background:var(--rd)}
+.bs{background:var(--w);color:var(--g7);border-color:var(--g2)}.bs:hover{border-color:var(--g4)}
+.bd{background:var(--w);color:var(--red);border-color:var(--g2)}.bd:hover{background:var(--red);color:#fff;border-color:var(--red)}
+.bsm{padding:6px 11px;font-size:13px}
+.btn-ghost{background:none;border:none;color:var(--g5);padding:6px;border-radius:7px;font-size:15px}.btn-ghost:hover{background:var(--g1);color:var(--bk)}
+.btn-ghost:disabled{opacity:.3;cursor:default}
+
+.toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+.searchbox{flex:1;min-width:180px;display:flex;align-items:center;gap:8px;background:var(--w);border:1px solid var(--g2);border-radius:10px;padding:0 12px}
+.searchbox input{flex:1;border:none;outline:none;padding:10px 0;background:none}
+.segment{display:inline-flex;background:var(--g1);border-radius:9px;padding:3px}
+.segment button{border:none;background:none;padding:7px 13px;font-size:13px;font-weight:600;color:var(--g6);border-radius:7px}
+.segment button.on{background:var(--w);color:var(--bk);box-shadow:var(--sh)}
+
+.list{background:var(--w);border:1px solid var(--g2);border-radius:var(--rad);box-shadow:var(--sh);overflow:hidden}
+.row{display:flex;align-items:center;gap:12px;padding:13px 16px;border-bottom:1px solid var(--g1)}
+.row:last-child{border-bottom:none}.row:hover{background:var(--g0)}
+.row .meta{flex:1;min-width:0}
+.row .ti{font-size:15px;font-weight:700;color:var(--bk);text-decoration:none;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer}
+.row .ti:hover{color:var(--red)}
+.row .su{font-size:12.5px;color:var(--g5);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:2px}
+.row .acts{display:flex;gap:4px;flex-shrink:0;align-items:center}
+.badge{font-size:10px;font-weight:700;padding:3px 9px;border-radius:999px;text-transform:uppercase;letter-spacing:.4px;flex-shrink:0}
+.badge.live{background:var(--okbg);color:var(--ok)}
+.badge.draft{background:var(--warnbg);color:var(--warn)}
+.empty{padding:38px 18px;text-align:center;color:var(--g4);font-size:14px}
+
+.fl{margin-bottom:14px}
+.fl label{display:block;font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--g6);margin-bottom:6px}
+.fl input,.fl select,.fl textarea{width:100%;padding:11px 12px;border:1px solid var(--g2);border-radius:9px;outline:none;background:var(--w)}
+.fl input:focus,.fl select:focus,.fl textarea:focus{border-color:var(--red);box-shadow:0 0 0 3px rgba(181,56,22,.12)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.hint{font-size:12px;color:var(--g5);margin-top:5px}
+
+.rtb{display:flex;gap:3px;flex-wrap:wrap;padding:7px 8px;border:1px solid var(--g2);border-bottom:none;border-radius:9px 9px 0 0;background:var(--g0)}
+.rb{padding:5px 10px;font-size:13px;background:var(--w);border:1px solid var(--g2);border-radius:6px;color:var(--g7)}.rb:hover{background:var(--g1)}
+.re{min-height:240px;max-height:460px;overflow-y:auto;padding:14px 16px;border:1px solid var(--g2);border-radius:0 0 9px 9px;
+  font-family:var(--f);font-size:17px;line-height:1.7;color:var(--g7);outline:none}
+.re:focus{border-color:var(--red)}.re p{margin-bottom:12px}.re h3{font-size:21px;font-weight:700;margin:18px 0 8px;color:var(--bk)}
+.re img{max-width:100%;border-radius:6px;margin:12px 0;display:block}.re blockquote{border-left:3px solid var(--red);padding-left:14px;color:var(--g5);font-style:italic}
+
+.pv{margin-top:16px;border:1px solid var(--g2);border-radius:var(--rad);overflow:hidden}
+.pvh{padding:8px 14px;background:var(--g0);border-bottom:1px solid var(--g2);font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--g5)}
+.pvb{padding:22px 20px;font-family:var(--f)}
+.pvb .pr{font-family:var(--s);font-size:11px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:var(--red);margin-bottom:8px}
+.pvb .pt{font-size:26px;font-weight:700;line-height:1.15;margin-bottom:8px}
+.pvb .ps{font-size:16px;color:var(--g5);margin-bottom:10px}
+.pvb .pm{font-family:var(--s);font-size:12px;color:var(--g4);margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--g2)}
+.pvb .pc{font-size:16px;line-height:1.7;color:var(--g7)}
+.pvb .pc img{max-width:100%;border-radius:6px;margin:10px 0}
+
+.secrow{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--g1);flex-wrap:wrap}
+.secrow:last-child{border-bottom:none}
+.secrow .ord{display:flex;gap:3px}
+.secrow strong{min-width:140px;font-size:13.5px}
+.secrow input[type=text]{flex:1;min-width:140px;padding:8px 10px;font-size:13px;border:1px solid var(--g2);border-radius:7px}
+.switch{position:relative;display:inline-block;width:40px;height:23px;flex-shrink:0}
+.switch input{opacity:0;width:0;height:0}
+.slider{position:absolute;inset:0;background:var(--g3);border-radius:999px;transition:.15s}
+.slider:before{content:"";position:absolute;height:17px;width:17px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.15s}
+.switch input:checked+.slider{background:var(--red)}.switch input:checked+.slider:before{transform:translateX(17px)}
+
+.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(80px);background:var(--bk);color:#fff;
+  padding:12px 20px;border-radius:10px;font-size:14px;z-index:999;opacity:0;transition:.25s;pointer-events:none;box-shadow:0 8px 24px rgba(0,0,0,.25);max-width:92vw}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+.spin{width:18px;height:18px;border:2px solid var(--g2);border-top-color:var(--red);border-radius:50%;display:inline-block;animation:sp .7s linear infinite;vertical-align:-3px}
+@keyframes sp{to{transform:rotate(360deg)}}
+
+@media(max-width:820px){
+  .shell.on{grid-template-columns:1fr}
+  .hamburger{display:block}
+  .side{position:fixed;top:58px;bottom:0;left:0;width:260px;z-index:40;transform:translateX(-100%);transition:transform .2s;box-shadow:0 10px 40px rgba(0,0,0,.2)}
+  .side.open{transform:none}
+  .scrim.show{display:block;position:fixed;inset:58px 0 0 0;background:rgba(0,0,0,.35);z-index:35}
+  .main{padding:16px}
+  .row2,.row3{grid-template-columns:1fr}
+  .brand span{display:none}
+  .userchip .em{display:none}
+}
+</style>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+</head>
+<body>
+
+<!-- ============ SIGN-IN GATE ============ -->
+<div class="gate" id="gate">
+  <div class="gate-box">
+    <img src="logo.png" alt="The Utah View">
+    <div class="gate-title">Editor</div>
+    <p class="gate-sub">Sign in with an approved Google account.</p>
+    <div id="gBtn"></div>
+    <button class="gate-fallback" onclick="gSignIn()">
+      <svg width="16" height="16" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+      Sign in with Google
+    </button>
+    <span class="gate-note">Access is limited to accounts added under Access.</span>
+    <p class="gate-err" id="gErr">This Google account isn't authorized. Contact <strong>theutahview@gmail.com</strong>.</p>
+    <a href="/" class="gate-home">&larr; Back to site</a>
+  </div>
+</div>
+
+<!-- ============ APP SHELL ============ -->
+<div class="shell" id="shell">
+  <div class="topbar">
+    <button class="hamburger" onclick="toggleNav()" aria-label="Menu">&#9776;</button>
+    <a class="brand" href="#" onclick="go('dashboard');return false"><img src="logo.png" alt=""><b>The Utah View</b><span>Editor</span></a>
+    <div class="top-right">
+      <a class="viewsite" href="/" target="_blank">View site &#8599;</a>
+      <div class="userchip"><div class="avatar" id="uAv"></div><span class="em" id="uEm"></span></div>
+      <button class="signout" onclick="out()">Sign out</button>
+    </div>
+  </div>
+  <div class="scrim" id="scrim" onclick="toggleNav(false)"></div>
+  <nav class="side" id="side">
+    <div class="side-hd">Overview</div>
+    <button class="nav" data-v="dashboard" onclick="go('dashboard')"><span class="ic">&#9632;</span> Dashboard</button>
+    <div class="side-hd">Content</div>
+    <button class="nav" data-v="stories" onclick="go('stories')"><span class="ic">&#128240;</span> Stories</button>
+    <button class="nav" data-v="pages" onclick="go('pages')"><span class="ic">&#128196;</span> Pages</button>
+    <div class="side-hd" data-admin>Front page</div>
+    <button class="nav" data-v="homepage" data-admin onclick="go('homepage')"><span class="ic">&#127968;</span> Homepage</button>
+    <button class="nav" data-v="footer" data-admin onclick="go('footer')"><span class="ic">&#128279;</span> Footer &amp; Subscribe</button>
+    <div class="side-hd" data-admin>Admin</div>
+    <button class="nav" data-v="access" data-admin onclick="go('access')"><span class="ic">&#128273;</span> Access</button>
+    <button class="nav" data-v="subs" data-admin onclick="go('subs')"><span class="ic">&#128236;</span> Subscribers</button>
+    <div class="side-foot">Signed in as <strong id="uEm2"></strong></div>
+  </nav>
+  <main class="main" id="main"><div class="wrap" id="view"></div></main>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+var API='https://api.theutahview.com',GC='562818410025-d6n1627aucueem1npk03mg5n7gs8i5t7.apps.googleusercontent.com';
+if(!localStorage.getItem('utv_acl'))localStorage.setItem('utv_acl',JSON.stringify({'theutahview@gmail.com':'admin'}));
+var apiOk=false,editId=null,editSlug=null,storyFilter='all',storyQuery='',curView='dashboard';
+
+/* ---------- tiny helpers ---------- */
+function $(id){return document.getElementById(id)}
+function g(k){try{return JSON.parse(localStorage.getItem(k))||{}}catch(e){return{}}}
+function s(k,v){localStorage.setItem(k,JSON.stringify(v))}
+function user(){return g('utv_user')}
+function acl(){return g('utv_acl')}
+function stories(){return g('utv_stories')}
+function pages(){return g('utv_pages')}
+function layout(){return g('utv_layout')}
+function site(){return g('utv_site')}
+function esc(x){return String(x==null?'':x).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+function sel(v,o){return v===o?' selected':''}
+function token(){return localStorage.getItem('utv_token')||''}
+function hd(){return{'Authorization':'Bearer '+token(),'Content-Type':'application/json'}}
+function tokenExpMs(){try{return (JSON.parse(atob(token().split('.')[1])).exp||0)*1000}catch(e){return 0}}
+function tokenFresh(){return !!token()&&tokenExpMs()>Date.now()+20000}
+var _pendingRefresh=null;
+// Google ID tokens expire after ~1h; silently re-issue one before an admin call
+// whose token has gone stale, so saves/grants don't fail with a 403.
+function refreshToken(){return new Promise(function(resolve){
+  if(tokenFresh()){resolve(true);return;}
+  if(typeof google==='undefined'||!google.accounts){resolve(false);return;}
+  _pendingRefresh=resolve;toast('Refreshing session…');
+  try{google.accounts.id.prompt();}catch(e){_pendingRefresh=null;resolve(false);return;}
+  setTimeout(function(){if(_pendingRefresh){_pendingRefresh=null;resolve(false);}},6000);
+})}
+function rawApi(m,p,b){return fetch(API+p,{method:m,headers:hd(),body:b?JSON.stringify(b):undefined}).then(function(r){apiOk=true;return r;})}
+function api(m,p,b){if(tokenFresh())return rawApi(m,p,b);return refreshToken().then(function(){return rawApi(m,p,b)})}
+function toast(m){var t=$('toast');t.innerHTML=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(function(){t.classList.remove('show')},2800)}
+function fmtDate(d){if(!d)return'';try{return new Date(d+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}catch(e){return d}}
+function today(){return new Date().toISOString().split('T')[0]}
+function isAdmin(){var u=user();return u&&u.role==='admin'}
+
+/* ---------- auth (Google only, no key in source) ---------- */
+function onCred(r){
+  localStorage.setItem('utv_token',r.credential);
+  if(_pendingRefresh){var done=_pendingRefresh;_pendingRefresh=null;done(true);return;}
+  var p=JSON.parse(atob(r.credential.split('.')[1]));tryAuth(p.email.toLowerCase(),p.name||p.email,p.picture||'');
+}
+function initGoogle(){
+  if(typeof google==='undefined'||!google.accounts)return;
+  var c=$('gBtn');if(!c){document.addEventListener('DOMContentLoaded',initGoogle);return;}
+  google.accounts.id.initialize({client_id:GC,callback:onCred,auto_select:true});
+  google.accounts.id.renderButton(c,{theme:'outline',size:'large',type:'standard',text:'signin_with',shape:'pill',width:260});
+}
+window.onGoogleLibraryLoad=initGoogle;
+document.addEventListener('DOMContentLoaded',function(){if(typeof google!=='undefined'&&google.accounts)initGoogle();});
+function gSignIn(){
+  if(typeof google==='undefined'||!google.accounts){$('gErr').textContent='Google Sign-In is still loading — try again in a moment.';$('gErr').classList.add('show');return;}
+  try{google.accounts.id.initialize({client_id:GC,callback:onCred});google.accounts.id.prompt();}
+  catch(e){$('gErr').classList.add('show');}
+}
+function tryAuth(email,name,pic){
+  var u={email:email,name:name,initial:(name||email).charAt(0).toUpperCase(),picture:pic||''};s('utv_user',u);
+  fetch(API+'/api/me',{headers:{'Authorization':'Bearer '+token()}}).then(function(r){return r.json()}).then(function(d){
+    if(d.role==='admin'||d.role==='editor'){u.role=d.role;s('utv_user',u);var a=acl();a[email]=d.role;s('utv_acl',a);$('gErr').classList.remove('show');enter();}
+    else deny();
+  }).catch(deny);
+}
+function deny(){localStorage.removeItem('utv_token');var u=user();if(u&&u.email){delete u.role;s('utv_user',u)}$('gErr').classList.add('show')}
+function check(){if(!token())return;fetch(API+'/api/me',{headers:{'Authorization':'Bearer '+token()}}).then(function(r){return r.json()}).then(function(d){if(d.role==='admin'||d.role==='editor'){var u=user()||{};u.role=d.role;if(!u.email&&d.email)u.email=d.email;if(!u.initial)u.initial=(u.email||'?').charAt(0).toUpperCase();s('utv_user',u);enter();}else deny();}).catch(function(){})}
+function out(){localStorage.removeItem('utv_user');localStorage.removeItem('utv_token');location.reload()}
+function enter(){
+  var u=user();
+  $('gate').style.display='none';$('shell').classList.add('on');
+  $('uAv').textContent=u.initial||'';$('uEm').textContent=u.email||'';$('uEm2').textContent=u.email||'';
+  if(u.picture){$('uAv').style.backgroundImage='url('+u.picture+')';$('uAv').style.backgroundSize='cover';$('uAv').textContent='';}
+  var admin=u.role==='admin';
+  document.querySelectorAll('[data-admin]').forEach(function(el){el.style.display=admin?'':'none'});
+  refreshAll();
+  go('dashboard');
+}
+function toggleNav(force){var sd=$('side'),sc=$('scrim');var open=force===undefined?!sd.classList.contains('open'):force;sd.classList.toggle('open',open);sc.classList.toggle('show',open)}
+
+/* ---------- data refresh ---------- */
+function refreshAll(){
+  api('GET','/api/admin/stories').then(function(r){return r.ok?r.json():null}).then(function(d){if(d&&d.stories){apiOk=true;var S=stories();var N={};d.stories.forEach(function(x){var old=S[x.id]||{};N[x.id]=x;if(!x.body&&old.body)N[x.id].body=old.body});s('utv_stories',N);if(curView==='dashboard')vDashboard();else if(curView==='stories')renderStoryList();}}).catch(function(){});
+  fetch(API+'/api/pages').then(function(r){return r.json()}).then(function(d){var P={},ex=pages();(d.pages||[]).forEach(function(p){P[p.slug]=p;if(!p.body&&ex[p.slug]&&ex[p.slug].body)P[p.slug].body=ex[p.slug].body});s('utv_pages',P);if(curView==='pages')render();}).catch(function(){});
+  fetch(API+'/api/config/layout').then(function(r){return r.json()}).then(function(d){if(d.value)s('utv_layout',d.value)}).catch(function(){});
+  fetch(API+'/api/config/site').then(function(r){return r.json()}).then(function(d){if(d.value)s('utv_site',d.value)}).catch(function(){});
+}
+
+/* ---------- router ---------- */
+function go(v){curView=v;editId=null;editSlug=null;
+  document.querySelectorAll('.nav').forEach(function(n){n.classList.toggle('on',n.getAttribute('data-v')===v)});
+  if(window.innerWidth<=820)toggleNav(false);
+  if($('main'))$('main').scrollTop=0;
+  render();
+}
+function render(){
+  var v=curView;
+  if(v==='dashboard')return vDashboard();
+  if(v==='stories')return vStories();
+  if(v==='story')return vStoryEdit();
+  if(v==='pages')return vPages();
+  if(v==='page')return vPageEdit();
+  if(v==='homepage')return vHomepage();
+  if(v==='footer')return vFooter();
+  if(v==='access')return vAccess();
+  if(v==='subs')return vSubs();
+}
+function head(title,actionsHtml){return '<div class="page-head"><h1>'+title+'</h1><div class="sp"></div>'+(actionsHtml||'')+'</div>'}
+
+/* ---------- DASHBOARD ---------- */
+function vDashboard(){
+  var S=stories(),ids=Object.keys(S);
+  var pub=ids.filter(function(i){return S[i].status==='published'}).length;
+  var dr=ids.length-pub;
+  var pg=Object.keys(pages()).length;
+  var recent=ids.map(function(i){return S[i]}).sort(function(a,b){return (b.updated_at||b.date||'').localeCompare(a.updated_at||a.date||'')}).slice(0,6);
+  var h=head('Good to see you');
+  h+='<div class="grid stats" style="margin-bottom:16px">'+
+     '<div class="stat"><div class="n">'+pub+'</div><div class="l red">Published</div></div>'+
+     '<div class="stat"><div class="n">'+dr+'</div><div class="l">Drafts</div></div>'+
+     '<div class="stat"><div class="n">'+pg+'</div><div class="l">Pages</div></div>'+
+     (isAdmin()?'<div class="stat"><div class="n" id="subCount">—</div><div class="l">Subscribers</div></div>':'')+'</div>';
+  h+='<div class="grid quick" style="margin-bottom:18px">'+
+     '<button class="qbtn" onclick="newStory()"><span class="qic">+</span><span><b>New story</b><small>Write &amp; publish</small></span></button>'+
+     (isAdmin()?'<button class="qbtn" onclick="go(\'homepage\')"><span class="qic">&#127968;</span><span><b>Edit homepage</b><small>Arrange the front page</small></span></button>':'')+
+     '<button class="qbtn" onclick="go(\'pages\')"><span class="qic">&#128196;</span><span><b>Pages</b><small>About, Contact…</small></span></button>'+
+     (isAdmin()?'<button class="qbtn" onclick="go(\'access\')"><span class="qic">&#128273;</span><span><b>Access</b><small>Who can edit</small></span></button>':'')+'</div>';
+  h+='<div class="card"><h2>Recent stories</h2>';
+  if(!recent.length)h+='<p class="empty">No stories yet. Click <b>New story</b> to begin.</p>';
+  else{h+='<div style="margin:4px -4px -4px">';recent.forEach(function(x){h+=storyRow(x)});h+='</div>';}
+  h+='</div>';
+  $('view').innerHTML=h;
+  if(isAdmin())api('GET','/api/admin/subscribers').then(function(r){return r.ok?r.json():null}).then(function(d){if(d&&$('subCount'))$('subCount').textContent=d.count}).catch(function(){});
+}
+
+/* ---------- STORIES ---------- */
+function storyRow(x){
+  var live=x.status==='published';
+  return '<div class="row"><span class="badge '+(live?'live':'draft')+'">'+(live?'Live':'Draft')+'</span>'+
+    '<div class="meta"><span class="ti" onclick="editStory(\''+x.id+'\')">'+esc(x.title||'(untitled)')+'</span>'+
+    '<div class="su">'+esc(x.region||'')+(x.author?' · '+esc(x.author):'')+(x.date?' · '+fmtDate(x.date):'')+'</div></div>'+
+    '<div class="acts">'+
+      '<button class="bt bs bsm" onclick="togglePub(\''+x.id+'\')">'+(live?'Unpublish':'Publish')+'</button>'+
+      '<button class="btn-ghost" title="Edit" onclick="editStory(\''+x.id+'\')">&#9998;</button>'+
+      '<button class="btn-ghost" title="Duplicate" onclick="dupStory(\''+x.id+'\')">&#10697;</button>'+
+      '<button class="btn-ghost" title="Delete" onclick="delStory(\''+x.id+'\')">&#128465;</button>'+
+    '</div></div>';
+}
+function vStories(){
+  var h=head('Stories','<button class="bt bp" onclick="newStory()">+ New story</button>');
+  h+='<div class="toolbar">'+
+     '<div class="searchbox">&#128269;<input id="sq" placeholder="Search stories…" value="'+esc(storyQuery)+'" oninput="storyQuery=this.value;renderStoryList()"></div>'+
+     '<div class="segment">'+
+       ['all','published','draft'].map(function(f){return '<button class="'+(storyFilter===f?'on':'')+'" onclick="setFilter(\''+f+'\')">'+(f==='all'?'All':f==='published'?'Live':'Drafts')+'</button>'}).join('')+
+     '</div></div><div id="storyList"></div>';
+  $('view').innerHTML=h;renderStoryList();
+}
+function setFilter(f){storyFilter=f;document.querySelectorAll('.segment button').forEach(function(b){b.classList.toggle('on',b.textContent===(f==='all'?'All':f==='published'?'Live':'Drafts'))});renderStoryList()}
+function renderStoryList(){
+  var S=stories();var arr=Object.keys(S).map(function(i){return S[i]});
+  arr=arr.filter(function(x){
+    if(storyFilter==='published'&&x.status!=='published')return false;
+    if(storyFilter==='draft'&&x.status==='published')return false;
+    if(storyQuery){var q=storyQuery.toLowerCase();return (x.title||'').toLowerCase().indexOf(q)>=0||(x.author||'').toLowerCase().indexOf(q)>=0||(x.region||'').toLowerCase().indexOf(q)>=0}
+    return true;
+  }).sort(function(a,b){return (b.updated_at||b.date||'').localeCompare(a.updated_at||a.date||'')});
+  var el=$('storyList');if(!el)return;
+  if(!arr.length){el.innerHTML='<div class="list"><p class="empty">No stories'+(storyQuery?' match “'+esc(storyQuery)+'”':storyFilter!=='all'?' in this view':'')+'.</p></div>';return;}
+  el.innerHTML='<div class="list">'+arr.map(storyRow).join('')+'</div>';
+}
+function newStory(){editId=null;curView='story';render()}
+function editStory(id){editId=id;curView='story';render();
+  if(apiOk)api('GET','/api/stories/'+id).then(function(r){return r.ok?r.json():null}).then(function(x){if(x){var S=stories();S[id]=Object.assign(S[id]||{},x);s('utv_stories',S);if(curView==='story'&&editId===id){var b=$('fbody');if(b&&x.body&&(!b.innerHTML||b.innerHTML==='<p>Start writing…</p>')){b.innerHTML=x.body;sPv();}}}}).catch(function(){});
+}
+function togglePub(id){var S=stories();var x=S[id];if(!x)return;var ns=x.status==='published'?'draft':'published';x.status=ns;s('utv_stories',S);
+  saveStory(x,true).then(function(){toast(ns==='published'?'✅ Published':'Moved to draft');render()});
+}
+function dupStory(id){var S=stories();var x=S[id];if(!x)return;dupSeed={title:(x.title||'Untitled')+' (copy)',author:x.author||'',region:x.region||'Global',summary:x.summary||'',body:x.body||'',read_time:x.read_time||x.readTime||'',status:'draft',date:today()};editId=null;curView='story';render();}
+var dupSeed=null;
+function delStory(id){if(!confirm('Delete this story? This cannot be undone.'))return;var S=stories();delete S[id];s('utv_stories',S);if(curView==='story')go('stories');else render();
+  if(apiOk)api('DELETE','/api/admin/stories/'+id).then(function(r){toast(r.ok?'Deleted':'⚠️ Not authorized to delete')}).catch(function(){toast('⚠️ Network error')});
+}
+function vStoryEdit(){
+  var x=editId?stories()[editId]:(dupSeed||null);dupSeed=null;
+  if(!x)x={title:'',author:user()?user().name:'',region:'Global',summary:'',body:'',status:'draft',date:today(),read_time:''};
+  var regions=['Global','The Americas','Europe','Asia-Pacific','Middle East','Africa','The Utah Lens'];
+  var h=head(editId?'Edit story':'New story','<button class="bt bs" onclick="go(\'stories\')">&larr; Back</button>');
+  h+='<div class="card">'+
+    '<div class="row2"><div class="fl"><label>Headline</label><input id="ft" value="'+esc(x.title)+'" oninput="sPv()" placeholder="Story headline"></div>'+
+    '<div class="fl"><label>Author</label><input id="fa" value="'+esc(x.author)+'" oninput="sPv()"></div></div>'+
+    '<div class="row3"><div class="fl"><label>Region / section</label><select id="fr" onchange="sPv()">'+regions.map(function(r){return '<option'+sel(x.region,r)+'>'+r+'</option>'}).join('')+'</select></div>'+
+    '<div class="fl"><label>Date</label><input id="fd" type="date" value="'+esc(x.date||today())+'"></div>'+
+    '<div class="fl"><label>Read time</label><input id="frt" value="'+esc(x.read_time||x.readTime||'')+'" placeholder="e.g. 6 min"></div></div>'+
+    '<div class="fl"><label>Summary / dek</label><input id="fsum" value="'+esc(x.summary)+'" oninput="sPv()" placeholder="One-sentence summary"></div>'+
+    '<div class="fl"><label>Body</label>'+
+      '<div class="rtb">'+
+        '<button class="rb" onclick="rc(\'bold\')"><b>B</b></button><button class="rb" onclick="rc(\'italic\')"><i>I</i></button>'+
+        '<button class="rb" onclick="rb(\'H3\')">H3</button><button class="rb" onclick="rb(\'P\')">¶</button><button class="rb" onclick="rb(\'BLOCKQUOTE\')">“Quote</button>'+
+        '<button class="rb" onclick="rc(\'insertUnorderedList\')">• List</button><button class="rb" onclick="iImg()">&#128247; Image</button>'+
+      '</div>'+
+      '<div class="re" id="fbody" contenteditable="true" oninput="sPv()">'+(x.body||'<p>Start writing…</p>')+'</div></div>'+
+    '<div class="toolbar" style="margin:14px 0 0">'+
+      '<button class="bt bp" onclick="saveFromForm(\'published\')">✅ Publish</button>'+
+      '<button class="bt bs" onclick="saveFromForm(\'draft\')">Save draft</button>'+
+      (editId?'<button class="bt bd bsm" style="margin-left:auto" onclick="delStory(\''+editId+'\')">Delete</button>':'')+
+    '</div></div>'+
+    '<div class="pv"><div class="pvh">Live preview</div><div class="pvb" id="spv"></div></div>';
+  $('view').innerHTML=h;sPv();
+}
+function rc(c){document.execCommand(c,false,null);$('fbody').focus()}
+function rb(t){document.execCommand('formatBlock',false,'<'+t+'>');$('fbody').focus()}
+function iImg(){
+  if(confirm('OK = upload an image file.   Cancel = paste an image URL.')){
+    var inp=document.createElement('input');inp.type='file';inp.accept='image/*';
+    inp.onchange=function(){var f=inp.files&&inp.files[0];if(!f)return;var fd=new FormData();fd.append('file',f);toast('Uploading…');
+      fetch(API+'/api/upload',{method:'POST',headers:{'Authorization':'Bearer '+token()},body:fd}).then(function(r){return r.json()}).then(function(d){if(d.url){$('fbody').focus();document.execCommand('insertHTML',false,'<img src="'+d.url+'">');sPv();}else toast('⚠️ '+(d.error||'Upload failed'))}).catch(function(){toast('⚠️ Upload failed')});};
+    inp.click();
+  }else{var u=prompt('Image URL:');if(u){$('fbody').focus();document.execCommand('insertHTML',false,'<img src="'+u+'">');sPv();}}
+}
+function sPv(){var el=$('spv');if(!el)return;el.innerHTML='<div class="pr">'+esc($('fr')?$('fr').value:'')+'</div><div class="pt">'+(esc($('ft').value)||'Untitled')+'</div><div class="ps">'+esc($('fsum')?$('fsum').value:'')+'</div><div class="pm">By <b>'+esc($('fa')?$('fa').value:'')+'</b></div><div class="pc">'+($('fbody')?$('fbody').innerHTML:'')+'</div>'}
+function collectStory(status){
+  var t=$('ft').value.trim(),a=$('fa').value.trim();
+  var id=editId||t.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').substring(0,60)||('story-'+Date.now());
+  var rt=$('frt').value.trim();
+  return {id:id,title:t,author:a,region:$('fr').value,status:status,summary:$('fsum').value.trim(),
+    body:$('fbody').innerHTML,read_time:rt,readTime:rt,date:$('fd').value||today()};
+}
+function saveFromForm(status){
+  var t=$('ft').value.trim(),a=$('fa').value.trim();
+  if(!t||!a){toast('⚠️ Headline and author are required');return;}
+  var d=collectStory(status);var existed=!!stories()[d.id];
+  var S=stories();S[d.id]=d;s('utv_stories',S);editId=d.id;
+  saveStory(d,existed).then(function(){
+    toast(status==='published'?'✅ Published — live now':'💾 Draft saved');
+    go('stories');
+  });
+}
+function saveStory(d,existed){
+  if(!apiOk){toast('⚠️ API offline — saved locally only');return Promise.resolve(false);}
+  return api(existed?'PUT':'POST',existed?'/api/admin/stories/'+d.id:'/api/admin/stories',d)
+    .then(function(r){if(!r.ok){if(r.status===401||r.status===403)toast('⚠️ Not authorized');else toast('⚠️ Save error');return false;}return true;})
+    .catch(function(){toast('⚠️ Network error');return false;});
+}
+
+/* ---------- PAGES ---------- */
+function vPages(){
+  var P=pages(),ks=Object.keys(P);
+  var h=head('Pages','<button class="bt bp" onclick="newPage()">+ New page</button>');
+  h+='<div class="list">';
+  if(!ks.length)h+='<p class="empty">No pages yet.</p>';
+  else ks.forEach(function(sl){var p=P[sl];h+='<div class="row"><div class="meta"><span class="ti" onclick="editPage(\''+sl+'\')">'+esc(p.title||sl)+'</span><div class="su">/page.html?p='+esc(sl)+'</div></div><div class="acts"><button class="btn-ghost" onclick="editPage(\''+sl+'\')">&#9998;</button><button class="btn-ghost" onclick="delPage(\''+sl+'\')">&#128465;</button></div></div>'});
+  h+='</div>';$('view').innerHTML=h;
+}
+function newPage(){editSlug=null;curView='page';render()}
+function editPage(sl){editSlug=sl;curView='page';render()}
+function vPageEdit(){
+  var p=editSlug?pages()[editSlug]:{title:'',subtitle:'',body:''};if(!p)p={title:'',subtitle:'',body:''};
+  var h=head(editSlug?'Edit page':'New page','<button class="bt bs" onclick="go(\'pages\')">&larr; Back</button>');
+  h+='<div class="card"><div class="fl"><label>Title</label><input id="pt" value="'+esc(p.title)+'" oninput="pPv()"></div>'+
+    '<div class="fl"><label>Subtitle</label><input id="psub" value="'+esc(p.subtitle)+'" oninput="pPv()"></div>'+
+    (editSlug?'':'<div class="fl"><label>URL slug</label><input id="pslug" placeholder="e.g. our-mission"><div class="hint">Lowercase, no spaces. Leave blank to auto-generate.</div></div>')+
+    '<div class="fl"><label>Body</label><div class="rtb"><button class="rb" onclick="rc2(\'bold\')"><b>B</b></button><button class="rb" onclick="rc2(\'italic\')"><i>I</i></button><button class="rb" onclick="rb2(\'H3\')">H3</button><button class="rb" onclick="rb2(\'P\')">¶</button></div>'+
+    '<div class="re" id="pbody" contenteditable="true" oninput="pPv()">'+(p.body||'<p>Start writing…</p>')+'</div></div>'+
+    '<div class="toolbar" style="margin-top:14px"><button class="bt bp" onclick="savePage()">💾 Save page</button>'+(editSlug?'<button class="bt bd bsm" style="margin-left:auto" onclick="delPage(\''+editSlug+'\')">Delete</button>':'')+'</div></div>'+
+    '<div class="pv"><div class="pvh">Preview</div><div class="pvb" id="ppv"></div></div>';
+  $('view').innerHTML=h;pPv();
+}
+function rc2(c){document.execCommand(c,false,null);$('pbody').focus()}
+function rb2(t){document.execCommand('formatBlock',false,'<'+t+'>');$('pbody').focus()}
+function pPv(){var el=$('ppv');if(!el)return;el.innerHTML='<div class="pt">'+esc($('pt').value)+'</div><div class="ps">'+esc($('psub')?$('psub').value:'')+'</div><div class="pc">'+$('pbody').innerHTML+'</div>'}
+function savePage(){var t=$('pt').value.trim();if(!t){toast('Title required');return;}var slug=editSlug||($('pslug')?$('pslug').value.trim():'')||t.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').substring(0,40);
+  var P=pages();P[slug]={slug:slug,title:t,subtitle:$('psub').value.trim(),body:$('pbody').innerHTML};s('utv_pages',P);editSlug=slug;
+  if(apiOk)api('POST','/api/admin/pages',{slug:slug,title:t,subtitle:P[slug].subtitle,body:P[slug].body}).then(function(r){toast(r.ok?'💾 Saved':(r.status===403?'⚠️ Admin only':'⚠️ Error'))}).catch(function(){toast('⚠️ Network error')});
+  else toast('⚠️ API offline');
+  go('pages');
+}
+function delPage(sl){if(!confirm('Delete this page?'))return;var P=pages();delete P[sl];s('utv_pages',P);if(apiOk)api('DELETE','/api/admin/pages/'+sl);toast('Deleted');go('pages')}
+
+/* ---------- HOMEPAGE builder ---------- */
+var SEC_IDS=['hero','editorial','regions','featured','utahLens','dataBrief'];
+var SEC_NAMES={hero:'Hero / Lead',editorial:'Editorial & Opinion',regions:'Around the World',featured:'In This Issue',utahLens:'The Utah Lens',dataBrief:'Data Brief'};
+var SEC_LABELABLE={editorial:1,regions:1,featured:1,utahLens:1,dataBrief:1};
+var secOrder=[],secHidden=[],secLabels={};
+function storyOpts(v){var S=stories();var ar=Object.keys(S).map(function(i){return S[i]}).sort(function(a,b){return (a.title||'').localeCompare(b.title||'')});
+  var h='<option value="">— none —</option>';ar.forEach(function(x){h+='<option value="'+esc(x.id)+'"'+(x.id===v?' selected':'')+'>'+esc((x.title||x.id).substring(0,60))+(x.status!=='published'?' (draft)':'')+'</option>'});return h}
+function slots(label,prefix,arr,n){var h='';for(var i=0;i<n;i++)h+='<div class="fl"><label>'+label+' #'+(i+1)+'</label><select id="'+prefix+i+'">'+storyOpts((arr||[])[i]||'')+'</select></div>';return h}
+function vHomepage(){
+  var L=layout();
+  secInit(L);
+  var h=head('Homepage &amp; app layout','<button class="bt bp" onclick="saveHome()">💾 Save homepage</button>');
+  h+='<div class="card"><h2>🧩 Sections <span style="font-weight:600;color:var(--g5);font-size:12px">&mdash; controls the website <b>and</b> the iOS/Android apps</span></h2><p class="desc">Reorder, show/hide, and rename the red headers. In the <b>mobile apps</b> the front page renders sections in exactly this order, hides the ones toggled off, and uses these labels. On wide web screens the grid order stays fixed but still honors hide + labels. Every story slot you pick below also applies to the apps.</p><div id="secMgr"></div></div>';
+  h+='<div class="card"><h2>📢 Briefing ticker</h2><div class="fl"><label>Scrolling message (separate items with •)</label><input id="lt" value="'+esc(L.ticker||'')+'"></div></div>';
+  h+='<div class="card"><h2>🏠 Hero</h2>'+
+    '<div class="fl"><label>Hero image</label><input id="li" value="'+esc(L.hero_image||'')+'" placeholder="Image URL"><button class="bt bs bsm" style="margin-top:8px" onclick="uploadImage(\'li\')">&#8679; Upload image</button></div>'+
+    '<div class="row3"><div class="fl"><label>⭐ Lead</label><select id="ll">'+storyOpts(L.hero_lead)+'</select></div>'+
+    '<div class="fl"><label>Secondary</label><select id="ls">'+storyOpts(L.hero_secondary)+'</select></div>'+
+    '<div class="fl"><label>Center</label><select id="lct">'+storyOpts(L.hero_center)+'</select></div></div>'+
+    '<div class="row3">'+slots('From This Issue','lr',L.hero_right,6)+'</div></div>';
+  h+='<div class="card"><h2>✍️ Editorial &amp; Opinion</h2><div class="row3">'+slots('Opinion','le',L.editorial,6)+'</div></div>';
+  var rn=['The Americas','Europe','Asia-Pacific','Middle East','Africa'],rg=L.regions||{};
+  h+='<div class="card"><h2>🌍 Around the World</h2><div class="row3">'+rn.map(function(r){return '<div class="fl"><label>'+r+'</label><select id="lrg-'+r.replace(/\s/g,'-')+'">'+storyOpts(rg[r]||'')+'</select></div>'}).join('')+'</div></div>';
+  h+='<div class="card"><h2>📰 In This Issue</h2><div class="row3">'+slots('Featured','lf',L.featured,10)+'</div></div>';
+  h+='<div class="card"><h2>📋 Sidebar</h2><div class="row2">'+slots('Utah Lens','lu',L.sidebar_utah,4)+'</div><div class="row3" style="margin-top:4px">'+slots('Data Brief','ld',L.sidebar_data,4)+'</div></div>';
+  h+='<div class="toolbar"><button class="bt bp" onclick="saveHome()">💾 Save homepage</button></div>';
+  $('view').innerHTML=h;renderSections();
+}
+function secInit(L){var o=(L.section_order&&L.section_order.length)?L.section_order.slice():SEC_IDS.slice();SEC_IDS.forEach(function(id){if(o.indexOf(id)<0)o.push(id)});o=o.filter(function(id){return SEC_IDS.indexOf(id)>=0});secOrder=o;secHidden=(L.hidden_sections||[]).slice();secLabels=Object.assign({},L.section_labels||{})}
+function secCapture(){secOrder.forEach(function(id){var v=$('sec_vis_'+id);if(v){secHidden=secHidden.filter(function(x){return x!==id});if(!v.checked)secHidden.push(id)}var l=$('sec_lbl_'+id);if(l)secLabels[id]=l.value})}
+function cleanLabels(){var o={};Object.keys(secLabels).forEach(function(k){var v=(secLabels[k]||'').trim();if(v)o[k]=v});return o}
+function renderSections(){var el=$('secMgr');if(!el)return;el.innerHTML=secOrder.map(function(id,i){
+  return '<div class="secrow"><span class="ord"><button class="btn-ghost" '+(i===0?'disabled':'')+' onclick="secMove(\''+id+'\',-1)">&#9650;</button><button class="btn-ghost" '+(i===secOrder.length-1?'disabled':'')+' onclick="secMove(\''+id+'\',1)">&#9660;</button></span>'+
+    '<label class="switch"><input type="checkbox" id="sec_vis_'+id+'" '+(secHidden.indexOf(id)<0?'checked':'')+'><span class="slider"></span></label>'+
+    '<strong>'+SEC_NAMES[id]+'</strong>'+
+    (SEC_LABELABLE[id]?'<input type="text" id="sec_lbl_'+id+'" placeholder="Custom red header (optional)" value="'+esc(secLabels[id]||'')+'">':'<span style="flex:1"></span>')+
+    '</div>';
+}).join('')}
+function secMove(id,d){secCapture();var i=secOrder.indexOf(id),j=i+d;if(j<0||j>=secOrder.length)return;var t=secOrder[i];secOrder[i]=secOrder[j];secOrder[j]=t;renderSections()}
+function collect(prefix,n){var a=[];for(var i=0;i<n;i++){var el=$(prefix+i);if(el&&el.value)a.push(el.value)}return a}
+function uploadImage(inputId){var inp=document.createElement('input');inp.type='file';inp.accept='image/*';
+  inp.onchange=function(){var f=inp.files&&inp.files[0];if(!f)return;if(f.size>5*1024*1024){toast('Image too large (5MB max)');return;}var fd=new FormData();fd.append('file',f);toast('Uploading…');
+    fetch(API+'/api/upload',{method:'POST',headers:{'Authorization':'Bearer '+token()},body:fd}).then(function(r){return r.json()}).then(function(d){if(d.url){var el=$(inputId);if(el)el.value=d.url;toast('✅ Uploaded')}else toast('⚠️ '+(d.error||'Upload failed'))}).catch(function(){toast('⚠️ Upload failed')});};
+  inp.click();
+}
+function saveHome(){
+  secCapture();
+  var rn=['The Americas','Europe','Asia-Pacific','Middle East','Africa'],rg={};rn.forEach(function(r){rg[r]=$('lrg-'+r.replace(/\s/g,'-')).value});
+  var L={ticker:$('lt').value,hero_image:$('li').value.trim(),hero_lead:$('ll').value,hero_secondary:$('ls').value,hero_center:$('lct').value,
+    hero_right:collect('lr',6),editorial:collect('le',6),regions:rg,featured:collect('lf',10),sidebar_utah:collect('lu',4),sidebar_data:collect('ld',4),
+    section_order:secOrder.slice(),hidden_sections:secHidden.slice(),section_labels:cleanLabels()};
+  var ex=layout();if(ex.hero_center_caption)L.hero_center_caption=ex.hero_center_caption;
+  s('utv_layout',L);
+  if(apiOk)api('PUT','/api/admin/config/layout',{value:L}).then(function(r){toast(r.ok?'✅ Homepage saved — live now':(r.status===403?'⚠️ Admin only':'⚠️ Error'))}).catch(function(){toast('⚠️ Network error')});
+  else toast('⚠️ API offline');
+}
+
+/* ---------- FOOTER ---------- */
+function vFooter(){
+  var ss=site();
+  var h=head('Footer & Subscribe','<button class="bt bp" onclick="saveFooter()">💾 Save</button>');
+  h+='<div class="card"><h2>📧 Subscribe banner</h2>'+
+    '<div class="fl"><label>Overline</label><input id="sol" value="'+esc(ss.sub_overline||'Stay briefed')+'"></div>'+
+    '<div class="fl"><label>Heading</label><input id="shd" value="'+esc(ss.sub_heading||'Independent analysis, delivered monthly')+'"></div>'+
+    '<div class="fl"><label>Description</label><input id="sds" value="'+esc(ss.sub_desc||'')+'"></div></div>';
+  h+='<div class="card"><h2>🔝 Top bar</h2><div class="row2"><div class="fl"><label>About text</label><input id="sabt" value="'+esc(ss.about_text||'About')+'"></div><div class="fl"><label>About URL</label><input id="sabu" value="'+esc(ss.about_url||'page.html?p=our-mission')+'"></div></div></div>';
+  h+='<div class="card"><h2>🔗 Footer</h2><div class="fl"><label>Copyright</label><input id="scp" value="'+esc(ss.copyright||'© 2026 The Utah View.')+'"></div>';
+  var cols=(ss.footer_cols||[]).slice();while(cols.length<4)cols.push({title:'',links:[]});
+  for(var c=0;c<4;c++){var col=cols[c];h+='<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--g1)"><div class="fl"><label>Column '+(c+1)+' title</label><input id="sc'+c+'t" value="'+esc(col.title||'')+'"></div>';
+    var lk=(col.links||[]).slice();while(lk.length<5)lk.push({text:'',url:''});
+    for(var i=0;i<5;i++)h+='<div class="row2" style="margin-bottom:4px"><input id="sc'+c+'l'+i+'t" value="'+esc(lk[i].text||'')+'" placeholder="Link text"><input id="sc'+c+'l'+i+'u" value="'+esc(lk[i].url||'')+'" placeholder="URL"></div>';h+='</div>'}
+  h+='<div class="toolbar" style="margin-top:14px"><button class="bt bp" onclick="saveFooter()">💾 Save</button></div></div>';
+  $('view').innerHTML=h;
+}
+function saveFooter(){
+  var cols=[];for(var c=0;c<4;c++){var t=$('sc'+c+'t').value;var lk=[];for(var i=0;i<5;i++){var lt=$('sc'+c+'l'+i+'t').value.trim(),lu=$('sc'+c+'l'+i+'u').value.trim();if(lt)lk.push({text:lt,url:lu||'#'})}if(t||lk.length)cols.push({title:t,links:lk})}
+  var ss={sub_overline:$('sol').value,sub_heading:$('shd').value,sub_desc:$('sds').value,about_text:$('sabt').value,about_url:$('sabu').value,copyright:$('scp').value,footer_cols:cols};
+  var ex=site();if(ex.nav_categories)ss.nav_categories=ex.nav_categories;
+  s('utv_site',ss);
+  if(apiOk)api('PUT','/api/admin/config/site',{value:ss}).then(function(r){toast(r.ok?'✅ Saved — live now':(r.status===403?'⚠️ Admin only':'⚠️ Error'))}).catch(function(){toast('⚠️ Network error')});
+  else toast('⚠️ API offline');
+}
+
+/* ---------- ACCESS ---------- */
+function vAccess(){
+  var a=acl();
+  var h=head('Access');
+  var me=user()||{};
+  h+='<div class="card"><h2>Grant access</h2><p class="desc">Add a Google email and choose a role. Editors manage stories &amp; pages; admins manage everything. Only <b>admins</b> can grant access &mdash; you’re signed in as <b>'+esc(me.email||'')+'</b> ('+esc(me.role||'?')+').</p>'+
+    '<div class="toolbar"><div class="searchbox" style="max-width:320px">&#9993;<input id="ae" type="email" placeholder="email@gmail.com"></div>'+
+    '<select id="ar" style="padding:9px 12px;border:1px solid var(--g2);border-radius:9px;max-width:140px"><option value="editor">Editor</option><option value="admin">Admin</option></select>'+
+    '<button class="bt bp" onclick="aAdd()">Grant</button></div></div>';
+  h+='<div id="accessList"></div>';
+  $('view').innerHTML=h;
+  renderAccessList();
+  // Fetch the latest list ONCE and refresh only the list container — never
+  // re-run vAccess() here, or the whole panel (and the email box) rebuilds in
+  // a loop and you can't type.
+  api('GET','/api/admin/users').then(function(r){return r.ok?r.json():null}).then(function(d){if(d&&d.users){var a2={};d.users.forEach(function(u){a2[u.email]=u.role});s('utv_acl',a2);if(curView==='access')renderAccessList();}}).catch(function(){});
+}
+function renderAccessList(){
+  var el=$('accessList');if(!el)return;var a=acl();
+  el.innerHTML='<div class="list">'+Object.keys(a).map(function(e){return '<div class="row"><div class="avatar" style="background:var(--g3);color:var(--g6)">'+esc(e.charAt(0).toUpperCase())+'</div><div class="meta"><div class="ti" style="cursor:default">'+esc(e)+'</div><div class="su">'+esc(a[e])+'</div></div><div class="acts">'+(e!=='theutahview@gmail.com'?'<button class="bt bd bsm" onclick="aRm(\''+e+'\')">Remove</button>':'<span class="su">Owner</span>')+'</div></div>'}).join('')+'</div>';
+}
+function errMsg(x,j,fallback){if(x.status===403)return 'You must be signed in as an admin to do this';if(x.status===401)return 'Session expired — sign out and back in';return (j&&j.error)?j.error:(fallback+' (HTTP '+x.status+')')}
+function aAdd(){var e=$('ae').value.trim().toLowerCase(),r=$('ar').value;if(!e||e.indexOf('@')<0){toast('Enter a valid email');return;}
+  toast('Granting access…');
+  api('POST','/api/admin/users',{email:e,role:r}).then(function(x){return x.json().catch(function(){return{}}).then(function(j){
+    if(x.ok){var a=acl();a[e]=r;s('utv_acl',a);$('ae').value='';toast('✅ Access granted to '+e);renderAccessList();}
+    else toast('⚠️ '+errMsg(x,j,'Could not grant'));
+  })}).catch(function(){toast('⚠️ Network error — check your connection')});
+}
+function aRm(e){if(!confirm('Remove access for '+e+'?'))return;
+  api('DELETE','/api/admin/users?email='+encodeURIComponent(e)).then(function(x){return x.json().catch(function(){return{}}).then(function(j){
+    if(x.ok){var a=acl();delete a[e];s('utv_acl',a);toast('Removed '+e);renderAccessList();}
+    else toast('⚠️ '+errMsg(x,j,'Could not remove'));
+  })}).catch(function(){toast('⚠️ Network error')});
+}
+
+/* ---------- SUBSCRIBERS ---------- */
+function vSubs(){
+  $('view').innerHTML=head('Subscribers')+'<div class="card"><p class="empty"><span class="spin"></span> Loading…</p></div>';
+  if(!apiOk){$('view').innerHTML=head('Subscribers')+'<div class="card"><p class="empty">API not connected.</p></div>';return;}
+  api('GET','/api/admin/subscribers').then(function(r){return r.json()}).then(function(d){
+    var h=head('Subscribers');
+    h+='<div class="grid stats" style="margin-bottom:14px"><div class="stat"><div class="n">'+(d.count||0)+'</div><div class="l red">Total subscribers</div></div></div>';
+    h+='<div class="list">';
+    if(!d.count)h+='<p class="empty">No subscribers yet.</p>';
+    else d.subscribers.forEach(function(x){var em=x.email||x;h+='<div class="row"><div class="meta"><div class="ti" style="font-weight:600;cursor:default">'+esc(em)+'</div>'+(x.subscribed_at?'<div class="su">Joined '+esc((x.subscribed_at||'').split(' ')[0])+'</div>':'')+'</div></div>'});
+    h+='</div>';$('view').innerHTML=h;
+  }).catch(function(){$('view').innerHTML=head('Subscribers')+'<div class="card"><p class="empty">Couldn’t load (admin only, or offline).</p></div>'});
+}
+
+check();
+</script>
+</body>
+</html>

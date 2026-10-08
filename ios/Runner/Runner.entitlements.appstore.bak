@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Universal links: theutahview.com/article.html?id=X opens the app.
+	     Requires apple-app-site-association on the website (docs/RELEASE.md)
+	     and the Associated Domains capability on the App ID. -->
+	<key>com.apple.developer.associated-domains</key>
+	<array>
+		<string>applinks:theutahview.com</string>
+		<string>applinks:www.theutahview.com</string>
+	</array>
+</dict>
+</plist>

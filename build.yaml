@@ -1,0 +1,9 @@
+targets:
+  $default:
+    builders:
+      json_serializable:
+        options:
+          # API uses snake_case keys (read_time, hero_lead, nav_categories...).
+          field_rename: snake
+          explicit_to_json: true
+          include_if_null: false

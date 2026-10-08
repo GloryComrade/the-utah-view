@@ -1,0 +1,92 @@
+{
+  "value": {
+    "sub_overline": "Stay briefed",
+    "sub_heading": "Independent analysis, delivered monthly",
+    "sub_desc": "Clarity Over Ideology. Every Month. Every Region.",
+    "about_text": "About",
+    "about_url": "page.html?p=our-mission",
+    "copyright": "© 2026 The Utah View.",
+    "footer_cols": [
+      {
+        "title": "Regions",
+        "links": [
+          {
+            "text": "The Americas",
+            "url": "https://theutahview.com/?cat=The%20Americas"
+          },
+          {
+            "text": "Europe",
+            "url": "https://theutahview.com/?cat=Europe"
+          },
+          {
+            "text": "Asia-Pacific",
+            "url": "https://theutahview.com/?cat=Asia-Pacific"
+          },
+          {
+            "text": "The Middle East",
+            "url": "https://theutahview.com/?cat=Middle%20East"
+          },
+          {
+            "text": "Africa",
+            "url": "https://theutahview.com/?cat=Africa"
+          }
+        ]
+      },
+      {
+        "title": "",
+        "links": [
+          {
+            "text": "Analysis",
+            "url": "https://theutahview.com/?cat=Analysis"
+          },
+          {
+            "text": "Opinion",
+            "url": "https://theutahview.com/?cat=Opinion"
+          },
+          {
+            "text": "Data",
+            "url": "https://theutahview.com/?cat=Data"
+          }
+        ]
+      },
+      {
+        "title": "Overview of The Utah View",
+        "links": [
+          {
+            "text": "Our Mission",
+            "url": "https://theutahview.com/page?p=our-mission"
+          },
+          {
+            "text": "About Us",
+            "url": "page.html?p=About Us"
+          },
+          {
+            "text": "Contact",
+            "url": "https://theutahview.com/page?p=contact"
+          },
+          {
+            "text": "Privacy Policy",
+            "url": "page.html?p=Privacy-Policy"
+          },
+          {
+            "text": "Terms Of Service",
+            "url": "page.html?p=terms-of-service"
+          }
+        ]
+      },
+      {
+        "title": "",
+        "links": [
+          {
+            "text": "Bi-Monthly Newsletter",
+            "url": "page.html?p=bi-monthly-news-letter"
+          },
+          {
+            "text": "An Analysis on Utah Today",
+            "url": "page.html?p=the-communist-weekly"
+          }
+        ]
+      }
+    ]
+  }
+}
