@@ -172,7 +172,14 @@ class _ArticleScreenState extends ConsumerState<ArticleScreen> {
           actions: [
             const TextSizeButton(),
             SaveStoryButton(storyId: id, detail: detail.value),
-            ShareStoryButton(storyId: id, title: story?.title),
+            ShareStoryButton(
+              storyId: id,
+              title: story?.title,
+              kicker: story?.region ?? '',
+              byline: (story?.author.isNotEmpty ?? false)
+                  ? 'By ${story!.author}'
+                  : '',
+            ),
             const SizedBox(width: 4),
           ],
           bottom: ReadingProgressBar(progress: _progress),

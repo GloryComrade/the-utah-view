@@ -13,6 +13,7 @@ import '../../../core/router/navigation.dart';
 import '../../../core/settings/app_settings.dart';
 import '../../../core/theme/theme.dart';
 import '../../saved/saved_stories.dart';
+import '../share_card.dart';
 
 /// Bookmark toggle. Saving stores the full story so it reads offline, so it
 /// is enabled once the body has loaded.
@@ -65,35 +66,116 @@ class SaveStoryButton extends ConsumerWidget {
   }
 }
 
-/// Shares the website link, so it opens for anyone (and in the app for
-/// readers who have it).
+/// Share menu: the website link (opens for anyone), or a branded image card
+/// for Instagram / Stories.
 class ShareStoryButton extends StatelessWidget {
-  const ShareStoryButton({super.key, required this.storyId, this.title});
+  const ShareStoryButton({
+    super.key,
+    required this.storyId,
+    this.title,
+    this.kicker = '',
+    this.byline = '',
+  });
 
   final String storyId;
   final String? title;
 
+  /// Region/section, shown as the red kicker on the image card.
+  final String kicker;
+
+  /// e.g. "By Jane Doe", shown under the headline on the image card.
+  final String byline;
+
+  Rect? _origin(BuildContext context) {
+    // iPad anchors the share sheet to the button.
+    final box = context.findRenderObject() as RenderBox?;
+    return box == null ? null : box.localToGlobal(Offset.zero) & box.size;
+  }
+
   @override
   Widget build(BuildContext context) {
-    return IconButton(
+    final uri = ApiConfig.articleWebUri(storyId);
+    final subject = title?.isNotEmpty == true ? title! : 'The Utah View';
+    return PopupMenuButton<int>(
       tooltip: 'Share',
       icon: Icon(Icons.adaptive.share),
-      onPressed: () {
-        // iPad anchors the share sheet to the button.
-        final box = context.findRenderObject() as RenderBox?;
-        final origin = box == null
-            ? null
-            : box.localToGlobal(Offset.zero) & box.size;
-        final subject = title?.isNotEmpty == true ? title : 'The Utah View';
-        SharePlus.instance.share(
-          ShareParams(
-            uri: ApiConfig.articleWebUri(storyId),
-            subject: subject,
+      onSelected: (choice) async {
+        final origin = _origin(context);
+        final messenger = ScaffoldMessenger.of(context);
+        if (choice == 0) {
+          await SharePlus.instance.share(
+            ShareParams(
+              uri: uri,
+              subject: subject,
+              title: subject,
+              sharePositionOrigin: origin,
+            ),
+          );
+          return;
+        }
+        try {
+          await shareStoryCard(
             title: subject,
-            sharePositionOrigin: origin,
-          ),
-        );
+            url: uri,
+            kicker: kicker,
+            byline: byline,
+            origin: origin,
+          );
+        } catch (_) {
+          messenger
+            ..hideCurrentSnackBar()
+            ..showSnackBar(
+              const SnackBar(content: Text('Couldn’t create the share image')),
+            );
+        }
       },
+      itemBuilder: (_) => const [
+        PopupMenuItem<int>(
+          value: 0,
+          child: _ShareOption(
+            icon: Icons.link_rounded,
+            label: 'Share link',
+          ),
+        ),
+        PopupMenuItem<int>(
+          value: 1,
+          child: _ShareOption(
+            icon: Icons.image_outlined,
+            label: 'Share as image',
+            subtitle: 'For Instagram, Stories…',
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _ShareOption extends StatelessWidget {
+  const _ShareOption({required this.icon, required this.label, this.subtitle});
+
+  final IconData icon;
+  final String label;
+  final String? subtitle;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(icon, size: 20),
+        const SizedBox(width: 12),
+        Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(label),
+            if (subtitle != null)
+              Text(
+                subtitle!,
+                style: TextStyle(fontSize: 12, color: context.palette.inkFaint),
+              ),
+          ],
+        ),
+      ],
     );
   }
 }
