@@ -202,6 +202,56 @@ async function maybeNotifyNewStory(env, storyId, data) {
   } catch (e) { console.error('FCM notify failed:', e); }
 }
 
+// Auto-post a newly published story to Instagram (Graph API), once per story.
+// Dormant until BOTH secrets are set: IG_ACCESS_TOKEN (long-lived token) and
+// IG_USER_ID (the Instagram Business/Creator account id). Instagram requires a
+// public JPEG image URL, so we use the story's first body image, else the
+// optional IG_FALLBACK_IMAGE; if neither exists we skip (can't post text-only).
+async function maybePostInstagram(env, storyId, data) {
+  try {
+    if (!env.IG_ACCESS_TOKEN || !env.IG_USER_ID) return;   // not configured yet
+    const seen = await env.DB.prepare('SELECT story_id FROM ig_posted WHERE story_id = ?').bind(storyId).first();
+    if (seen) return;                                      // already posted
+
+    let image = '';
+    const body = (data && data.body) ? String(data.body) : '';
+    const m = body.match(/<img[^>]+src=["']([^"']+)["']/i);
+    if (m) image = m[1];
+    if (!image && env.IG_FALLBACK_IMAGE) image = env.IG_FALLBACK_IMAGE;
+    if (!image) { console.log('IG: no image for story ' + storyId + ' — skipped'); return; }
+    if (image.startsWith('/')) image = (env.R2_PUBLIC_URL || '') + image;
+
+    const title = (data && data.title) ? String(data.title) : 'New story';
+    const summary = (data && data.summary) ? String(data.summary).trim() : '';
+    const caption = [
+      title,
+      summary,
+      'Read the full story at theutahview.com (link in bio).',
+      '#TheUtahView #Utah #WorldNews #Politics #Journalism',
+    ].filter(Boolean).join('\n\n');
+
+    const base = 'https://graph.facebook.com/v21.0/' + env.IG_USER_ID;
+    const create = await fetch(base + '/media', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ image_url: image, caption, access_token: env.IG_ACCESS_TOKEN }),
+    });
+    const created = await create.json();
+    if (!create.ok || !created.id) { console.error('IG create failed: ' + JSON.stringify(created)); return; }
+
+    const publish = await fetch(base + '/media_publish', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ creation_id: created.id, access_token: env.IG_ACCESS_TOKEN }),
+    });
+    const published = await publish.json();
+    if (!publish.ok || !published.id) { console.error('IG publish failed: ' + JSON.stringify(published)); return; }
+
+    await env.DB.prepare('INSERT OR IGNORE INTO ig_posted (story_id, ig_media_id) VALUES (?, ?)').bind(storyId, String(published.id)).run();
+    console.log('IG posted story ' + storyId + ' -> ' + published.id);
+  } catch (e) { console.error('IG post failed:', e); }
+}
+
 
 // ── Audit Logging ──
 
@@ -417,7 +467,10 @@ export default {
         'INSERT OR REPLACE INTO stories (id, title, author, region, status, summary, body, read_time, date, created_by, updated_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
       ).bind(id, data.title, data.author, data.region || 'Global', data.status || 'draft', data.summary || '', data.body || '', data.read_time || '', data.date || new Date().toISOString().split('T')[0], user.email, user.email).run();
       await auditLog(env, user.email, 'create', 'story', id, JSON.stringify({ title: data.title }), ip);
-      if ((data.status || 'draft') === 'published') ctx.waitUntil(maybeNotifyNewStory(env, id, data));
+      if ((data.status || 'draft') === 'published') {
+        ctx.waitUntil(maybeNotifyNewStory(env, id, data));
+        ctx.waitUntil(maybePostInstagram(env, id, data));
+      }
       return new Response(JSON.stringify({ id, message: 'Created' }), { headers: corsHeaders() });
     }
 
@@ -431,7 +484,10 @@ export default {
         'UPDATE stories SET title=?, author=?, region=?, status=?, summary=?, body=?, read_time=?, date=?, updated_at=datetime(\'now\'), updated_by=? WHERE id=?'
       ).bind(data.title, data.author, data.region, data.status, data.summary, data.body, data.read_time, data.date, user.email, id).run();
       await auditLog(env, user.email, 'update', 'story', id, JSON.stringify({ title: data.title, status: data.status }), ip);
-      if (data.status === 'published') ctx.waitUntil(maybeNotifyNewStory(env, id, data));
+      if (data.status === 'published') {
+        ctx.waitUntil(maybeNotifyNewStory(env, id, data));
+        ctx.waitUntil(maybePostInstagram(env, id, data));
+      }
       return new Response(JSON.stringify({ message: 'Updated' }), { headers: corsHeaders() });
     }
 

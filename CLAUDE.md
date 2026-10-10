@@ -102,6 +102,15 @@ This Mac sits behind a transparent TLS filter (ContentKeeper) + a local proxy.
 - iOS 26/27 simulator: use **Xcode 27 + DeviceHub.app** (`open -a DeviceHub`), not
   `Simulator.app`. See `docs/RELEASE.md`.
 
+## Instagram
+- **Share to Instagram (app):** the article share button offers "Share as image",
+  which renders a branded 1080×1350 card (`lib/features/article/share_card.dart`)
+  and opens the OS share sheet (Instagram Stories/Feed, etc.).
+- **Auto-post on publish (backend):** `maybePostInstagram()` in `worker.js` posts a
+  newly published story to Instagram via the Graph API. Dormant until the Worker
+  secrets `IG_ACCESS_TOKEN` + `IG_USER_ID` (and optional `IG_FALLBACK_IMAGE`) are
+  set. Deduped via the `ig_posted` D1 table. Full setup: `docs/INSTAGRAM_AUTOPOST.md`.
+
 ## Security notes
 - No secrets live in the repo. The admin API key and Firebase FCM service-account
   key are **Cloudflare Worker secrets** (`wrangler secret put …`), never committed.
