@@ -505,26 +505,40 @@ var SEC_LABELABLE={editorial:1,regions:1,featured:1,utahLens:1,dataBrief:1};
 var secOrder=[],secHidden=[],secLabels={};
 function storyOpts(v){var S=stories();var ar=Object.keys(S).map(function(i){return S[i]}).sort(function(a,b){return (a.title||'').localeCompare(b.title||'')});
   var h='<option value="">— none —</option>';ar.forEach(function(x){h+='<option value="'+esc(x.id)+'"'+(x.id===v?' selected':'')+'>'+esc((x.title||x.id).substring(0,60))+(x.status!=='published'?' (draft)':'')+'</option>'});return h}
-function slots(label,prefix,arr,n){var h='';for(var i=0;i<n;i++)h+='<div class="fl"><label>'+label+' #'+(i+1)+'</label><select id="'+prefix+i+'">'+storyOpts((arr||[])[i]||'')+'</select></div>';return h}
+function slots(label,prefix,arr,n){var h='';for(var i=0;i<n;i++)h+='<div class="fl"><label>'+label+' #'+(i+1)+'</label><select data-slot id="'+prefix+i+'">'+storyOpts((arr||[])[i]||'')+'</select></div>';return h}
+// Re-pull the story list from the API and repopulate every slot dropdown in
+// place, keeping each current selection — so stories published after the
+// Homepage panel was opened become selectable without losing your work.
+function refreshHomepageStories(btn){
+  if(btn){btn.disabled=true;btn.textContent='Refreshing…';}
+  var done=function(){if(btn){btn.disabled=false;btn.innerHTML='&#8635; Refresh stories';}};
+  api('GET','/api/admin/stories').then(function(r){return r.ok?r.json():null}).then(function(d){
+    if(d&&d.stories){var S={},cur=stories();d.stories.forEach(function(x){var old=cur[x.id]||{};S[x.id]=x;if(!x.body&&old.body)S[x.id].body=old.body;});s('utv_stories',S);
+      if(curView==='homepage')document.querySelectorAll('select[data-slot]').forEach(function(sel){sel.innerHTML=storyOpts(sel.value);});
+      if(btn)toast('✅ Stories updated');
+    } else if(btn)toast('⚠️ Could not refresh');
+    done();
+  }).catch(function(){done();if(btn)toast('⚠️ Network error');});
+}
 function vHomepage(){
   var L=layout();
   secInit(L);
-  var h=head('Homepage &amp; app layout','<button class="bt bp" onclick="saveHome()">💾 Save homepage</button>');
+  var h=head('Homepage &amp; app layout','<button class="bt bs" onclick="refreshHomepageStories(this)">&#8635; Refresh stories</button> <button class="bt bp" onclick="saveHome()">💾 Save homepage</button>');
   h+='<div class="card"><h2>🧩 Sections <span style="font-weight:600;color:var(--g5);font-size:12px">&mdash; controls the website <b>and</b> the iOS/Android apps</span></h2><p class="desc">Reorder, show/hide, and rename the red headers. In the <b>mobile apps</b> the front page renders sections in exactly this order, hides the ones toggled off, and uses these labels. On wide web screens the grid order stays fixed but still honors hide + labels. Every story slot you pick below also applies to the apps.</p><div id="secMgr"></div></div>';
   h+='<div class="card"><h2>📢 Briefing ticker</h2><div class="fl"><label>Scrolling message (separate items with •)</label><input id="lt" value="'+esc(L.ticker||'')+'"></div></div>';
   h+='<div class="card"><h2>🏠 Hero</h2>'+
     '<div class="fl"><label>Hero image</label><input id="li" value="'+esc(L.hero_image||'')+'" placeholder="Image URL"><button class="bt bs bsm" style="margin-top:8px" onclick="uploadImage(\'li\')">&#8679; Upload image</button></div>'+
-    '<div class="row3"><div class="fl"><label>⭐ Lead</label><select id="ll">'+storyOpts(L.hero_lead)+'</select></div>'+
-    '<div class="fl"><label>Secondary</label><select id="ls">'+storyOpts(L.hero_secondary)+'</select></div>'+
-    '<div class="fl"><label>Center</label><select id="lct">'+storyOpts(L.hero_center)+'</select></div></div>'+
+    '<div class="row3"><div class="fl"><label>⭐ Lead</label><select data-slot id="ll">'+storyOpts(L.hero_lead)+'</select></div>'+
+    '<div class="fl"><label>Secondary</label><select data-slot id="ls">'+storyOpts(L.hero_secondary)+'</select></div>'+
+    '<div class="fl"><label>Center</label><select data-slot id="lct">'+storyOpts(L.hero_center)+'</select></div></div>'+
     '<div class="row3">'+slots('From This Issue','lr',L.hero_right,6)+'</div></div>';
   h+='<div class="card"><h2>✍️ Editorial &amp; Opinion</h2><div class="row3">'+slots('Opinion','le',L.editorial,6)+'</div></div>';
   var rn=['The Americas','Europe','Asia-Pacific','Middle East','Africa'],rg=L.regions||{};
-  h+='<div class="card"><h2>🌍 Around the World</h2><div class="row3">'+rn.map(function(r){return '<div class="fl"><label>'+r+'</label><select id="lrg-'+r.replace(/\s/g,'-')+'">'+storyOpts(rg[r]||'')+'</select></div>'}).join('')+'</div></div>';
+  h+='<div class="card"><h2>🌍 Around the World</h2><div class="row3">'+rn.map(function(r){return '<div class="fl"><label>'+r+'</label><select data-slot id="lrg-'+r.replace(/\s/g,'-')+'">'+storyOpts(rg[r]||'')+'</select></div>'}).join('')+'</div></div>';
   h+='<div class="card"><h2>📰 In This Issue</h2><div class="row3">'+slots('Featured','lf',L.featured,10)+'</div></div>';
   h+='<div class="card"><h2>📋 Sidebar</h2><div class="row2">'+slots('Utah Lens','lu',L.sidebar_utah,4)+'</div><div class="row3" style="margin-top:4px">'+slots('Data Brief','ld',L.sidebar_data,4)+'</div></div>';
   h+='<div class="toolbar"><button class="bt bp" onclick="saveHome()">💾 Save homepage</button></div>';
-  $('view').innerHTML=h;renderSections();
+  $('view').innerHTML=h;renderSections();refreshHomepageStories();
 }
 function secInit(L){var o=(L.section_order&&L.section_order.length)?L.section_order.slice():SEC_IDS.slice();SEC_IDS.forEach(function(id){if(o.indexOf(id)<0)o.push(id)});o=o.filter(function(id){return SEC_IDS.indexOf(id)>=0});secOrder=o;secHidden=(L.hidden_sections||[]).slice();secLabels=Object.assign({},L.section_labels||{})}
 function secCapture(){secOrder.forEach(function(id){var v=$('sec_vis_'+id);if(v){secHidden=secHidden.filter(function(x){return x!==id});if(!v.checked)secHidden.push(id)}var l=$('sec_lbl_'+id);if(l)secLabels[id]=l.value})}
