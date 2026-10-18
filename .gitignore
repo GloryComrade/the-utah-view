@@ -63,3 +63,9 @@ app.*.map.json
 **/backend/**/.dev.vars
 # OS / editor cruft
 .DS_Store
+
+# --- Android release signing (NEVER commit; this repo is public) ---
+**/key.properties
+**/*.jks
+**/*.keystore
+upload-keystore.jks
