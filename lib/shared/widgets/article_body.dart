@@ -74,12 +74,17 @@ class ArticleBody extends StatelessWidget {
           'margin': '1.6em 0 0.55em 0',
           'color': ink,
         },
+        // Pull quote: big Newsreader italic set off by a terracotta rule, so
+        // it breaks the column the way a magazine pull quote does.
         'blockquote' => {
-          'border-left': '3px solid $accent',
-          'padding': '0.1em 0 0.1em 1em',
-          'margin': '1.4em 0',
+          'font-family': AppFonts.headline,
+          'font-weight': '500',
           'font-style': 'italic',
-          'font-size': '1.08em',
+          'font-size': '1.55em',
+          'line-height': '1.28',
+          'border-left': '3px solid $accent',
+          'padding': '0.1em 0 0.1em 0.7em',
+          'margin': '1.7em 0',
           'color': ink,
         },
         'a' => {'color': accent, 'text-decoration': 'underline'},
