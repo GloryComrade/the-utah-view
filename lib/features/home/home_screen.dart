@@ -171,6 +171,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           onOpen: _open,
           imageUrl: feed.leadImageUrl,
           caption: feed.leadImageCaption,
+          credit: feed.leadImageCredit,
           textPadding: EdgeInsets.symmetric(horizontal: gutter),
         ),
       for (final story in feed.topStories)
@@ -330,6 +331,7 @@ class _TabletFrontPage extends StatelessWidget {
             onOpen: onOpen,
             imageUrl: feed.leadImageUrl,
             caption: feed.leadImageCaption,
+            credit: feed.leadImageCredit,
             headlineStyle: news.headlineXL.copyWith(fontSize: 38),
           ),
         if (feed.topStories.isNotEmpty) ...[

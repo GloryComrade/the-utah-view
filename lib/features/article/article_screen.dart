@@ -12,6 +12,7 @@ import '../../core/theme/theme.dart';
 import '../../shared/widgets/article_body.dart';
 import '../../shared/widgets/brand.dart';
 import '../../shared/widgets/headline_hero.dart';
+import '../../shared/widgets/image_caption.dart';
 import '../../shared/widgets/labels.dart';
 import '../../shared/widgets/rules.dart';
 import '../../shared/widgets/state_views.dart';
@@ -66,7 +67,17 @@ class _ArticleScreenState extends ConsumerState<ArticleScreen> {
         ref.watch(storyIndexProvider.select((index) => index?[id])) ??
         detail.value?.toStory();
     final layout = ref.watch(layoutProvider).value;
-    final heroImage = layout?.heroLead == id ? layout?.heroImageUrl : null;
+    // Prefer the story's own lead image; fall back to the homepage hero only
+    // when this story is the configured lead.
+    final detailValue = detail.value;
+    final heroImage = detailValue != null && detailValue.imageUrl.isNotEmpty
+        ? detailValue.imageUrlOrNull
+        : (layout?.heroLead == id ? layout?.heroImageUrl : null);
+    final heroCaption =
+        detailValue != null && detailValue.imageCaption.isNotEmpty
+        ? detailValue.imageCaption
+        : (layout?.heroLead == id ? (layout?.heroCenterCaption ?? '') : '');
+    final heroCredit = detailValue?.imageCredit ?? '';
     final scale = ref.watch(settingsProvider.select((s) => s.readingScale));
     final canPop = GoRouter.of(context).canPop();
     final gutter = context.gutter;
@@ -198,18 +209,17 @@ class _ArticleScreenState extends ConsumerState<ArticleScreen> {
                         tag: storyImageHeroTag(id),
                         child: StoryImage(
                           url: heroImage,
-                          semanticLabel:
-                              layout?.heroCenterCaption.isNotEmpty == true
-                              ? layout!.heroCenterCaption
+                          semanticLabel: heroCaption.isNotEmpty
+                              ? heroCaption
                               : null,
                         ),
                       ),
-                      if (layout?.heroCenterCaption.isNotEmpty == true)
+                      if (heroCaption.isNotEmpty || heroCredit.isNotEmpty)
                         Padding(
-                          padding: EdgeInsets.fromLTRB(gutter, 6, gutter, 0),
-                          child: Text(
-                            layout!.heroCenterCaption,
-                            style: context.news.meta.copyWith(fontSize: 11.5),
+                          padding: EdgeInsets.fromLTRB(gutter, 8, gutter, 0),
+                          child: ImageCaption(
+                            caption: heroCaption,
+                            credit: heroCredit,
                           ),
                         ),
                     ],

@@ -214,9 +214,9 @@ async function maybePostInstagram(env, storyId, data) {
     if (seen) return;                                      // already posted
 
     let image = '';
+    if (data && data.image_url) image = String(data.image_url);   // the story's lead image
     const body = (data && data.body) ? String(data.body) : '';
-    const m = body.match(/<img[^>]+src=["']([^"']+)["']/i);
-    if (m) image = m[1];
+    if (!image) { const m = body.match(/<img[^>]+src=["']([^"']+)["']/i); if (m) image = m[1]; }
     if (!image && env.IG_FALLBACK_IMAGE) image = env.IG_FALLBACK_IMAGE;
     if (!image) { console.log('IG: no image for story ' + storyId + ' — skipped'); return; }
     if (image.startsWith('/')) image = (env.R2_PUBLIC_URL || '') + image;
@@ -279,7 +279,7 @@ export default {
     // GET /api/stories — list published stories (public)
     if (path === '/api/stories' && method === 'GET') {
       const region = url.searchParams.get('region');
-      let query = 'SELECT id, title, author, region, summary, read_time, date FROM stories WHERE status = ?';
+      let query = 'SELECT id, title, author, region, summary, read_time, date, image_url, image_caption, image_credit FROM stories WHERE status = ?';
       const params = ['published'];
       if (region) { query += ' AND region = ?'; params.push(region); }
       query += ' ORDER BY date DESC';
@@ -497,8 +497,8 @@ export default {
       }
       const id = data.id || data.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-+$/, '').substring(0, 60);
       await env.DB.prepare(
-        'INSERT OR REPLACE INTO stories (id, title, author, region, status, summary, body, read_time, date, created_by, updated_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
-      ).bind(id, data.title, data.author, data.region || 'Global', data.status || 'draft', data.summary || '', data.body || '', data.read_time || '', data.date || new Date().toISOString().split('T')[0], user.email, user.email).run();
+        'INSERT OR REPLACE INTO stories (id, title, author, region, status, summary, body, read_time, date, image_url, image_caption, image_credit, created_by, updated_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+      ).bind(id, data.title, data.author, data.region || 'Global', data.status || 'draft', data.summary || '', data.body || '', data.read_time || '', data.date || new Date().toISOString().split('T')[0], data.image_url || '', data.image_caption || '', data.image_credit || '', user.email, user.email).run();
       await auditLog(env, user.email, 'create', 'story', id, JSON.stringify({ title: data.title }), ip);
       if ((data.status || 'draft') === 'published') {
         ctx.waitUntil(maybeNotifyNewStory(env, id, data));
@@ -514,8 +514,8 @@ export default {
       const id = path.split('/')[4];
       const data = await request.json();
       await env.DB.prepare(
-        'UPDATE stories SET title=?, author=?, region=?, status=?, summary=?, body=?, read_time=?, date=?, updated_at=datetime(\'now\'), updated_by=? WHERE id=?'
-      ).bind(data.title, data.author, data.region, data.status, data.summary, data.body, data.read_time, data.date, user.email, id).run();
+        'UPDATE stories SET title=?, author=?, region=?, status=?, summary=?, body=?, read_time=?, date=?, image_url=?, image_caption=?, image_credit=?, updated_at=datetime(\'now\'), updated_by=? WHERE id=?'
+      ).bind(data.title, data.author, data.region, data.status, data.summary, data.body, data.read_time, data.date, data.image_url || '', data.image_caption || '', data.image_credit || '', user.email, id).run();
       await auditLog(env, user.email, 'update', 'story', id, JSON.stringify({ title: data.title, status: data.status }), ip);
       if (data.status === 'published') {
         ctx.waitUntil(maybeNotifyNewStory(env, id, data));
@@ -743,7 +743,7 @@ export default {
     if (!subscribers.results.length) return;
 
     const stories = await env.DB.prepare(
-      'SELECT id, title, author, region, summary, read_time FROM stories WHERE status = ? ORDER BY date DESC LIMIT 8'
+      'SELECT id, title, author, region, summary, read_time, date, image_url, image_caption, image_credit FROM stories WHERE status = ? ORDER BY date DESC LIMIT 8'
     ).bind('published').all();
 
     const siteUrl = env.SITE_URL || 'https://the-utah-view.pages.dev';

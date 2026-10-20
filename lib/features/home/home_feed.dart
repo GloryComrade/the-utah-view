@@ -14,6 +14,7 @@ class HomeFeed {
     this.lead,
     this.leadImageUrl,
     this.leadImageCaption = '',
+    this.leadImageCredit = '',
     this.topStories = const [],
     this.fromThisIssue = const [],
     this.editorial = const [],
@@ -55,10 +56,15 @@ class HomeFeed {
     return HomeFeed(
       ticker: layout.ticker,
       lead: lead,
-      // The hero photo belongs to the configured lead; don't attach it to a
-      // promoted stand-in.
-      leadImageUrl: configuredLead == null ? null : layout.heroImageUrl,
-      leadImageCaption: layout.heroCenterCaption,
+      // Prefer the lead story's own photo. Fall back to the homepage hero
+      // image only for the configured lead (never a promoted stand-in).
+      leadImageUrl: lead != null && lead.imageUrl.isNotEmpty
+          ? lead.imageUrlOrNull
+          : (configuredLead == null ? null : layout.heroImageUrl),
+      leadImageCaption: lead != null && lead.imageCaption.isNotEmpty
+          ? lead.imageCaption
+          : layout.heroCenterCaption,
+      leadImageCredit: lead?.imageCredit ?? '',
       topStories: resolve([layout.heroSecondary, layout.heroCenter])
           .where((s) => s.id != lead?.id)
           .toList(),
@@ -81,6 +87,7 @@ class HomeFeed {
   final Story? lead;
   final String? leadImageUrl;
   final String leadImageCaption;
+  final String leadImageCredit;
 
   /// Secondary and center stories.
   final List<Story> topStories;

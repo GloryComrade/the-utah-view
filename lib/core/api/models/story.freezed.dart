@@ -16,7 +16,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$Story {
 
- String get id; String get title; String get author; String get region; String get summary; String get readTime; String get date;
+ String get id; String get title; String get author; String get region; String get summary; String get readTime; String get date; String get imageUrl; String get imageCaption; String get imageCredit;
 /// Create a copy of Story
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -30,20 +30,20 @@ $StoryCopyWith<Story> get copyWith => _$StoryCopyWithImpl<Story>(this as Story, 
 @override
 bool operator ==(Object other) {
   final _this = this as Story;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Story&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.title, _this.title) || other.title == _this.title)&&(identical(other.author, _this.author) || other.author == _this.author)&&(identical(other.region, _this.region) || other.region == _this.region)&&(identical(other.summary, _this.summary) || other.summary == _this.summary)&&(identical(other.readTime, _this.readTime) || other.readTime == _this.readTime)&&(identical(other.date, _this.date) || other.date == _this.date));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Story&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.title, _this.title) || other.title == _this.title)&&(identical(other.author, _this.author) || other.author == _this.author)&&(identical(other.region, _this.region) || other.region == _this.region)&&(identical(other.summary, _this.summary) || other.summary == _this.summary)&&(identical(other.readTime, _this.readTime) || other.readTime == _this.readTime)&&(identical(other.date, _this.date) || other.date == _this.date)&&(identical(other.imageUrl, _this.imageUrl) || other.imageUrl == _this.imageUrl)&&(identical(other.imageCaption, _this.imageCaption) || other.imageCaption == _this.imageCaption)&&(identical(other.imageCredit, _this.imageCredit) || other.imageCredit == _this.imageCredit));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
   final _this = this as Story;
-  return Object.hash(runtimeType,_this.id,_this.title,_this.author,_this.region,_this.summary,_this.readTime,_this.date);
+  return Object.hash(runtimeType,_this.id,_this.title,_this.author,_this.region,_this.summary,_this.readTime,_this.date,_this.imageUrl,_this.imageCaption,_this.imageCredit);
 }
 
 @override
 String toString() {
   final _this = this as Story;
-  return 'Story(id: ${_this.id}, title: ${_this.title}, author: ${_this.author}, region: ${_this.region}, summary: ${_this.summary}, readTime: ${_this.readTime}, date: ${_this.date})';
+  return 'Story(id: ${_this.id}, title: ${_this.title}, author: ${_this.author}, region: ${_this.region}, summary: ${_this.summary}, readTime: ${_this.readTime}, date: ${_this.date}, imageUrl: ${_this.imageUrl}, imageCaption: ${_this.imageCaption}, imageCredit: ${_this.imageCredit})';
 }
 
 
@@ -54,7 +54,7 @@ abstract mixin class $StoryCopyWith<$Res>  {
   factory $StoryCopyWith(Story value, $Res Function(Story) _then) = _$StoryCopyWithImpl;
 @useResult
 $Res call({
- String id, String title, String author, String region, String summary, String readTime, String date
+ String id, String title, String author, String region, String summary, String readTime, String date, String imageUrl, String imageCaption, String imageCredit
 });
 
 
@@ -71,7 +71,7 @@ class _$StoryCopyWithImpl<$Res>
 
 /// Create a copy of Story
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? title = null,Object? author = null,Object? region = null,Object? summary = null,Object? readTime = null,Object? date = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? title = null,Object? author = null,Object? region = null,Object? summary = null,Object? readTime = null,Object? date = null,Object? imageUrl = null,Object? imageCaption = null,Object? imageCredit = null,}) {
   return _then(Story(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,title: null == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
@@ -80,6 +80,9 @@ as String,region: null == region ? _self.region : region // ignore: cast_nullabl
 as String,summary: null == summary ? _self.summary : summary // ignore: cast_nullable_to_non_nullable
 as String,readTime: null == readTime ? _self.readTime : readTime // ignore: cast_nullable_to_non_nullable
 as String,date: null == date ? _self.date : date // ignore: cast_nullable_to_non_nullable
+as String,imageUrl: null == imageUrl ? _self.imageUrl : imageUrl // ignore: cast_nullable_to_non_nullable
+as String,imageCaption: null == imageCaption ? _self.imageCaption : imageCaption // ignore: cast_nullable_to_non_nullable
+as String,imageCredit: null == imageCredit ? _self.imageCredit : imageCredit // ignore: cast_nullable_to_non_nullable
 as String,
   ));
 }
@@ -165,10 +168,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String title,  String author,  String region,  String summary,  String readTime,  String date)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String title,  String author,  String region,  String summary,  String readTime,  String date,  String imageUrl,  String imageCaption,  String imageCredit)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Story() when $default != null:
-return $default(_that.id,_that.title,_that.author,_that.region,_that.summary,_that.readTime,_that.date);case _:
+return $default(_that.id,_that.title,_that.author,_that.region,_that.summary,_that.readTime,_that.date,_that.imageUrl,_that.imageCaption,_that.imageCredit);case _:
   return orElse();
 
 }
@@ -186,10 +189,10 @@ return $default(_that.id,_that.title,_that.author,_that.region,_that.summary,_th
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String title,  String author,  String region,  String summary,  String readTime,  String date)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String title,  String author,  String region,  String summary,  String readTime,  String date,  String imageUrl,  String imageCaption,  String imageCredit)  $default,) {final _that = this;
 switch (_that) {
 case _Story():
-return $default(_that.id,_that.title,_that.author,_that.region,_that.summary,_that.readTime,_that.date);case _:
+return $default(_that.id,_that.title,_that.author,_that.region,_that.summary,_that.readTime,_that.date,_that.imageUrl,_that.imageCaption,_that.imageCredit);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -206,10 +209,10 @@ return $default(_that.id,_that.title,_that.author,_that.region,_that.summary,_th
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String title,  String author,  String region,  String summary,  String readTime,  String date)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String title,  String author,  String region,  String summary,  String readTime,  String date,  String imageUrl,  String imageCaption,  String imageCredit)?  $default,) {final _that = this;
 switch (_that) {
 case _Story() when $default != null:
-return $default(_that.id,_that.title,_that.author,_that.region,_that.summary,_that.readTime,_that.date);case _:
+return $default(_that.id,_that.title,_that.author,_that.region,_that.summary,_that.readTime,_that.date,_that.imageUrl,_that.imageCaption,_that.imageCredit);case _:
   return null;
 
 }
@@ -221,7 +224,7 @@ return $default(_that.id,_that.title,_that.author,_that.region,_that.summary,_th
 
 @JsonSerializable(converters: lenientJsonConverters)
 class _Story extends Story {
-  const _Story({this.id = '', this.title = '', this.author = '', this.region = '', this.summary = '', this.readTime = '', this.date = ''}): super._();
+  const _Story({this.id = '', this.title = '', this.author = '', this.region = '', this.summary = '', this.readTime = '', this.date = '', this.imageUrl = '', this.imageCaption = '', this.imageCredit = ''}): super._();
   factory _Story.fromJson(Map<String, dynamic> json) => _$StoryFromJson(json);
 
 @override@JsonKey() final  String id;
@@ -231,6 +234,9 @@ class _Story extends Story {
 @override@JsonKey() final  String summary;
 @override@JsonKey() final  String readTime;
 @override@JsonKey() final  String date;
+@override@JsonKey() final  String imageUrl;
+@override@JsonKey() final  String imageCaption;
+@override@JsonKey() final  String imageCredit;
 
 /// Create a copy of Story
 /// with the given fields replaced by the non-null parameter values.
@@ -245,18 +251,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _Story&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.author, author) || other.author == author)&&(identical(other.region, region) || other.region == region)&&(identical(other.summary, summary) || other.summary == summary)&&(identical(other.readTime, readTime) || other.readTime == readTime)&&(identical(other.date, date) || other.date == date));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _Story&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.author, author) || other.author == author)&&(identical(other.region, region) || other.region == region)&&(identical(other.summary, summary) || other.summary == summary)&&(identical(other.readTime, readTime) || other.readTime == readTime)&&(identical(other.date, date) || other.date == date)&&(identical(other.imageUrl, imageUrl) || other.imageUrl == imageUrl)&&(identical(other.imageCaption, imageCaption) || other.imageCaption == imageCaption)&&(identical(other.imageCredit, imageCredit) || other.imageCredit == imageCredit));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
-    return Object.hash(runtimeType,id,title,author,region,summary,readTime,date);
+    return Object.hash(runtimeType,id,title,author,region,summary,readTime,date,imageUrl,imageCaption,imageCredit);
 }
 
 @override
 String toString() {
-    return 'Story(id: $id, title: $title, author: $author, region: $region, summary: $summary, readTime: $readTime, date: $date)';
+    return 'Story(id: $id, title: $title, author: $author, region: $region, summary: $summary, readTime: $readTime, date: $date, imageUrl: $imageUrl, imageCaption: $imageCaption, imageCredit: $imageCredit)';
 }
 
 
@@ -267,7 +273,7 @@ abstract mixin class _$StoryCopyWith<$Res> implements $StoryCopyWith<$Res> {
   factory _$StoryCopyWith(_Story value, $Res Function(_Story) _then) = __$StoryCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String title, String author, String region, String summary, String readTime, String date
+ String id, String title, String author, String region, String summary, String readTime, String date, String imageUrl, String imageCaption, String imageCredit
 });
 
 
@@ -284,7 +290,7 @@ class __$StoryCopyWithImpl<$Res>
 
 /// Create a copy of Story
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? title = null,Object? author = null,Object? region = null,Object? summary = null,Object? readTime = null,Object? date = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? title = null,Object? author = null,Object? region = null,Object? summary = null,Object? readTime = null,Object? date = null,Object? imageUrl = null,Object? imageCaption = null,Object? imageCredit = null,}) {
   return _then(_Story(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,title: null == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
@@ -293,6 +299,9 @@ as String,region: null == region ? _self.region : region // ignore: cast_nullabl
 as String,summary: null == summary ? _self.summary : summary // ignore: cast_nullable_to_non_nullable
 as String,readTime: null == readTime ? _self.readTime : readTime // ignore: cast_nullable_to_non_nullable
 as String,date: null == date ? _self.date : date // ignore: cast_nullable_to_non_nullable
+as String,imageUrl: null == imageUrl ? _self.imageUrl : imageUrl // ignore: cast_nullable_to_non_nullable
+as String,imageCaption: null == imageCaption ? _self.imageCaption : imageCaption // ignore: cast_nullable_to_non_nullable
+as String,imageCredit: null == imageCredit ? _self.imageCredit : imageCredit // ignore: cast_nullable_to_non_nullable
 as String,
   ));
 }
@@ -304,7 +313,7 @@ as String,
 /// @nodoc
 mixin _$StoryDetail {
 
- String get id; String get title; String get author; String get region; String get status; String get summary; String get body; String get readTime; String get date; String get createdAt; String get updatedAt;
+ String get id; String get title; String get author; String get region; String get status; String get summary; String get body; String get readTime; String get date; String get imageUrl; String get imageCaption; String get imageCredit; String get createdAt; String get updatedAt;
 /// Create a copy of StoryDetail
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -318,20 +327,20 @@ $StoryDetailCopyWith<StoryDetail> get copyWith => _$StoryDetailCopyWithImpl<Stor
 @override
 bool operator ==(Object other) {
   final _this = this as StoryDetail;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is StoryDetail&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.title, _this.title) || other.title == _this.title)&&(identical(other.author, _this.author) || other.author == _this.author)&&(identical(other.region, _this.region) || other.region == _this.region)&&(identical(other.status, _this.status) || other.status == _this.status)&&(identical(other.summary, _this.summary) || other.summary == _this.summary)&&(identical(other.body, _this.body) || other.body == _this.body)&&(identical(other.readTime, _this.readTime) || other.readTime == _this.readTime)&&(identical(other.date, _this.date) || other.date == _this.date)&&(identical(other.createdAt, _this.createdAt) || other.createdAt == _this.createdAt)&&(identical(other.updatedAt, _this.updatedAt) || other.updatedAt == _this.updatedAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is StoryDetail&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.title, _this.title) || other.title == _this.title)&&(identical(other.author, _this.author) || other.author == _this.author)&&(identical(other.region, _this.region) || other.region == _this.region)&&(identical(other.status, _this.status) || other.status == _this.status)&&(identical(other.summary, _this.summary) || other.summary == _this.summary)&&(identical(other.body, _this.body) || other.body == _this.body)&&(identical(other.readTime, _this.readTime) || other.readTime == _this.readTime)&&(identical(other.date, _this.date) || other.date == _this.date)&&(identical(other.imageUrl, _this.imageUrl) || other.imageUrl == _this.imageUrl)&&(identical(other.imageCaption, _this.imageCaption) || other.imageCaption == _this.imageCaption)&&(identical(other.imageCredit, _this.imageCredit) || other.imageCredit == _this.imageCredit)&&(identical(other.createdAt, _this.createdAt) || other.createdAt == _this.createdAt)&&(identical(other.updatedAt, _this.updatedAt) || other.updatedAt == _this.updatedAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
   final _this = this as StoryDetail;
-  return Object.hash(runtimeType,_this.id,_this.title,_this.author,_this.region,_this.status,_this.summary,_this.body,_this.readTime,_this.date,_this.createdAt,_this.updatedAt);
+  return Object.hash(runtimeType,_this.id,_this.title,_this.author,_this.region,_this.status,_this.summary,_this.body,_this.readTime,_this.date,_this.imageUrl,_this.imageCaption,_this.imageCredit,_this.createdAt,_this.updatedAt);
 }
 
 @override
 String toString() {
   final _this = this as StoryDetail;
-  return 'StoryDetail(id: ${_this.id}, title: ${_this.title}, author: ${_this.author}, region: ${_this.region}, status: ${_this.status}, summary: ${_this.summary}, body: ${_this.body}, readTime: ${_this.readTime}, date: ${_this.date}, createdAt: ${_this.createdAt}, updatedAt: ${_this.updatedAt})';
+  return 'StoryDetail(id: ${_this.id}, title: ${_this.title}, author: ${_this.author}, region: ${_this.region}, status: ${_this.status}, summary: ${_this.summary}, body: ${_this.body}, readTime: ${_this.readTime}, date: ${_this.date}, imageUrl: ${_this.imageUrl}, imageCaption: ${_this.imageCaption}, imageCredit: ${_this.imageCredit}, createdAt: ${_this.createdAt}, updatedAt: ${_this.updatedAt})';
 }
 
 
@@ -342,7 +351,7 @@ abstract mixin class $StoryDetailCopyWith<$Res>  {
   factory $StoryDetailCopyWith(StoryDetail value, $Res Function(StoryDetail) _then) = _$StoryDetailCopyWithImpl;
 @useResult
 $Res call({
- String id, String title, String author, String region, String status, String summary, String body, String readTime, String date, String createdAt, String updatedAt
+ String id, String title, String author, String region, String status, String summary, String body, String readTime, String date, String imageUrl, String imageCaption, String imageCredit, String createdAt, String updatedAt
 });
 
 
@@ -359,7 +368,7 @@ class _$StoryDetailCopyWithImpl<$Res>
 
 /// Create a copy of StoryDetail
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? title = null,Object? author = null,Object? region = null,Object? status = null,Object? summary = null,Object? body = null,Object? readTime = null,Object? date = null,Object? createdAt = null,Object? updatedAt = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? title = null,Object? author = null,Object? region = null,Object? status = null,Object? summary = null,Object? body = null,Object? readTime = null,Object? date = null,Object? imageUrl = null,Object? imageCaption = null,Object? imageCredit = null,Object? createdAt = null,Object? updatedAt = null,}) {
   return _then(StoryDetail(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,title: null == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
@@ -370,6 +379,9 @@ as String,summary: null == summary ? _self.summary : summary // ignore: cast_nul
 as String,body: null == body ? _self.body : body // ignore: cast_nullable_to_non_nullable
 as String,readTime: null == readTime ? _self.readTime : readTime // ignore: cast_nullable_to_non_nullable
 as String,date: null == date ? _self.date : date // ignore: cast_nullable_to_non_nullable
+as String,imageUrl: null == imageUrl ? _self.imageUrl : imageUrl // ignore: cast_nullable_to_non_nullable
+as String,imageCaption: null == imageCaption ? _self.imageCaption : imageCaption // ignore: cast_nullable_to_non_nullable
+as String,imageCredit: null == imageCredit ? _self.imageCredit : imageCredit // ignore: cast_nullable_to_non_nullable
 as String,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as String,updatedAt: null == updatedAt ? _self.updatedAt : updatedAt // ignore: cast_nullable_to_non_nullable
 as String,
@@ -457,10 +469,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String title,  String author,  String region,  String status,  String summary,  String body,  String readTime,  String date,  String createdAt,  String updatedAt)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String title,  String author,  String region,  String status,  String summary,  String body,  String readTime,  String date,  String imageUrl,  String imageCaption,  String imageCredit,  String createdAt,  String updatedAt)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _StoryDetail() when $default != null:
-return $default(_that.id,_that.title,_that.author,_that.region,_that.status,_that.summary,_that.body,_that.readTime,_that.date,_that.createdAt,_that.updatedAt);case _:
+return $default(_that.id,_that.title,_that.author,_that.region,_that.status,_that.summary,_that.body,_that.readTime,_that.date,_that.imageUrl,_that.imageCaption,_that.imageCredit,_that.createdAt,_that.updatedAt);case _:
   return orElse();
 
 }
@@ -478,10 +490,10 @@ return $default(_that.id,_that.title,_that.author,_that.region,_that.status,_tha
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String title,  String author,  String region,  String status,  String summary,  String body,  String readTime,  String date,  String createdAt,  String updatedAt)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String title,  String author,  String region,  String status,  String summary,  String body,  String readTime,  String date,  String imageUrl,  String imageCaption,  String imageCredit,  String createdAt,  String updatedAt)  $default,) {final _that = this;
 switch (_that) {
 case _StoryDetail():
-return $default(_that.id,_that.title,_that.author,_that.region,_that.status,_that.summary,_that.body,_that.readTime,_that.date,_that.createdAt,_that.updatedAt);case _:
+return $default(_that.id,_that.title,_that.author,_that.region,_that.status,_that.summary,_that.body,_that.readTime,_that.date,_that.imageUrl,_that.imageCaption,_that.imageCredit,_that.createdAt,_that.updatedAt);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -498,10 +510,10 @@ return $default(_that.id,_that.title,_that.author,_that.region,_that.status,_tha
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String title,  String author,  String region,  String status,  String summary,  String body,  String readTime,  String date,  String createdAt,  String updatedAt)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String title,  String author,  String region,  String status,  String summary,  String body,  String readTime,  String date,  String imageUrl,  String imageCaption,  String imageCredit,  String createdAt,  String updatedAt)?  $default,) {final _that = this;
 switch (_that) {
 case _StoryDetail() when $default != null:
-return $default(_that.id,_that.title,_that.author,_that.region,_that.status,_that.summary,_that.body,_that.readTime,_that.date,_that.createdAt,_that.updatedAt);case _:
+return $default(_that.id,_that.title,_that.author,_that.region,_that.status,_that.summary,_that.body,_that.readTime,_that.date,_that.imageUrl,_that.imageCaption,_that.imageCredit,_that.createdAt,_that.updatedAt);case _:
   return null;
 
 }
@@ -513,7 +525,7 @@ return $default(_that.id,_that.title,_that.author,_that.region,_that.status,_tha
 
 @JsonSerializable(converters: lenientJsonConverters)
 class _StoryDetail extends StoryDetail {
-  const _StoryDetail({this.id = '', this.title = '', this.author = '', this.region = '', this.status = '', this.summary = '', this.body = '', this.readTime = '', this.date = '', this.createdAt = '', this.updatedAt = ''}): super._();
+  const _StoryDetail({this.id = '', this.title = '', this.author = '', this.region = '', this.status = '', this.summary = '', this.body = '', this.readTime = '', this.date = '', this.imageUrl = '', this.imageCaption = '', this.imageCredit = '', this.createdAt = '', this.updatedAt = ''}): super._();
   factory _StoryDetail.fromJson(Map<String, dynamic> json) => _$StoryDetailFromJson(json);
 
 @override@JsonKey() final  String id;
@@ -525,6 +537,9 @@ class _StoryDetail extends StoryDetail {
 @override@JsonKey() final  String body;
 @override@JsonKey() final  String readTime;
 @override@JsonKey() final  String date;
+@override@JsonKey() final  String imageUrl;
+@override@JsonKey() final  String imageCaption;
+@override@JsonKey() final  String imageCredit;
 @override@JsonKey() final  String createdAt;
 @override@JsonKey() final  String updatedAt;
 
@@ -541,18 +556,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _StoryDetail&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.author, author) || other.author == author)&&(identical(other.region, region) || other.region == region)&&(identical(other.status, status) || other.status == status)&&(identical(other.summary, summary) || other.summary == summary)&&(identical(other.body, body) || other.body == body)&&(identical(other.readTime, readTime) || other.readTime == readTime)&&(identical(other.date, date) || other.date == date)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _StoryDetail&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.author, author) || other.author == author)&&(identical(other.region, region) || other.region == region)&&(identical(other.status, status) || other.status == status)&&(identical(other.summary, summary) || other.summary == summary)&&(identical(other.body, body) || other.body == body)&&(identical(other.readTime, readTime) || other.readTime == readTime)&&(identical(other.date, date) || other.date == date)&&(identical(other.imageUrl, imageUrl) || other.imageUrl == imageUrl)&&(identical(other.imageCaption, imageCaption) || other.imageCaption == imageCaption)&&(identical(other.imageCredit, imageCredit) || other.imageCredit == imageCredit)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
-    return Object.hash(runtimeType,id,title,author,region,status,summary,body,readTime,date,createdAt,updatedAt);
+    return Object.hash(runtimeType,id,title,author,region,status,summary,body,readTime,date,imageUrl,imageCaption,imageCredit,createdAt,updatedAt);
 }
 
 @override
 String toString() {
-    return 'StoryDetail(id: $id, title: $title, author: $author, region: $region, status: $status, summary: $summary, body: $body, readTime: $readTime, date: $date, createdAt: $createdAt, updatedAt: $updatedAt)';
+    return 'StoryDetail(id: $id, title: $title, author: $author, region: $region, status: $status, summary: $summary, body: $body, readTime: $readTime, date: $date, imageUrl: $imageUrl, imageCaption: $imageCaption, imageCredit: $imageCredit, createdAt: $createdAt, updatedAt: $updatedAt)';
 }
 
 
@@ -563,7 +578,7 @@ abstract mixin class _$StoryDetailCopyWith<$Res> implements $StoryDetailCopyWith
   factory _$StoryDetailCopyWith(_StoryDetail value, $Res Function(_StoryDetail) _then) = __$StoryDetailCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String title, String author, String region, String status, String summary, String body, String readTime, String date, String createdAt, String updatedAt
+ String id, String title, String author, String region, String status, String summary, String body, String readTime, String date, String imageUrl, String imageCaption, String imageCredit, String createdAt, String updatedAt
 });
 
 
@@ -580,7 +595,7 @@ class __$StoryDetailCopyWithImpl<$Res>
 
 /// Create a copy of StoryDetail
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? title = null,Object? author = null,Object? region = null,Object? status = null,Object? summary = null,Object? body = null,Object? readTime = null,Object? date = null,Object? createdAt = null,Object? updatedAt = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? title = null,Object? author = null,Object? region = null,Object? status = null,Object? summary = null,Object? body = null,Object? readTime = null,Object? date = null,Object? imageUrl = null,Object? imageCaption = null,Object? imageCredit = null,Object? createdAt = null,Object? updatedAt = null,}) {
   return _then(_StoryDetail(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,title: null == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
@@ -591,6 +606,9 @@ as String,summary: null == summary ? _self.summary : summary // ignore: cast_nul
 as String,body: null == body ? _self.body : body // ignore: cast_nullable_to_non_nullable
 as String,readTime: null == readTime ? _self.readTime : readTime // ignore: cast_nullable_to_non_nullable
 as String,date: null == date ? _self.date : date // ignore: cast_nullable_to_non_nullable
+as String,imageUrl: null == imageUrl ? _self.imageUrl : imageUrl // ignore: cast_nullable_to_non_nullable
+as String,imageCaption: null == imageCaption ? _self.imageCaption : imageCaption // ignore: cast_nullable_to_non_nullable
+as String,imageCredit: null == imageCredit ? _self.imageCredit : imageCredit // ignore: cast_nullable_to_non_nullable
 as String,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as String,updatedAt: null == updatedAt ? _self.updatedAt : updatedAt // ignore: cast_nullable_to_non_nullable
 as String,

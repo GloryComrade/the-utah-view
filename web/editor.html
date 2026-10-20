@@ -414,6 +414,9 @@ function vStoryEdit(){
     '<div class="fl"><label>Date</label><input id="fd" type="date" value="'+esc(x.date||today())+'"></div>'+
     '<div class="fl"><label>Read time</label><input id="frt" value="'+esc(x.read_time||x.readTime||'')+'" placeholder="e.g. 6 min"></div></div>'+
     '<div class="fl"><label>Summary / dek</label><input id="fsum" value="'+esc(x.summary)+'" oninput="sPv()" placeholder="One-sentence summary"></div>'+
+    '<div class="fl"><label>Lead image</label><input id="fimg" value="'+esc(x.image_url||'')+'" placeholder="Image URL (or upload)" oninput="sPv()"><button class="bt bs bsm" style="margin-top:8px" onclick="uploadImage(\'fimg\')">&#8679; Upload image</button></div>'+
+    '<div class="row2"><div class="fl"><label>Image caption</label><input id="fcap" value="'+esc(x.image_caption||'')+'" placeholder="What the photo shows" oninput="sPv()"></div>'+
+    '<div class="fl"><label>Image credit</label><input id="fcred" value="'+esc(x.image_credit||'')+'" placeholder="Photo: Name / Source" oninput="sPv()"></div></div>'+
     '<div class="fl"><label>Body</label>'+
       '<div class="rtb">'+
         '<button class="rb" onclick="rc(\'bold\')"><b>B</b></button><button class="rb" onclick="rc(\'italic\')"><i>I</i></button>'+
@@ -439,13 +442,14 @@ function iImg(){
     inp.click();
   }else{var u=prompt('Image URL:');if(u){$('fbody').focus();document.execCommand('insertHTML',false,'<img src="'+u+'">');sPv();}}
 }
-function sPv(){var el=$('spv');if(!el)return;el.innerHTML='<div class="pr">'+esc($('fr')?$('fr').value:'')+'</div><div class="pt">'+(esc($('ft').value)||'Untitled')+'</div><div class="ps">'+esc($('fsum')?$('fsum').value:'')+'</div><div class="pm">By <b>'+esc($('fa')?$('fa').value:'')+'</b></div><div class="pc">'+($('fbody')?$('fbody').innerHTML:'')+'</div>'}
+function sPv(){var el=$('spv');if(!el)return;var img=$('fimg')?$('fimg').value.trim():'',cap=$('fcap')?$('fcap').value.trim():'',cred=$('fcred')?$('fcred').value.trim():'';var lead=img?'<img src="'+esc(img)+'" style="width:100%;border-radius:4px;display:block">'+((cap||cred)?'<div style="font-size:12px;color:#777;margin:6px 0 14px">'+esc(cap)+(cap&&cred?' — ':'')+esc(cred)+'</div>':'<div style="margin-bottom:14px"></div>'):'';el.innerHTML=lead+'<div class="pr">'+esc($('fr')?$('fr').value:'')+'</div><div class="pt">'+(esc($('ft').value)||'Untitled')+'</div><div class="ps">'+esc($('fsum')?$('fsum').value:'')+'</div><div class="pm">By <b>'+esc($('fa')?$('fa').value:'')+'</b></div><div class="pc">'+($('fbody')?$('fbody').innerHTML:'')+'</div>'}
 function collectStory(status){
   var t=$('ft').value.trim(),a=$('fa').value.trim();
   var id=editId||t.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').substring(0,60)||('story-'+Date.now());
   var rt=$('frt').value.trim();
   return {id:id,title:t,author:a,region:$('fr').value,status:status,summary:$('fsum').value.trim(),
-    body:$('fbody').innerHTML,read_time:rt,readTime:rt,date:$('fd').value||today()};
+    body:$('fbody').innerHTML,read_time:rt,readTime:rt,date:$('fd').value||today(),
+    image_url:$('fimg')?$('fimg').value.trim():'',image_caption:$('fcap')?$('fcap').value.trim():'',image_credit:$('fcred')?$('fcred').value.trim():''};
 }
 function saveFromForm(status){
   var t=$('ft').value.trim(),a=$('fa').value.trim();

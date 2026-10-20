@@ -4,6 +4,7 @@ import '../../core/api/models/models.dart';
 import '../../core/theme/theme.dart';
 import '../../core/utils/formatters.dart';
 import 'headline_hero.dart';
+import 'image_caption.dart';
 import 'labels.dart';
 import 'story_image.dart';
 
@@ -50,6 +51,7 @@ class LeadStoryCard extends StatelessWidget {
     required this.onOpen,
     this.imageUrl,
     this.caption,
+    this.credit,
     this.headlineStyle,
     this.textPadding = EdgeInsets.zero,
   });
@@ -59,6 +61,7 @@ class LeadStoryCard extends StatelessWidget {
   final OpenStory onOpen;
   final String? imageUrl;
   final String? caption;
+  final String? credit;
 
   /// Insets the text but not the photo, so the photo can run edge to edge.
   final EdgeInsetsGeometry textPadding;
@@ -84,12 +87,12 @@ class LeadStoryCard extends StatelessWidget {
                 semanticLabel: caption?.isNotEmpty == true ? caption : null,
               ),
             ),
-            if (caption?.isNotEmpty == true)
+            if (caption?.isNotEmpty == true || credit?.isNotEmpty == true)
               Padding(
-                padding: textPadding.add(const EdgeInsets.only(top: 6)),
-                child: Text(
-                  caption!,
-                  style: news.meta.copyWith(fontSize: 11.5),
+                padding: textPadding.add(const EdgeInsets.only(top: 8)),
+                child: ImageCaption(
+                  caption: caption ?? '',
+                  credit: credit ?? '',
                 ),
               ),
             const SizedBox(height: 16),

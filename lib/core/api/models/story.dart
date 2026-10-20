@@ -1,6 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 import '../../utils/formatters.dart';
+import '../api_config.dart';
 import 'json_converters.dart';
 
 part 'story.freezed.dart';
@@ -20,6 +21,9 @@ abstract class Story with _$Story {
     @Default('') String summary,
     @Default('') String readTime,
     @Default('') String date,
+    @Default('') String imageUrl,
+    @Default('') String imageCaption,
+    @Default('') String imageCredit,
   }) = _Story;
 
   factory Story.fromJson(Map<String, dynamic> json) => _$StoryFromJson(json);
@@ -29,6 +33,10 @@ abstract class Story with _$Story {
 
   /// `May 25, 2026`.
   String get displayDate => formatStoryDate(date);
+
+  /// Absolute lead-image URL, or null when the story has no image.
+  String? get imageUrlOrNull =>
+      imageUrl.isEmpty ? null : ApiConfig.resolveUrl(imageUrl);
 }
 
 /// A full story from `GET /api/stories/{id}`, including the HTML body.
@@ -47,6 +55,9 @@ abstract class StoryDetail with _$StoryDetail {
     @Default('') String body,
     @Default('') String readTime,
     @Default('') String date,
+    @Default('') String imageUrl,
+    @Default('') String imageCaption,
+    @Default('') String imageCredit,
     @Default('') String createdAt,
     @Default('') String updatedAt,
   }) = _StoryDetail;
@@ -63,5 +74,12 @@ abstract class StoryDetail with _$StoryDetail {
     summary: summary,
     readTime: readTime,
     date: date,
+    imageUrl: imageUrl,
+    imageCaption: imageCaption,
+    imageCredit: imageCredit,
   );
+
+  /// Absolute lead-image URL, or null when the story has no image.
+  String? get imageUrlOrNull =>
+      imageUrl.isEmpty ? null : ApiConfig.resolveUrl(imageUrl);
 }

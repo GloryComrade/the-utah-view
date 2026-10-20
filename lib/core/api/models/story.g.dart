@@ -28,6 +28,15 @@ _Story _$StoryFromJson(Map<String, dynamic> json) => _Story(
   date: json['date'] == null
       ? ''
       : const LenientStringConverter().fromJson(json['date']),
+  imageUrl: json['image_url'] == null
+      ? ''
+      : const LenientStringConverter().fromJson(json['image_url']),
+  imageCaption: json['image_caption'] == null
+      ? ''
+      : const LenientStringConverter().fromJson(json['image_caption']),
+  imageCredit: json['image_credit'] == null
+      ? ''
+      : const LenientStringConverter().fromJson(json['image_credit']),
 );
 
 Map<String, dynamic> _$StoryToJson(_Story instance) => <String, dynamic>{
@@ -38,6 +47,11 @@ Map<String, dynamic> _$StoryToJson(_Story instance) => <String, dynamic>{
   'summary': ?const LenientStringConverter().toJson(instance.summary),
   'read_time': ?const LenientStringConverter().toJson(instance.readTime),
   'date': ?const LenientStringConverter().toJson(instance.date),
+  'image_url': ?const LenientStringConverter().toJson(instance.imageUrl),
+  'image_caption': ?const LenientStringConverter().toJson(
+    instance.imageCaption,
+  ),
+  'image_credit': ?const LenientStringConverter().toJson(instance.imageCredit),
 };
 
 _StoryDetail _$StoryDetailFromJson(Map<String, dynamic> json) => _StoryDetail(
@@ -68,6 +82,15 @@ _StoryDetail _$StoryDetailFromJson(Map<String, dynamic> json) => _StoryDetail(
   date: json['date'] == null
       ? ''
       : const LenientStringConverter().fromJson(json['date']),
+  imageUrl: json['image_url'] == null
+      ? ''
+      : const LenientStringConverter().fromJson(json['image_url']),
+  imageCaption: json['image_caption'] == null
+      ? ''
+      : const LenientStringConverter().fromJson(json['image_caption']),
+  imageCredit: json['image_credit'] == null
+      ? ''
+      : const LenientStringConverter().fromJson(json['image_credit']),
   createdAt: json['created_at'] == null
       ? ''
       : const LenientStringConverter().fromJson(json['created_at']),
@@ -76,17 +99,23 @@ _StoryDetail _$StoryDetailFromJson(Map<String, dynamic> json) => _StoryDetail(
       : const LenientStringConverter().fromJson(json['updated_at']),
 );
 
-Map<String, dynamic> _$StoryDetailToJson(_StoryDetail instance) =>
-    <String, dynamic>{
-      'id': ?const LenientStringConverter().toJson(instance.id),
-      'title': ?const LenientStringConverter().toJson(instance.title),
-      'author': ?const LenientStringConverter().toJson(instance.author),
-      'region': ?const LenientStringConverter().toJson(instance.region),
-      'status': ?const LenientStringConverter().toJson(instance.status),
-      'summary': ?const LenientStringConverter().toJson(instance.summary),
-      'body': ?const LenientStringConverter().toJson(instance.body),
-      'read_time': ?const LenientStringConverter().toJson(instance.readTime),
-      'date': ?const LenientStringConverter().toJson(instance.date),
-      'created_at': ?const LenientStringConverter().toJson(instance.createdAt),
-      'updated_at': ?const LenientStringConverter().toJson(instance.updatedAt),
-    };
+Map<String, dynamic> _$StoryDetailToJson(
+  _StoryDetail instance,
+) => <String, dynamic>{
+  'id': ?const LenientStringConverter().toJson(instance.id),
+  'title': ?const LenientStringConverter().toJson(instance.title),
+  'author': ?const LenientStringConverter().toJson(instance.author),
+  'region': ?const LenientStringConverter().toJson(instance.region),
+  'status': ?const LenientStringConverter().toJson(instance.status),
+  'summary': ?const LenientStringConverter().toJson(instance.summary),
+  'body': ?const LenientStringConverter().toJson(instance.body),
+  'read_time': ?const LenientStringConverter().toJson(instance.readTime),
+  'date': ?const LenientStringConverter().toJson(instance.date),
+  'image_url': ?const LenientStringConverter().toJson(instance.imageUrl),
+  'image_caption': ?const LenientStringConverter().toJson(
+    instance.imageCaption,
+  ),
+  'image_credit': ?const LenientStringConverter().toJson(instance.imageCredit),
+  'created_at': ?const LenientStringConverter().toJson(instance.createdAt),
+  'updated_at': ?const LenientStringConverter().toJson(instance.updatedAt),
+};
