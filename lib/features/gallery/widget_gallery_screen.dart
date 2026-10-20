@@ -4,7 +4,7 @@ import '../../core/api/models/models.dart';
 import '../../core/theme/theme.dart';
 import '../../shared/widgets/article_body.dart';
 import '../../shared/widgets/brand.dart';
-import '../../shared/widgets/briefing_ticker.dart';
+import '../../shared/widgets/briefing_strip.dart';
 import '../../shared/widgets/labels.dart';
 import '../../shared/widgets/rules.dart';
 import '../../shared/widgets/state_views.dart';
@@ -79,9 +79,9 @@ class _WidgetGalleryScreenState extends State<WidgetGalleryScreen> {
                 ),
                 const _Section(
                   number: 5,
-                  title: 'Briefing ticker',
+                  title: 'Briefing strip',
                   padded: false,
-                  child: BriefingTicker(text: GallerySamples.ticker),
+                  child: BriefingStrip(text: GallerySamples.ticker),
                 ),
                 _Section(
                   number: 6,

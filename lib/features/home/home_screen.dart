@@ -8,6 +8,7 @@ import '../../core/api/providers.dart';
 import '../../core/router/navigation.dart';
 import '../../core/theme/theme.dart';
 import '../../shared/widgets/app_shell.dart';
+import '../../shared/widgets/briefing_strip.dart';
 import '../../shared/widgets/labels.dart';
 import '../../shared/widgets/rules.dart';
 import '../../shared/widgets/state_views.dart';
@@ -96,6 +97,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         ),
       ],
       AsyncData(:final value) => [
+        if (value.ticker.trim().isNotEmpty)
+          SliverToBoxAdapter(child: BriefingStrip(text: value.ticker)),
         if (tablet)
           SliverToBoxAdapter(
             child: _TabletFrontPage(feed: value, onOpen: _open),

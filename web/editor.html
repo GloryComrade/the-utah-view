@@ -546,7 +546,7 @@ function vHomepage(){
   secInit(L);
   var h=head('Homepage &amp; app layout','<button class="bt bs" onclick="refreshHomepageStories(this)">&#8635; Refresh stories</button> <button class="bt bp" onclick="saveHome()">💾 Save homepage</button>');
   h+='<div class="card"><h2>🧩 Sections <span style="font-weight:600;color:var(--g5);font-size:12px">&mdash; controls the website <b>and</b> the iOS/Android apps</span></h2><p class="desc">Reorder, show/hide, and rename the red headers. In the <b>mobile apps</b> the front page renders sections in exactly this order, hides the ones toggled off, and uses these labels. On wide web screens the grid order stays fixed but still honors hide + labels. Every story slot you pick below also applies to the apps.</p><div id="secMgr"></div></div>';
-  h+='<div class="card"><h2>📢 Briefing ticker</h2><div class="fl"><label>Scrolling message (separate items with •)</label><input id="lt" value="'+esc(L.ticker||'')+'"></div></div>';
+  h+='<div class="card"><h2>📢 Briefing strip</h2><div class="fl"><label>Shows as a static strip under the masthead. Separate items with • (readers tap to see them all). Leave blank to hide.</label><input id="lt" value="'+esc(L.ticker||'')+'"></div></div>';
   h+='<div class="card"><h2>🏠 Hero</h2>'+
     '<div class="fl"><label>Hero image</label><input id="li" value="'+esc(L.hero_image||'')+'" placeholder="Image URL"><button class="bt bs bsm" style="margin-top:8px" onclick="uploadImage(\'li\')">&#8679; Upload image</button></div>'+
     '<div class="row3"><div class="fl"><label>⭐ Lead</label><select data-slot id="ll">'+storyOpts(L.hero_lead)+'</select></div>'+
