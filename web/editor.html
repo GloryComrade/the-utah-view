@@ -358,7 +358,10 @@ function vDashboard(){
 /* ---------- STORIES ---------- */
 function storyRow(x){
   var live=x.status==='published';
-  return '<div class="row"><span class="badge '+(live?'live':'draft')+'">'+(live?'Live':'Draft')+'</span>'+
+  var thumb=x.image_url
+    ? '<img src="'+esc(x.image_url)+'" alt="" title="Has a photo — click to edit" onclick="editStory(\''+x.id+'\')" style="width:46px;height:46px;object-fit:cover;border-radius:6px;flex-shrink:0;cursor:pointer;border:1px solid var(--g2)">'
+    : '<div onclick="editStory(\''+x.id+'\')" title="No photo yet — click to add one" style="width:46px;height:46px;border-radius:6px;background:var(--g1);display:flex;align-items:center;justify-content:center;color:var(--g4);font-size:17px;flex-shrink:0;cursor:pointer">&#128247;</div>';
+  return '<div class="row">'+thumb+'<span class="badge '+(live?'live':'draft')+'">'+(live?'Live':'Draft')+'</span>'+
     '<div class="meta"><span class="ti" onclick="editStory(\''+x.id+'\')">'+esc(x.title||'(untitled)')+'</span>'+
     '<div class="su">'+esc(x.region||'')+(x.author?' · '+esc(x.author):'')+(x.date?' · '+fmtDate(x.date):'')+'</div></div>'+
     '<div class="acts">'+
