@@ -121,6 +121,18 @@ flutter:
           weight: 700
         - asset: assets/fonts/Inter-ExtraBold.ttf
           weight: 800
+    # Newsreader (variable opsz,wght) — display headlines and deks. 2026 redesign.
+    - family: Newsreader
+      fonts:
+        - asset: assets/fonts/Newsreader.ttf
+        - asset: assets/fonts/Newsreader-Italic.ttf
+          style: italic
+    # IBM Plex Sans (variable wdth,wght) — body copy and all UI chrome.
+    - family: IBMPlexSans
+      fonts:
+        - asset: assets/fonts/IBMPlexSans.ttf
+        - asset: assets/fonts/IBMPlexSans-Italic.ttf
+          style: italic
 
 # App icon, generated from the logo painter by
 # tool/brand_assets/generate_brand_assets_test.dart.

@@ -280,6 +280,39 @@ class _AppearanceSetting extends ConsumerWidget {
   }
 }
 
+Future<void> _confirmDeleteAccount(BuildContext context, WidgetRef ref) async {
+  final ok = await showDialog<bool>(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: const Text('Delete your account?'),
+      content: const Text(
+        'This permanently deletes your account, your synced saved stories, '
+        'and any newsletter subscription for this email. Bookmarks already '
+        'on this device stay here. This can’t be undone.',
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(false),
+          child: const Text('Cancel'),
+        ),
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(true),
+          style: TextButton.styleFrom(
+            foregroundColor: Theme.of(context).colorScheme.error,
+          ),
+          child: const Text('Delete'),
+        ),
+      ],
+    ),
+  );
+  if (ok != true || !context.mounted) return;
+  final messenger = ScaffoldMessenger.of(context);
+  final err = await deleteReaderAccount(ref);
+  messenger.showSnackBar(
+    SnackBar(content: Text(err ?? 'Your account has been deleted.')),
+  );
+}
+
 Future<void> _showUnsubscribe(BuildContext context, WidgetRef ref) async {
   final email = await showDialog<String>(
     context: context,
@@ -407,22 +440,27 @@ class _SignInSectionState extends ConsumerState<_SignInSection> {
     final google = ref.watch(authControllerProvider).value;
     final gutter = context.gutter;
 
-    if (reader != null) {
-      return NavRow(
-        title: 'Sign out',
-        subtitle: reader.email,
-        serif: false,
-        icon: Icons.logout_rounded,
-        onTap: () => ref.read(readerAccountProvider.notifier).logOut(),
-      );
-    }
-    if (google != null) {
-      return NavRow(
-        title: 'Sign out',
-        subtitle: google.email,
-        serif: false,
-        icon: Icons.logout_rounded,
-        onTap: () => ref.read(authControllerProvider.notifier).signOut(),
+    if (reader != null || google != null) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          NavRow(
+            title: 'Sign out',
+            subtitle: reader?.email ?? google!.email,
+            serif: false,
+            icon: Icons.logout_rounded,
+            onTap: () => reader != null
+                ? ref.read(readerAccountProvider.notifier).logOut()
+                : ref.read(authControllerProvider.notifier).signOut(),
+          ),
+          NavRow(
+            title: 'Delete account',
+            subtitle: 'Permanently remove your account and saved-story sync',
+            serif: false,
+            icon: Icons.delete_forever_outlined,
+            onTap: () => _confirmDeleteAccount(context, ref),
+          ),
+        ],
       );
     }
 

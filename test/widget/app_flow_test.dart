@@ -30,7 +30,6 @@ void main() {
       await tester.pumpWidget(routerTestApp(location: '/home'));
       await settle(tester);
 
-      expect(find.text('BRIEFING'), findsOneWidget);
       expect(find.text(lead.title), findsOneWidget);
       expect(find.text('EVERY REGION · EVERY MONTH'), findsOneWidget);
 
@@ -149,7 +148,7 @@ void main() {
 
       await tester.tap(find.byType(BackButton));
       await settle(tester);
-      expect(find.text('BRIEFING'), findsOneWidget);
+      expect(find.text('EVERY REGION · EVERY MONTH'), findsOneWidget);
     });
 
     testWidgets('an unknown story shows a friendly message', (tester) async {

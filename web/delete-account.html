@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Delete Your Account | The Utah View</title>
+<style>
+:root{--red:#B53816;--ink:#141414;--g6:#555;--g2:#e3e3e3;--bg:#f7f6f4;--w:#fff}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:Georgia,'Times New Roman',serif;color:var(--ink);background:var(--bg);line-height:1.7}
+.wrap{max-width:720px;margin:0 auto;padding:40px 22px 80px}
+.top{font-family:'Helvetica Neue',Arial,sans-serif;font-size:13px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--red)}
+h1{font-size:34px;font-weight:700;margin:6px 0 4px;letter-spacing:.3px}
+.eff{font-family:'Helvetica Neue',Arial,sans-serif;font-size:13px;color:var(--g6);margin-bottom:28px}
+h2{font-family:'Helvetica Neue',Arial,sans-serif;font-size:17px;font-weight:700;margin:28px 0 8px}
+p{margin:0 0 14px;font-size:17px}
+ul{margin:0 0 14px 22px}li{margin:0 0 7px;font-size:17px}
+a{color:var(--red)}
+.rule{height:3px;width:60px;background:var(--red);margin:14px 0 24px}
+.foot{font-family:'Helvetica Neue',Arial,sans-serif;font-size:13px;color:var(--g6);margin-top:40px;border-top:1px solid var(--g2);padding-top:18px}
+.card{background:var(--w);border:1px solid var(--g2);padding:22px;margin:8px 0 18px}
+label{display:block;font-family:'Helvetica Neue',Arial,sans-serif;font-size:13px;font-weight:700;margin:12px 0 5px}
+input{width:100%;font-size:16px;padding:10px 12px;border:1px solid #bbb;background:var(--w);color:var(--ink)}
+button{margin-top:18px;font-family:'Helvetica Neue',Arial,sans-serif;font-size:15px;font-weight:700;padding:12px 18px;border:0;background:var(--red);color:#fff;cursor:pointer}
+button:disabled{opacity:.5;cursor:default}
+.msg{font-family:'Helvetica Neue',Arial,sans-serif;font-size:15px;margin-top:14px}
+.err{color:var(--red)}.ok{color:#1d6b35}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">The Utah View</div>
+  <h1>Delete your account</h1>
+  <div class="eff">For readers of The Utah View app and website</div>
+  <div class="rule"></div>
+
+  <p>Deleting your account permanently removes:</p>
+  <ul>
+    <li>your account (email address, name and password hash),</li>
+    <li>the saved stories synced to your account, and</li>
+    <li>any newsletter subscription for the same email.</li>
+  </ul>
+  <p>Deletion takes effect immediately and can’t be undone. We keep no copy of this data afterward. Bookmarks stored on your own device stay there until you remove them or uninstall the app.</p>
+
+  <h2>Email &amp; password accounts</h2>
+  <form class="card" id="f">
+    <label for="email">Email</label>
+    <input id="email" type="email" autocomplete="email" required>
+    <label for="pw">Password</label>
+    <input id="pw" type="password" autocomplete="current-password" required>
+    <button id="go" type="submit">Permanently delete my account</button>
+    <div class="msg" id="msg" role="status"></div>
+  </form>
+
+  <h2>Signed in with Google?</h2>
+  <p>Open the app, go to <strong>More → Delete account</strong>. Or email <a href="mailto:theutahview@gmail.com?subject=Delete%20my%20account">theutahview@gmail.com</a> from that Google address and we’ll delete everything within 7 days.</p>
+
+  <div class="foot">See our <a href="/privacy.html">Privacy Policy</a>. © 2026 The Utah View, Salt Lake City, Utah.</div>
+</div>
+<script>
+document.getElementById('f').addEventListener('submit', async function (e) {
+  e.preventDefault();
+  var msg = document.getElementById('msg'), btn = document.getElementById('go');
+  if (!confirm('Permanently delete this account? This can\u2019t be undone.')) return;
+  btn.disabled = true; msg.className = 'msg'; msg.textContent = 'Deleting\u2026';
+  try {
+    var r = await fetch('https://api.theutahview.com/api/account/delete', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({email: document.getElementById('email').value, password: document.getElementById('pw').value})
+    });
+    var j = await r.json().catch(function () { return {}; });
+    if (r.ok) { msg.className = 'msg ok'; msg.textContent = 'Your account and its data have been deleted.'; document.getElementById('f').reset(); }
+    else { msg.className = 'msg err'; msg.textContent = j.error || 'Something went wrong. Please try again.'; btn.disabled = false; }
+  } catch (err) { msg.className = 'msg err'; msg.textContent = 'Couldn\u2019t reach the server. Check your connection.'; btn.disabled = false; }
+});
+</script>
+</body>
+</html>

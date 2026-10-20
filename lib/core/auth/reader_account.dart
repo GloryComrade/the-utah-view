@@ -102,6 +102,30 @@ final readerAccountProvider =
       ReaderAccountController.new,
     );
 
+/// Permanently deletes the signed-in reader's account and all server-side
+/// data tied to it (saved stories, newsletter subscription), then signs out
+/// locally. Returns null on success, or a reader-facing error message.
+Future<String?> deleteReaderAccount(WidgetRef ref) async {
+  final token = ref.read(savedAuthTokenProvider);
+  if (token == null) return 'You’re not signed in.';
+  try {
+    await ref
+        .read(apiClientProvider)
+        .postAuthed('/api/account/delete', const {}, token);
+  } on ApiException catch (e) {
+    return e.userMessage;
+  } on Object {
+    return 'Couldn’t delete your account. Check your connection and try again.';
+  }
+  if (ref.read(readerAccountProvider) != null) {
+    await ref.read(readerAccountProvider.notifier).logOut();
+  }
+  if (ref.read(authControllerProvider).value != null) {
+    await ref.read(authControllerProvider.notifier).signOut();
+  }
+  return null;
+}
+
 /// Token used for saved-story sync: a reader session, else a Google ID token.
 final savedAuthTokenProvider = Provider<String?>((ref) {
   final acct = ref.watch(readerAccountProvider);

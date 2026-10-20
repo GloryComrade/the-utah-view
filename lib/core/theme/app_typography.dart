@@ -4,14 +4,17 @@ import 'app_colors.dart';
 
 /// Font families bundled in `assets/fonts` (see pubspec.yaml).
 abstract final class AppFonts {
-  /// Source Serif 4, text optical size. Body copy and summaries.
-  static const serif = 'SourceSerif4';
+  /// Newsreader (variable opsz,wght). Deks and summaries (often italic).
+  static const serif = 'Newsreader';
 
-  /// Source Serif 4, display optical size. Headlines.
-  static const headline = 'SourceSerif4Display';
+  /// Newsreader at display optical sizes. Headlines.
+  static const headline = 'Newsreader';
 
-  /// Inter. Labels, bylines, buttons and other UI chrome only.
-  static const sans = 'Inter';
+  /// IBM Plex Sans. Body copy and all UI chrome (labels, bylines, buttons).
+  static const sans = 'IBMPlexSans';
+
+  /// IBM Plex Sans. Article body copy.
+  static const body = 'IBMPlexSans';
 
   /// Fallbacks used while a glyph is missing from the subset fonts.
   static const serifFallback = <String>['Georgia', 'Times New Roman', 'serif'];
@@ -68,6 +71,9 @@ class NewsTextStyles extends ThemeExtension<NewsTextStyles> {
       height: height,
       leadingDistribution: TextLeadingDistribution.even,
     );
+    // Newsreader is optically sized (6–72pt); drive the opsz axis from the
+    // point size so big headlines use the display cut and small text the
+    // text cut.
     TextStyle head(
       double size,
       double height, {
@@ -81,13 +87,16 @@ class NewsTextStyles extends ThemeExtension<NewsTextStyles> {
       height: height,
       letterSpacing: spacing,
       color: p.ink,
+      fontVariations: [FontVariation('opsz', size.clamp(6, 72))],
       leadingDistribution: TextLeadingDistribution.even,
     );
+    // Deks and summaries: Newsreader, usually italic for the one-line dek.
     TextStyle serif(
       double size,
       double height,
       Color color, {
       FontWeight weight = FontWeight.w400,
+      bool italic = false,
     }) => TextStyle(
       fontFamily: AppFonts.serif,
       fontFamilyFallback: AppFonts.serifFallback,
@@ -95,6 +104,25 @@ class NewsTextStyles extends ThemeExtension<NewsTextStyles> {
       fontWeight: weight,
       height: height,
       color: color,
+      fontStyle: italic ? FontStyle.italic : FontStyle.normal,
+      fontVariations: [FontVariation('opsz', size.clamp(6, 72))],
+      leadingDistribution: TextLeadingDistribution.even,
+    );
+    // Body copy and running text: IBM Plex Sans.
+    TextStyle plex(
+      double size,
+      FontWeight weight,
+      Color color, {
+      double spacing = 0,
+      double height = 1.6,
+    }) => TextStyle(
+      fontFamily: AppFonts.body,
+      fontFamilyFallback: AppFonts.sansFallback,
+      fontSize: size,
+      fontWeight: weight,
+      color: color,
+      letterSpacing: spacing,
+      height: height,
       leadingDistribution: TextLeadingDistribution.even,
     );
 
@@ -115,8 +143,8 @@ class NewsTextStyles extends ThemeExtension<NewsTextStyles> {
       summaryL: serif(17, 1.5, p.inkSecondary),
       summary: serif(15.5, 1.5, p.inkSecondary),
       summaryS: serif(14.5, 1.45, p.inkMuted),
-      articleSummary: serif(20, 1.45, p.inkMuted),
-      body: serif(18.5, 1.65, p.inkSecondary),
+      articleSummary: serif(21, 1.42, p.inkSecondary, italic: true),
+      body: plex(18, FontWeight.w400, p.inkSecondary, height: 1.6),
       byline: sans(12, FontWeight.w400, p.inkMuted, height: 1.4),
       bylineStrong: sans(12, FontWeight.w600, p.ink, height: 1.4),
       meta: sans(12, FontWeight.w500, p.inkMuted, height: 1.4),

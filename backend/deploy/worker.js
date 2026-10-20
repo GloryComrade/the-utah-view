@@ -402,6 +402,39 @@ export default {
       return json({ message: 'Logged out' });
     }
 
+    // Permanently delete a reader account and everything tied to its email
+    // (account row, sessions, saved stories, newsletter subscription).
+    // Auth: Bearer session token or Google ID token (in-app), or
+    // { email, password } in the body (web form at /delete-account.html).
+    if (path === '/api/account/delete' && method === 'POST') {
+      let email = null;
+      const idn = await resolveSavedIdentity(request, env);
+      if (idn) {
+        email = idn.email;
+      } else {
+        let body = {};
+        try { body = await request.json(); } catch (e) {}
+        const clean = (body.email || '').toLowerCase().trim();
+        const acct = clean ? await env.DB.prepare('SELECT password_hash, password_salt FROM accounts WHERE email = ?').bind(clean).first() : null;
+        if (!acct || !acct.password_hash) return json({ error: 'Invalid email or password' }, 401);
+        const { hashHex } = await hashPassword(body.password || '', acct.password_salt);
+        if (!timingSafeEqual(hashHex, acct.password_hash)) return json({ error: 'Invalid email or password' }, 401);
+        email = clean;
+      }
+      const acctRow = await env.DB.prepare('SELECT id FROM accounts WHERE email = ?').bind(email).first();
+      const stmts = [
+        env.DB.prepare('DELETE FROM saved_stories WHERE email = ?').bind(email),
+        env.DB.prepare('DELETE FROM subscribers WHERE email = ?').bind(email),
+      ];
+      if (acctRow) {
+        stmts.push(env.DB.prepare('DELETE FROM sessions WHERE account_id = ?').bind(acctRow.id));
+        stmts.push(env.DB.prepare('DELETE FROM accounts WHERE id = ?').bind(acctRow.id));
+      }
+      await env.DB.batch(stmts);
+      await auditLog(env, 'deleted-account', 'delete_account', 'account', acctRow ? acctRow.id : '', null, ip);
+      return json({ message: 'Account and associated data deleted' });
+    }
+
     if (path === '/api/me/saved' && method === 'GET') {
       const id = await resolveSavedIdentity(request, env);
       if (!id) return json({ error: 'Authentication required' }, 401);

@@ -5,20 +5,23 @@ import 'package:material_ui/material_ui.dart';
 /// Widgets should not use these directly; read the semantic [AppPalette]
 /// from the theme instead so dark mode keeps working.
 abstract final class BrandColors {
-  static const red = Color(0xFFB53816);
-  static const redDark = Color(0xFF902C11);
-  static const ink = Color(0xFF121212);
-  static const gray700 = Color(0xFF333333);
-  static const gray500 = Color(0xFF666666);
-  static const gray400 = Color(0xFF888888);
-  static const gray200 = Color(0xFFD4D4D4);
-  static const gray100 = Color(0xFFEEEEEE);
-  static const gray50 = Color(0xFFF7F7F7);
+  /// Red-rock terracotta — the single signature accent (2026 redesign).
+  static const red = Color(0xFFB5401F);
+  static const redDark = Color(0xFF8F3015);
+  static const ink = Color(0xFF1A1A18);
+  static const gray700 = Color(0xFF403D36);
+  static const gray500 = Color(0xFF6B655C);
+  static const gray400 = Color(0xFF847D72);
+  static const gray200 = Color(0xFFDED8CD);
+  static const gray100 = Color(0xFFECE8DF);
+  static const gray50 = Color(0xFFF2EFE7);
   static const white = Color(0xFFFFFFFF);
 
-  /// Brand red lifted for dark backgrounds (6.0:1 on #121212). The true
-  /// brand red is only 3.5:1 there, which fails WCAG AA for text.
-  static const redOnDark = Color(0xFFEB6A5C);
+  /// Newsprint-warm page base.
+  static const paper = Color(0xFFFAF8F3);
+
+  /// Terracotta lifted for dark backgrounds (AA on the warm near-black base).
+  static const redOnDark = Color(0xFFE0724C);
 }
 
 /// Semantic color tokens for one brightness.
@@ -93,16 +96,16 @@ class AppPalette extends ThemeExtension<AppPalette> {
   final Color highlight;
 
   static const light = AppPalette(
-    background: BrandColors.white,
-    surfaceMuted: BrandColors.gray50,
-    ink: BrandColors.ink,
-    inkSecondary: BrandColors.gray700,
-    inkMuted: BrandColors.gray500,
+    background: BrandColors.paper, // newsprint-warm #FAF8F3
+    surfaceMuted: BrandColors.gray50, // #F2EFE7
+    ink: BrandColors.ink, // #1A1A18
+    inkSecondary: BrandColors.gray700, // #403D36
+    inkMuted: BrandColors.gray500, // #6B655C
     inkFaint: BrandColors.gray400,
-    rule: BrandColors.gray200,
+    rule: BrandColors.gray200, // #DED8CD warm hairline
     ruleLight: BrandColors.gray100,
     ruleStrong: BrandColors.ink,
-    accent: BrandColors.red,
+    accent: BrandColors.red, // terracotta #B5401F
     accentPressed: BrandColors.redDark,
     accentFill: BrandColors.red,
     onAccentFill: BrandColors.white,
@@ -112,22 +115,22 @@ class AppPalette extends ThemeExtension<AppPalette> {
   );
 
   static const dark = AppPalette(
-    background: Color(0xFF121212),
-    surfaceMuted: Color(0xFF1C1C1C),
-    ink: Color(0xFFEDEDED),
-    inkSecondary: Color(0xFFD4D4D4),
-    inkMuted: Color(0xFFA6A6A6),
-    inkFaint: Color(0xFF8A8A8A),
-    rule: Color(0xFF333333),
-    ruleLight: Color(0xFF262626),
-    ruleStrong: Color(0xFFD4D4D4),
-    accent: BrandColors.redOnDark,
-    accentPressed: Color(0xFFF07B6E),
+    background: Color(0xFF161411), // warm near-black
+    surfaceMuted: Color(0xFF201D18),
+    ink: Color(0xFFF2EDE4),
+    inkSecondary: Color(0xFFD4CEC2),
+    inkMuted: Color(0xFFA49D90),
+    inkFaint: Color(0xFF7E776B),
+    rule: Color(0xFF343029),
+    ruleLight: Color(0xFF26231D),
+    ruleStrong: Color(0xFFD4CEC2),
+    accent: BrandColors.redOnDark, // #E0724C
+    accentPressed: Color(0xFFEC8260),
     accentFill: BrandColors.red,
     onAccentFill: BrandColors.white,
-    placeholderStart: Color(0xFF242424),
-    placeholderEnd: Color(0xFF2E2E2E),
-    highlight: Color(0xFF1C1C1C),
+    placeholderStart: Color(0xFF221F19),
+    placeholderEnd: Color(0xFF2B281F),
+    highlight: Color(0xFF201D18),
   );
 
   @override

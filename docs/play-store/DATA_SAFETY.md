@@ -7,7 +7,7 @@ saved stories, a newsletter email signup, and Firebase Cloud Messaging for push.
 ## Overview questions
 - **Does your app collect or share any of the required user data types?** → **Yes**
 - **Is all of the user data collected by your app encrypted in transit?** → **Yes** (all API traffic is HTTPS/TLS).
-- **Do you provide a way for users to request that their data is deleted?** → **Yes** — users can email **theutahview@gmail.com** to delete their account and associated data. (Consider adding an in-app/URL deletion form later; email is acceptable for now.)
+- **Do you provide a way for users to request that their data is deleted?** → **Yes** — in-app (More → Delete account) and on the web. **Delete account URL:** https://theutahview.com/delete-account.html
 
 ## Data types collected
 
