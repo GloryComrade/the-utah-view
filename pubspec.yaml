@@ -155,10 +155,10 @@ flutter_launcher_icons:
 # White launch screen with the logo.
 # Regenerate with: dart run flutter_native_splash:create
 flutter_native_splash:
-  color: "#FFFFFF"
+  color: "#FAF8F3"
   image: assets/brand/splash_logo.png
   android_12:
-    color: "#FFFFFF"
+    color: "#FAF8F3"
     image: assets/brand/splash_logo_android12.png
-    icon_background_color: "#FFFFFF"
+    icon_background_color: "#FAF8F3"
   web: false
