@@ -129,6 +129,8 @@ a{color:var(--red)}
   font-family:var(--f);font-size:17px;line-height:1.7;color:var(--g7);outline:none}
 .re:focus{border-color:var(--red)}.re p{margin-bottom:12px}.re h3{font-size:21px;font-weight:700;margin:18px 0 8px;color:var(--bk)}
 .re img{max-width:100%;border-radius:6px;margin:12px 0;display:block}.re blockquote{border-left:3px solid var(--red);padding-left:14px;color:var(--g5);font-style:italic}
+.re figure,.pvb figure{margin:12px 0}.re figure img,.pvb figure img{margin:0 0 4px}
+.re figcaption,.pvb figcaption{font-family:var(--s);font-size:12.5px;color:var(--g5);line-height:1.4}
 
 .pv{margin-top:16px;border:1px solid var(--g2);border-radius:var(--rad);overflow:hidden}
 .pvh{padding:8px 14px;background:var(--g0);border-bottom:1px solid var(--g2);font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--g5)}
@@ -437,13 +439,25 @@ function vStoryEdit(){
 }
 function rc(c){document.execCommand(c,false,null);$('fbody').focus()}
 function rb(t){document.execCommand('formatBlock',false,'<'+t+'>');$('fbody').focus()}
+// Insert an in-body image WITH its own caption + credit, wrapped in a
+// <figure>/<figcaption> so both show under the photo (every image is credited).
 function iImg(){
+  getImgUrl(function(url){
+    var cap=(prompt('Caption for this image (what it shows) — optional:','')||'').trim();
+    var cred=(prompt('Credit — e.g. "Photo: Jane Doe / Source" — optional:','')||'').trim();
+    var fc=(cap||cred)?'<figcaption>'+esc(cap)+((cap&&cred)?' — ':'')+esc(cred)+'</figcaption>':'';
+    $('fbody').focus();
+    document.execCommand('insertHTML',false,'<figure><img src="'+esc(url)+'" alt="'+esc(cap)+'">'+fc+'</figure><p><br></p>');
+    sPv();
+  });
+}
+function getImgUrl(cb){
   if(confirm('OK = upload an image file.   Cancel = paste an image URL.')){
     var inp=document.createElement('input');inp.type='file';inp.accept='image/*';
     inp.onchange=function(){var f=inp.files&&inp.files[0];if(!f)return;var fd=new FormData();fd.append('file',f);toast('Uploading…');
-      fetch(API+'/api/upload',{method:'POST',headers:{'Authorization':'Bearer '+token()},body:fd}).then(function(r){return r.json()}).then(function(d){if(d.url){$('fbody').focus();document.execCommand('insertHTML',false,'<img src="'+d.url+'">');sPv();}else toast('⚠️ '+(d.error||'Upload failed'))}).catch(function(){toast('⚠️ Upload failed')});};
+      fetch(API+'/api/upload',{method:'POST',headers:{'Authorization':'Bearer '+token()},body:fd}).then(function(r){return r.json()}).then(function(d){if(d.url)cb(d.url);else toast('⚠️ '+(d.error||'Upload failed'))}).catch(function(){toast('⚠️ Upload failed')});};
     inp.click();
-  }else{var u=prompt('Image URL:');if(u){$('fbody').focus();document.execCommand('insertHTML',false,'<img src="'+u+'">');sPv();}}
+  }else{var u=prompt('Image URL:');if(u&&u.trim())cb(u.trim());}
 }
 function sPv(){var el=$('spv');if(!el)return;var img=$('fimg')?$('fimg').value.trim():'',cap=$('fcap')?$('fcap').value.trim():'',cred=$('fcred')?$('fcred').value.trim():'';var lead=img?'<img src="'+esc(img)+'" style="width:100%;border-radius:4px;display:block">'+((cap||cred)?'<div style="font-size:12px;color:#777;margin:6px 0 14px">'+esc(cap)+(cap&&cred?' — ':'')+esc(cred)+'</div>':'<div style="margin-bottom:14px"></div>'):'';el.innerHTML=lead+'<div class="pr">'+esc($('fr')?$('fr').value:'')+'</div><div class="pt">'+(esc($('ft').value)||'Untitled')+'</div><div class="ps">'+esc($('fsum')?$('fsum').value:'')+'</div><div class="pm">By <b>'+esc($('fa')?$('fa').value:'')+'</b></div><div class="pc">'+($('fbody')?$('fbody').innerHTML:'')+'</div>'}
 function collectStory(status){
