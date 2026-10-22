@@ -25,6 +25,11 @@ button{margin-top:18px;font-family:'Helvetica Neue',Arial,sans-serif;font-size:1
 button:disabled{opacity:.5;cursor:default}
 .msg{font-family:'Helvetica Neue',Arial,sans-serif;font-size:15px;margin-top:14px}
 .err{color:var(--red)}.ok{color:#1d6b35}
+/* Smooth page changes: a quick cross-fade between pages of this site (browsers
+   without cross-document view transitions just load normally). */
+@view-transition { navigation: auto; }
+::view-transition-old(root), ::view-transition-new(root) { animation-duration: .25s; animation-timing-function: ease; }
+@media (prefers-reduced-motion: reduce) { @view-transition { navigation: none; } }
 </style>
 </head>
 <body>

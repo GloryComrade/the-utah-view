@@ -205,6 +205,11 @@ body { font-family:var(--serif); color:var(--black); background:var(--white); -w
   .sub-input { border-right:1px solid var(--gray-200); }
 }
 @media print { .ticker-bar,.sub-banner,.main-nav,.top-bar { display:none; } body { font-size:11pt; } .container { max-width:100%; } }
+/* Smooth page changes: a quick cross-fade between pages of this site (browsers
+   without cross-document view transitions just load normally). */
+@view-transition { navigation: auto; }
+::view-transition-old(root), ::view-transition-new(root) { animation-duration: .25s; animation-timing-function: ease; }
+@media (prefers-reduced-motion: reduce) { @view-transition { navigation: none; } }
 </style>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>

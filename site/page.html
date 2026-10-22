@@ -39,6 +39,11 @@ body { font-family: var(--serif); color: var(--black); background: var(--white);
 @keyframes skPulse { 0%, 100% { opacity: 1; } 50% { opacity: .45; } }
 @media (prefers-reduced-motion: reduce) { .sk { animation: none; } }
 @media print { .top-bar, .header-bar { display: none; } .narrow { max-width: 100%; } }
+/* Smooth page changes: a quick cross-fade between pages of this site (browsers
+   without cross-document view transitions just load normally). */
+@view-transition { navigation: auto; }
+::view-transition-old(root), ::view-transition-new(root) { animation-duration: .25s; animation-timing-function: ease; }
+@media (prefers-reduced-motion: reduce) { @view-transition { navigation: none; } }
 </style>
 </head>
 <body>
