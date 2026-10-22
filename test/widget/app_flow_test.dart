@@ -49,13 +49,8 @@ void main() {
       expect(find.text('01'), findsOneWidget);
       // Data Brief is empty in the live layout, so it is hidden.
       expect(find.text('DATA BRIEF'), findsNothing);
-
-      await tester.scrollUntilVisible(
-        find.text('SUBSCRIBE'),
-        400,
-        scrollable: _feed,
-      );
-      expect(find.text('Stay briefed'.toUpperCase()), findsOneWidget);
+      // The "Stay briefed" subscribe card now lives only in the More tab,
+      // not at the bottom of the home feed.
     });
 
     testWidgets('two-column tablet layout', (tester) async {

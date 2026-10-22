@@ -19,19 +19,24 @@ class ImageCaption extends StatelessWidget {
     final cr = credit.trim();
     if (cap.isEmpty && cr.isEmpty) return const SizedBox.shrink();
 
-    final faint = news.meta.copyWith(color: p.inkFaint);
+    // The credit is set in the article serif, italic and AA-readable — a
+    // newspaper photo credit, not a faint afterthought.
+    final credited = news.meta.copyWith(
+      color: p.inkMuted,
+      fontStyle: FontStyle.italic,
+    );
     return Text.rich(
       TextSpan(
         children: [
           if (cap.isNotEmpty) TextSpan(text: cap),
           if (cap.isNotEmpty && cr.isNotEmpty)
-            TextSpan(text: '  —  ', style: faint),
-          if (cr.isNotEmpty) TextSpan(text: cr, style: faint),
+            TextSpan(text: '  —  ', style: credited),
+          if (cr.isNotEmpty) TextSpan(text: cr, style: credited),
         ],
       ),
       style: news.meta.copyWith(
         fontSize: 12.5,
-        color: p.inkMuted,
+        color: p.inkSecondary,
         height: 1.4,
       ),
     );

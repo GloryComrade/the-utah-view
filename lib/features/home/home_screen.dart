@@ -13,7 +13,6 @@ import '../../shared/widgets/labels.dart';
 import '../../shared/widgets/rules.dart';
 import '../../shared/widgets/state_views.dart';
 import '../../shared/widgets/story_cards.dart';
-import '../../shared/widgets/subscribe_card.dart';
 import 'home_feed.dart';
 import 'widgets/home_sections.dart';
 import 'widgets/masthead_header.dart';
@@ -107,7 +106,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           SliverList(
             delegate: SliverChildListDelegate(_phoneFrontPage(context, value)),
           ),
-        SliverToBoxAdapter(child: SubscribeCard.fromConfig(site)),
         SliverToBoxAdapter(
           child: HomeFooter(
             copyright: (site ?? const SiteConfig()).copyrightLine,

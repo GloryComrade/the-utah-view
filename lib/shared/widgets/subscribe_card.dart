@@ -136,7 +136,7 @@ class _SubscribeCardState extends ConsumerState<SubscribeCard> {
               widget.overline.toUpperCase(),
               semanticsLabel: widget.overline,
               textAlign: TextAlign.center,
-              style: news.sectionLabel.copyWith(letterSpacing: 2),
+              style: news.sectionLabel.copyWith(letterSpacing: 0.5),
             ),
             const SizedBox(height: 8),
             Semantics(
