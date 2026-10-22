@@ -1,6 +1,11 @@
 /* Dark mode for the website. A small script in each page's <head> sets
    data-theme="dark" from the visitor's sun/moon choice (theme.js) or, if they
    haven't chosen, from their device setting — before the first paint. */
+/* The "The Utah View" wordmark: Playfair Display Black Italic (SIL OFL,
+   fonts/OFL.txt), self-hosted Latin subset. */
+@font-face { font-family: 'Playfair Display'; font-style: italic; font-weight: 900; font-display: swap; src: url('/fonts/playfair-display-black-italic-latin.woff2') format('woff2'); }
+:root { --wordmark: 'Playfair Display', Georgia, 'Times New Roman', serif; }
+
 :root[data-theme="dark"] {
   color-scheme: dark;
   --white: #141414;

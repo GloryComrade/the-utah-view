@@ -7,6 +7,7 @@
 <link rel="icon" type="image/png" href="/favicon.png">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <script>(function(){var t;try{t=localStorage.getItem('utv_theme')}catch(e){}if(t!=='light'&&t!=='dark')t=window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';document.documentElement.setAttribute('data-theme',t)})()</script>
+<link rel="preload" href="/fonts/playfair-display-black-italic-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/theme.css">
 <style>
 :root { --red: #C4352A; --red-dark: #9E2A22; --black: #121212; --gray-700: #333; --gray-500: #666; --gray-400: #888; --gray-200: #d4d4d4; --gray-100: #eee; --gray-50: #f7f7f7; --white: #fff; --serif: 'Georgia','Times New Roman','Times',serif; --sans: 'Helvetica Neue','Arial',sans-serif; }
@@ -19,7 +20,7 @@ body { font-family: var(--serif); color: var(--black); background: var(--white);
 .top-bar-links a { color: var(--gray-500); text-decoration: none; padding: 2px 8px; }
 .top-bar-links a:hover { color: var(--red); }
 .header-bar { padding: 14px 0; border-bottom: 2px solid var(--black); display: flex; align-items: center; justify-content: center; gap: 12px; }
-.header-logo-text { font-family: var(--sans); font-size: 18px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; color: var(--black); text-decoration: none; }
+.header-logo-text { font-family: var(--wordmark); font-size: 22px; font-style: italic; font-weight: 900; color: var(--black); text-decoration: none; }
 .header-logo-text:hover { color: var(--red); }
 .page-header { padding: 40px 0 24px; border-bottom: 1px solid var(--gray-200); margin-bottom: 32px; }
 .page-title { font-size: clamp(28px, 5vw, 42px); font-weight: 700; line-height: 1.12; margin-bottom: 8px; }
