@@ -18,7 +18,7 @@ the new logo) and add animations and features from the later Flutter versions
 | # | Feature | Decisions | Status |
 |---|---------|-----------|--------|
 | 1 | Reading progress bar | 3px bar in the site red, pinned to the top of the window; full at the end of the article text | **Live** 2026-10-22 |
-| 2 | Styled quotes & captions | Pull quotes large italic with a red rule; small captions under in-article photos | |
+| 2 | Styled quotes & captions | Pull quotes large italic with a red rule (back-to-back quote blocks joined on display; writer's bold kept); small grey captions under in-article photos | **Live** 2026-10-22 |
 | 3 | Lead photo + credit | Story's lead image with caption and credit at the top of the article | |
 | 4 | Text size A− / A+ | Article text only; remembered between visits | |
 | 5 | Loading placeholders | Pulsing grey bars while stories load (no pulse under reduce motion) | |
