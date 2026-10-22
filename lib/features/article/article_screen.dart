@@ -19,6 +19,7 @@ import '../../shared/widgets/state_views.dart';
 import '../../shared/widgets/story_cards.dart';
 import '../../shared/widgets/story_image.dart';
 import '../home/widgets/home_sections.dart';
+import 'read_aloud.dart';
 import 'story_detail_provider.dart';
 import 'widgets/article_actions.dart';
 
@@ -35,15 +36,20 @@ class ArticleScreen extends ConsumerStatefulWidget {
 class _ArticleScreenState extends ConsumerState<ArticleScreen> {
   final _scroll = ScrollController();
   final _progress = ValueNotifier<double>(0);
+  late final ReadAloudController _readAloud;
 
   @override
   void initState() {
     super.initState();
     _scroll.addListener(_updateProgress);
+    // Saved now so dispose() doesn't touch `ref` after the widget unmounts.
+    _readAloud = ref.read(readAloudProvider.notifier);
   }
 
   @override
   void dispose() {
+    // Stop read-aloud when the reader leaves the article.
+    _readAloud.stop();
     _scroll.dispose();
     _progress.dispose();
     super.dispose();
@@ -78,6 +84,14 @@ class _ArticleScreenState extends ConsumerState<ArticleScreen> {
         ? detailValue.imageCaption
         : (layout?.heroLead == id ? (layout?.heroCenterCaption ?? '') : '');
     final heroCredit = detailValue?.imageCredit ?? '';
+    // Spoken text for read-aloud: headline, dek, then the body (plain text).
+    final spokenText = detailValue == null
+        ? null
+        : [
+            story?.title ?? '',
+            story?.summary ?? '',
+            spokenTextFromHtml(detailValue.body),
+          ].where((s) => s.trim().isNotEmpty).join('. ');
     final scale = ref.watch(settingsProvider.select((s) => s.readingScale));
     final canPop = GoRouter.of(context).canPop();
     final gutter = context.gutter;
@@ -181,6 +195,7 @@ class _ArticleScreenState extends ConsumerState<ArticleScreen> {
             ),
           ),
           actions: [
+            ListenButton(text: spokenText),
             const TextSizeButton(),
             SaveStoryButton(storyId: id, detail: detail.value),
             ShareStoryButton(
