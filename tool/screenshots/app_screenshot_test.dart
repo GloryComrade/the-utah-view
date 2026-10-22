@@ -2,7 +2,12 @@
 //
 //   flutter test tool/screenshots/app_screenshot_test.dart
 //
-// Output: docs/screenshots/*.png (network photos show the placeholder).
+// Output: docs/screenshots/*.png (network photos show the placeholder), and the
+// Google Play phone screenshots in docs/play-store/screenshots/ (402×804 at 2×,
+// Play's maximum 2:1 aspect):
+//
+//   flutter test tool/screenshots/app_screenshot_test.dart --plain-name "play store"
+
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
@@ -17,6 +22,7 @@ import '../../test/support/test_harness.dart';
 
 const _phone = Size(402, 874);
 const _tablet = Size(1024, 1366);
+const _playStore = Size(402, 804);
 
 Future<void> _shoot(
   WidgetTester tester, {
@@ -26,6 +32,7 @@ Future<void> _shoot(
   bool dark = false,
   bool fullHeight = false,
   Future<void> Function()? before,
+  String dir = 'docs/screenshots',
 }) async {
   debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
   setScreenSize(tester, size, ratio: 2);
@@ -40,10 +47,19 @@ Future<void> _shoot(
     routerTestApp(location: location, stores: stores, dark: dark),
   );
   await settle(tester, 15);
+  // Decode the logo for real before capturing; otherwise the first shot of a
+  // run renders the masthead without it.
+  await tester.runAsync(
+    () => precacheImage(
+      const AssetImage('assets/brand/logo.png'),
+      tester.element(find.byType(MaterialApp)),
+    ),
+  );
+  await settle(tester, 3);
   await before?.call();
   if (fullHeight) await expandToFullHeight(tester, size.width);
   await settle(tester, 5);
-  await captureScreen(tester, 'docs/screenshots/$name.png');
+  await captureScreen(tester, '$dir/$name.png');
   debugDefaultTargetPlatformOverride = null;
 }
 
@@ -107,4 +123,27 @@ void main() {
     'more',
     (t) => _shoot(t, name: 'more', location: '/more', fullHeight: true),
   );
+
+  group('play store', () {
+    const dir = 'docs/play-store/screenshots';
+    for (final (name, location, dark) in [
+      ('01-home', '/home', false),
+      ('02-home-dark', '/home', true),
+      ('03-sections', '/sections', false),
+      ('04-article', '/home/story/$fixtureLeadId', false),
+      ('05-more', '/more', false),
+    ]) {
+      testWidgets(
+        name,
+        (t) => _shoot(
+          t,
+          name: name,
+          location: location,
+          dark: dark,
+          size: _playStore,
+          dir: dir,
+        ),
+      );
+    }
+  });
 }
