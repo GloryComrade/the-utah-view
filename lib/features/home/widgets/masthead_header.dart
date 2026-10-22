@@ -20,6 +20,7 @@ class MastheadHeaderDelegate extends SliverPersistentHeaderDelegate {
     required this.date,
     required this.onSearch,
     required this.background,
+    this.showSearch = true,
   });
 
   static const toolbarHeight = 56.0;
@@ -30,6 +31,9 @@ class MastheadHeaderDelegate extends SliverPersistentHeaderDelegate {
   final DateTime date;
   final VoidCallback onSearch;
   final Color background;
+
+  /// Hidden on tablet/desktop, where the top-nav strip carries search instead.
+  final bool showSearch;
 
   // Mirrors the Column in _ExpandedMasthead so the header is exactly as tall
   // as its content at any text size.
@@ -91,15 +95,16 @@ class MastheadHeaderDelegate extends SliverPersistentHeaderDelegate {
               ),
             ),
           ),
-          Positioned(
-            top: topPadding + (toolbarHeight - 48) / 2,
-            right: 4,
-            child: IconButton(
-              tooltip: 'Search',
-              icon: const Icon(Icons.search_rounded),
-              onPressed: onSearch,
+          if (showSearch)
+            Positioned(
+              top: topPadding + (toolbarHeight - 48) / 2,
+              right: 4,
+              child: IconButton(
+                tooltip: 'Search',
+                icon: const Icon(Icons.search_rounded),
+                onPressed: onSearch,
+              ),
             ),
-          ),
           Positioned(
             top: topPadding + (toolbarHeight - 40) / 2,
             left: 8,
@@ -118,6 +123,7 @@ class MastheadHeaderDelegate extends SliverPersistentHeaderDelegate {
       old.textScaler != textScaler ||
       old.date != date ||
       old.background != background ||
+      old.showSearch != showSearch ||
       old.onSearch != onSearch;
 }
 

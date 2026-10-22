@@ -79,6 +79,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         date: widget.today ?? DateTime.now(),
         onSearch: context.openSearch,
         background: context.palette.background,
+        // On tablet/desktop the top-nav strip carries search.
+        showSearch: !tablet,
       ),
     );
 
