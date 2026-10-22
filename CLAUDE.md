@@ -12,7 +12,27 @@ and web** from `lib/`, plus a **Cloudflare** backend in `backend/` and
 - Live site + web app: https://theutahview.com (Cloudflare Pages project `the-utah-view`)
 - API: https://api.theutahview.com (Cloudflare Worker `utv-api`)
 - Admin editor: https://theutahview.com/editor (Google sign-in only)
-- Repo: https://github.com/GloryComrade/the-utah-view (private)
+- Repo: https://github.com/GloryComrade/the-utah-view (**PUBLIC** — never commit secrets)
+
+> **Resuming a session?** Read **`docs/SESSION-HANDOFF.md`** first — current
+> deploy/device state, environment gotchas, and what the last redesign changed.
+
+## Design system (2026 red/white redesign)
+- **Two fonts only.** `ArchivoBlack` for the "THE UTAH VIEW" wordmark (an
+  Arial Black stand-in — Arial can't be bundled); **Newsreader** for everything
+  else. `AppFonts.sans`/`body` deliberately alias to Newsreader, so all UI chrome
+  is the one serif. Don't add a third family without asking.
+- **Color.** White background, `#CE1126` fills, `#A11121` accent text/links,
+  `#E3E3E3` rules, near-black ink. `#A2A9AF` is decoration-only (fails text
+  contrast). Defined as semantic tokens in `lib/core/theme/app_colors.dart`;
+  `test/core/contrast_test.dart` enforces AA for light, dark, and both
+  high-contrast palettes — run it after any color change.
+- **Accessibility is first-party** (not OS-reliant): in-app text size, high
+  contrast, reduce motion, a web skip link, and article read-aloud (TTS). See
+  `lib/shared/widgets/accessibility_panel.dart`, `skip_link.dart`,
+  `lib/features/article/read_aloud.dart`.
+- **Navigation.** Phones: bottom tab bar. Tablet/desktop: top strip with a
+  text-only dropdown menu + search (`lib/shared/widgets/app_shell.dart`).
 
 ## Repo layout
 | Path | What |
