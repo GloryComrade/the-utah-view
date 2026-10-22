@@ -4,6 +4,8 @@
 **2026-10-22**. Pairs with `CLAUDE.md` (workflow), `docs/WEBSITE-ROADMAP.md`
 (website feature log) and `docs/RELEASE.md` (app release notes).
 
+> **On a new computer?** Do §8 first (clone, tools, logins, Android signing files).
+
 ---
 
 ## 1. Current state (HEAD `0c2eef2` or later, all pushed)
@@ -31,6 +33,9 @@
     uploaded** — Play upload is Ryan's step (bump the version if a build was
     ever uploaded before).
 - `flutter analyze` clean; `flutter test` = **158 passing** (app code).
+- **Backend security fixed 2026-10-22:** the leaked shared admin-key login was
+  removed from the Worker (live version `778dab4c`) and the `ADMIN_API_KEY`
+  secret deleted. Admin access is Google sign-in only. See §6.
 
 ## 2. Ryan's working preferences (learned the hard way)
 
@@ -46,6 +51,9 @@
 - **Website only** unless he names the app.
 
 ## 3. Environment gotchas (Salt Lake Mac)
+
+*(Everything in this section is about the Salt Lake Mac; a new computer
+won't have the proxy/filter quirks — see §8.)*
 
 - **Real repo:** `/Users/ryancheng/Downloads/the utah view app /testing`
   (space after `app`). Sessions sometimes open in the **stale, unrelated**
@@ -120,18 +128,17 @@ artwork: `tool/brand_assets/logo-source.png` → `vectorize_logo.py` →
 
 ## 6. Open items
 
-1. **SECURITY — do this soon.** The Worker still accepts
-   `Authorization: Bearer <ADMIN_API_KEY>` (+ optional `X-User-Email`) as an
-   admin login (`backend/deploy/worker.js`, `authenticate()`), and the key's
-   *value* was published in an earlier version of this file (commit
-   `15e5f57`, public repo, 2026-10-22 04:58 UTC). With it anyone gets full
-   admin: subscriber list, `/api/admin/backup`, publishing, granting admin.
-   Ryan deferred it. Fix: remove that branch in `authenticate()` (and
-   `X-User-Email` from the CORS headers), deploy the Worker, *then*
-   `wrangler secret delete ADMIN_API_KEY` (not before — the code falls back to
-   `'Bearer '` when the secret is missing). Also check `users`/`audit_log` in
-   D1 for anything unexpected since 2026-10-22 04:58 UTC. Needs Ryan's OK
-   (production change).
+1. ~~Security: leaked admin key~~ — **done 2026-10-22.** The Worker's shared
+   `Bearer <ADMIN_API_KEY>` (+ `X-User-Email`) login was removed (live version
+   `778dab4c`; the live code was first confirmed identical to the repo), CORS
+   no longer allows `X-User-Email`, and the secret was deleted (remaining
+   secrets: FCM_SERVICE_ACCOUNT, RESEND_API_KEY, IG_ACCESS_TOKEN, IG_USER_ID).
+   Checked from a browser: the old key now gets 401/403 and the public API
+   still works. Read-only D1 check: no `audit_log` entries, story edits,
+   settings changes or new admin users since the leak (04:58 UTC); the
+   `users` table is still the three known admins. Reads (e.g. the subscriber
+   list) aren't logged, so access during the ~6-hour window can't be ruled
+   out, but nothing points to it.
 2. Reinstall the app on the iPhone 16 Pro.
 3. Upload the Android AAB to Google Play (Ryan).
 4. Website ideas offered but not requested yet: lead photo in shared-link
@@ -160,3 +167,47 @@ artwork: `tool/brand_assets/logo-source.png` → `vectorize_logo.py` →
   progress bar, quotes/captions, lead photo, text size, placeholders,
   Briefing list + editor controls, Listen, search, page fade, slim bar, dark mode.
 - Playfair Display Black Italic wordmark (`0c2eef2`), chosen from five options.
+- Leaked admin key fixed: login removed from the Worker, secret deleted, no
+  misuse found in the logs (§6).
+
+## 8. Setting up a new computer
+
+Git carries everything except a few machine-local items. In order:
+
+1. **Clone:** `gh auth login` (once), then
+   `gh repo clone GloryComrade/the-utah-view && cd the-utah-view`.
+2. **Tools:** Git, GitHub CLI, **Node.js 20+** (this Mac: 24.14), **Flutter
+   3.47.x stable** (this Mac: 3.47.6; `flutter doctor`), Google Chrome, Claude
+   Code (+ the VS Code Flutter/Dart extensions if using VS Code). Then
+   `flutter pub get` and `NO_PROXY=localhost,127.0.0.1,::1 flutter test` (expect 158 passing; the
+   `NO_PROXY` prefix only matters on the Salt Lake Mac).
+3. **Cloudflare:** `npx --yes wrangler@4.151.1 login` (browser OAuth with the
+   account that owns `the-utah-view` / `utv-api`, account ID
+   `0405da01a73bef87f1d07da2a4cb8c11`). Check with
+   `npx --yes wrangler@4.151.1 pages deployment list --project-name=the-utah-view`.
+   Website deploys work from any OS; on Windows run the same `npx` commands in
+   PowerShell without the `unset … proxy` subshell.
+4. **Android signing (needed for Play Store builds) — copy by hand, never
+   commit:** `android/key.properties` and `android/app/upload-keystore.jks`
+   from the old machine into the same paths (AirDrop/USB/password manager).
+   Keep a backup somewhere safe; losing them means an upload-key reset with
+   Google Play. Upload-key SHA-1:
+   `A9:17:9A:3F:CD:11:72:97:5F:85:E2:F2:8C:DD:E7:B9:9E:2C:7E:28`
+   (check with `keytool -printcert -jarfile <aab>`).
+5. **iOS builds need a Mac** with Xcode, signed in to the Apple ID for team
+   `WJV7UGJ2AS`; phones are installed with `xcrun devicectl` (command in §3
+   of the old workflow notes below and `docs/RELEASE.md`). On Windows only
+   web/Android are possible.
+6. **Claude Code memory does not transfer** (it lives in `~/.claude` on each
+   machine). This file + `CLAUDE.md` + `docs/WEBSITE-ROADMAP.md` are the
+   source of truth. Start the first session with:
+   > Read docs/SESSION-HANDOFF.md and docs/WEBSITE-ROADMAP.md first. The
+   > website is the static site in site/; only the website changes unless I
+   > say the app. Show me a preview link and screenshots before anything goes
+   > live, one change at a time.
+7. **Browser testing** (optional): in a scratch folder outside the repo,
+   `PUPPETEER_SKIP_DOWNLOAD=1 npm i puppeteer-core@23.11.1` and point
+   `executablePath` at the installed Chrome (§4).
+8. **Old Mac leftovers that do not transfer** (nothing needed): `git stash`
+   `stash@{0}` (the rejected app restyle), build outputs, and the scratch test
+   scripts.

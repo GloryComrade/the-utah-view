@@ -146,7 +146,8 @@ and the parsers in
 
 ### CORS (for the web build)
 - **Observed:** `access-control-allow-origin: *`,
-  `access-control-allow-headers: Content-Type, Authorization, X-User-Email`,
+  `access-control-allow-headers: Content-Type, Authorization` (`X-User-Email`
+  was dropped on 2026-10-22 with the old admin-key login),
   `access-control-allow-methods: GET, POST, PUT, DELETE, OPTIONS` on every
   response. That's why the Flutter **web** build can call the API from a
   browser. (Native iOS/Android don't need CORS.)
@@ -263,6 +264,5 @@ Full list in [BACKEND_NOTES.md](BACKEND_NOTES.md). The ones readers see:
    unintended.
 3. **Contact page is placeholder** (`<p>Start writing...</p>`) — Google Play's
    news policy wants real publisher contact info reachable in the app.
-4. **Security check (unverified):** CORS allows an `X-User-Email` header. If
-   any write endpoint trusts that header instead of the Google ID token, it
-   can be spoofed. Worth a look at the Worker's auth before Phase 2.
+4. **Security check — resolved 2026-10-22:** the `X-User-Email` header was part
+   of a shared admin-key login; that login was removed and the key deleted.

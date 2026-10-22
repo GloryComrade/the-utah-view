@@ -51,7 +51,6 @@ visible to readers, so they are worth fixing at the source.
     app change is small.
 11. **Saved-story sync** needs new endpoints (`/api/me` only identifies the
     user). See docs/PHASE2.md.
-12. **Security check, not verified:** CORS allows an `X-User-Email` request
-    header. If any write endpoint trusts that header instead of verifying
-    the Google ID token, it can be spoofed by anyone. Worth a quick look at
-    the Worker's auth.
+12. **Resolved 2026-10-22:** the `X-User-Email` header belonged to a shared
+    admin-key login, which was removed (and the key deleted). CORS no longer
+    allows that header; admin calls need a verified Google ID token.

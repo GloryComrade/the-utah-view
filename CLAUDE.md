@@ -161,14 +161,14 @@ This Mac sits behind a transparent TLS filter (ContentKeeper) + a local proxy.
   set. Deduped via the `ig_posted` D1 table. Full setup: `docs/INSTAGRAM_AUTOPOST.md`.
 
 ## Security notes
-- No secrets live in the repo. The admin API key and Firebase FCM service-account
-  key are **Cloudflare Worker secrets** (`wrangler secret put …`), never committed.
+- No secrets live in the repo. The Firebase FCM service account, Resend and
+  Instagram keys are **Cloudflare Worker secrets** (`wrangler secret put …`),
+  never committed. The Android upload keystore (`android/app/upload-keystore.jks`
+  + `android/key.properties`) is gitignored — copy it by hand between machines.
   Firebase *client* config (`GoogleService-Info.plist`, `google-services.json`,
   `firebase_options.dart`) is committed on purpose — those are not secrets.
-- **Open security hole — fix soon:** the Worker still accepts
-  `Bearer <ADMIN_API_KEY>` (+ `X-User-Email`) as an admin login, and the key's
-  value was published in an old handoff commit (`15e5f57`, public repo). Remove
-  that branch, deploy the Worker, *then* `wrangler secret delete ADMIN_API_KEY`
-  (see `docs/SESSION-HANDOFF.md` §6). Needs Ryan's OK.
+- Admin access is **Google sign-in only** (verified ID token + the `users`
+  table). The old shared `ADMIN_API_KEY` login was removed and the secret
+  deleted on 2026-10-22 after the key leaked; don't reintroduce shared keys.
 - Backend is **live production with real subscriber data** — keep changes additive
   and never POST real addresses to `/api/subscribe`.

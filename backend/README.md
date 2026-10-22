@@ -60,6 +60,7 @@ curl -s https://api.theutahview.com/api/me/saved -H "Authorization: Bearer <TOKE
 ## Security notes
 - Passwords are PBKDF2-SHA256 (100k iterations, per-user salt). Sessions are
   random 256-bit tokens, 30-day expiry.
-- This does NOT fix the pre-existing `ADMIN_API_KEY` + `X-User-Email` bypass in
-  `authenticate()` — still recommended to remove that and rotate the key.
+- The old `ADMIN_API_KEY` + `X-User-Email` admin login was removed from
+  `authenticate()` and the secret deleted on 2026-10-22; admin access is
+  Google sign-in + the `users` table only.
 - The app will send the session/Google token over HTTPS only.

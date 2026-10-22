@@ -53,14 +53,9 @@ async function authenticate(request, env) {
   const authHeader = request.headers.get('Authorization');
   if (!authHeader) return null;
 
-  // API key auth (never expires)
-  if (authHeader === 'Bearer ' + (env.ADMIN_API_KEY || '')) {
-    const email = request.headers.get('X-User-Email') || 'theutahview@gmail.com';
-    const row = await env.DB.prepare('SELECT role FROM users WHERE email = ?').bind(email).first();
-    return { email, name: email.split('@')[0], role: row ? row.role : null };
-  }
-
-  // Google JWT auth (expires after 1 hour)
+  // Google ID token only (expires after 1 hour). The old shared admin API key
+  // login (Bearer ADMIN_API_KEY + X-User-Email) was removed on 2026-10-22
+  // after the key leaked; the editor never used it.
   if (authHeader.startsWith('Bearer ')) {
     try {
       const token = authHeader.slice(7);
@@ -96,7 +91,7 @@ function corsHeaders() {
     'Content-Type': 'application/json',
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-User-Email',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
   };
 }
 
