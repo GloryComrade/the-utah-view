@@ -6,6 +6,8 @@ void main() {
   for (final (name, p) in [
     ('light', AppPalette.light),
     ('dark', AppPalette.dark),
+    ('high-contrast light', AppPalette.highContrastLight),
+    ('high-contrast dark', AppPalette.highContrastDark),
   ]) {
     group('$name palette meets WCAG AA (4.5:1) for text', () {
       final textColors = <String, Color>{

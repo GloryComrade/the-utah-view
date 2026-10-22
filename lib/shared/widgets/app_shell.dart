@@ -3,7 +3,9 @@ import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../core/router/navigation.dart';
+import '../../core/settings/app_settings.dart';
 import '../../core/theme/theme.dart';
+import 'accessibility_panel.dart';
 import 'brand.dart';
 
 /// Which tab was re-tapped (and a counter so repeat taps still notify).
@@ -23,11 +25,15 @@ final tabReselectProvider = NotifierProvider<TabReselectNotifier, (int, int)>(
 void listenForTabReselect(WidgetRef ref, int tab, ScrollController controller) {
   ref.listen(tabReselectProvider, (_, next) {
     if (next.$1 == tab && controller.hasClients) {
-      controller.animateTo(
-        0,
-        duration: const Duration(milliseconds: 350),
-        curve: Curves.easeOutCubic,
-      );
+      if (ref.read(settingsProvider).reduceMotion) {
+        controller.jumpTo(0);
+      } else {
+        controller.animateTo(
+          0,
+          duration: const Duration(milliseconds: 350),
+          curve: Curves.easeOutCubic,
+        );
+      }
     }
   });
 }
@@ -167,6 +173,7 @@ class _DesktopTopNav extends StatelessWidget {
                   const Spacer(),
                   _NavMenu(currentIndex: currentIndex, onSelect: onSelect),
                   const SizedBox(width: 4),
+                  const AccessibilityButton(),
                   IconButton(
                     tooltip: 'Search',
                     icon: const Icon(Icons.search_rounded),

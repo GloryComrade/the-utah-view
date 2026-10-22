@@ -9,6 +9,8 @@ class AppSettings {
   const AppSettings({
     this.themeMode = ThemeMode.system,
     this.readingScale = 1.0,
+    this.highContrast = false,
+    this.reduceMotion = false,
   });
 
   /// Steps offered by A−/A+ and the text-size setting. Applied to article
@@ -17,6 +19,12 @@ class AppSettings {
 
   final ThemeMode themeMode;
   final double readingScale;
+
+  /// Maximum-contrast palette (pure black/white, heavier rules).
+  final bool highContrast;
+
+  /// Suppress non-essential animation (also honors the OS reduce-motion flag).
+  final bool reduceMotion;
 
   int get readingScaleIndex {
     final i = readingScales.indexOf(readingScale);
@@ -34,16 +42,24 @@ class AppSettings {
     _ => 'Largest',
   };
 
-  AppSettings copyWith({ThemeMode? themeMode, double? readingScale}) =>
-      AppSettings(
-        themeMode: themeMode ?? this.themeMode,
-        readingScale: readingScale ?? this.readingScale,
-      );
+  AppSettings copyWith({
+    ThemeMode? themeMode,
+    double? readingScale,
+    bool? highContrast,
+    bool? reduceMotion,
+  }) => AppSettings(
+    themeMode: themeMode ?? this.themeMode,
+    readingScale: readingScale ?? this.readingScale,
+    highContrast: highContrast ?? this.highContrast,
+    reduceMotion: reduceMotion ?? this.reduceMotion,
+  );
 }
 
 class SettingsNotifier extends Notifier<AppSettings> {
   static const _themeKey = 'theme_mode';
   static const _scaleKey = 'reading_scale';
+  static const _contrastKey = 'high_contrast';
+  static const _motionKey = 'reduce_motion';
 
   KeyValueStore get _store => ref.read(appStoresProvider).settings;
 
@@ -55,7 +71,19 @@ class SettingsNotifier extends Notifier<AppSettings> {
     return AppSettings(
       themeMode: mode ?? ThemeMode.system,
       readingScale: AppSettings.readingScales.contains(scale) ? scale! : 1.0,
+      highContrast: store.read(_contrastKey) == 'true',
+      reduceMotion: store.read(_motionKey) == 'true',
     );
+  }
+
+  Future<void> setHighContrast(bool on) async {
+    state = state.copyWith(highContrast: on);
+    await _store.write(_contrastKey, on.toString());
+  }
+
+  Future<void> setReduceMotion(bool on) async {
+    state = state.copyWith(reduceMotion: on);
+    await _store.write(_motionKey, on.toString());
   }
 
   Future<void> setThemeMode(ThemeMode mode) async {

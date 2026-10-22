@@ -13,16 +13,33 @@ import 'app_typography.dart';
 /// result reads like a newspaper app: white pages, no tinted surfaces, no
 /// pill indicators, square-cornered inputs and buttons, thin rules.
 abstract final class AppTheme {
-  static ThemeData light({TargetPlatform? platform}) =>
-      _build(AppPalette.light, Brightness.light, platform);
+  static ThemeData light({
+    TargetPlatform? platform,
+    bool highContrast = false,
+    bool reduceMotion = false,
+  }) => _build(
+    highContrast ? AppPalette.highContrastLight : AppPalette.light,
+    Brightness.light,
+    platform,
+    reduceMotion,
+  );
 
-  static ThemeData dark({TargetPlatform? platform}) =>
-      _build(AppPalette.dark, Brightness.dark, platform);
+  static ThemeData dark({
+    TargetPlatform? platform,
+    bool highContrast = false,
+    bool reduceMotion = false,
+  }) => _build(
+    highContrast ? AppPalette.highContrastDark : AppPalette.dark,
+    Brightness.dark,
+    platform,
+    reduceMotion,
+  );
 
   static ThemeData _build(
     AppPalette p,
     Brightness brightness,
     TargetPlatform? platformOverride,
+    bool reduceMotion,
   ) {
     final platform = platformOverride ?? defaultTargetPlatform;
     final isApple =
@@ -135,13 +152,21 @@ abstract final class AppTheme {
       materialTapTargetSize: MaterialTapTargetSize.padded,
       visualDensity: VisualDensity.standard,
       iconTheme: IconThemeData(color: p.ink, size: 24),
-      pageTransitionsTheme: const PageTransitionsTheme(
-        builders: {
-          TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
-          TargetPlatform.macOS: CupertinoPageTransitionsBuilder(),
-          TargetPlatform.android: FadeForwardsPageTransitionsBuilder(),
-        },
-      ),
+      pageTransitionsTheme: reduceMotion
+          ? const PageTransitionsTheme(
+              builders: {
+                TargetPlatform.iOS: _NoPageTransitionsBuilder(),
+                TargetPlatform.macOS: _NoPageTransitionsBuilder(),
+                TargetPlatform.android: _NoPageTransitionsBuilder(),
+              },
+            )
+          : const PageTransitionsTheme(
+              builders: {
+                TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+                TargetPlatform.macOS: CupertinoPageTransitionsBuilder(),
+                TargetPlatform.android: FadeForwardsPageTransitionsBuilder(),
+              },
+            ),
       cupertinoOverrideTheme: CupertinoThemeData(
         primaryColor: p.accent,
         brightness: brightness,
@@ -365,4 +390,18 @@ abstract final class AppTheme {
       ),
     );
   }
+}
+
+/// Instant page changes, used when reduce-motion is on.
+class _NoPageTransitionsBuilder extends PageTransitionsBuilder {
+  const _NoPageTransitionsBuilder();
+
+  @override
+  Widget buildTransitions<T>(
+    PageRoute<T> route,
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
+  ) => child;
 }

@@ -138,6 +138,46 @@ class AppPalette extends ThemeExtension<AppPalette> {
     highlight: Color(0xFF1C1C20),
   );
 
+  /// Maximum-contrast light palette: pure black text and rules on white.
+  static const highContrastLight = AppPalette(
+    background: Color(0xFFFFFFFF),
+    surfaceMuted: Color(0xFFF2F2F2),
+    ink: Color(0xFF000000),
+    inkSecondary: Color(0xFF000000),
+    inkMuted: Color(0xFF1C1C1C),
+    inkFaint: Color(0xFF404040),
+    rule: Color(0xFF000000),
+    ruleLight: Color(0xFF000000),
+    ruleStrong: Color(0xFF000000),
+    accent: Color(0xFF8A0E19), // deep red, ~11:1 on white
+    accentPressed: Color(0xFF5E0A12),
+    accentFill: Color(0xFFA11121),
+    onAccentFill: Color(0xFFFFFFFF),
+    placeholderStart: Color(0xFFE0E0E0),
+    placeholderEnd: Color(0xFFCFCFCF),
+    highlight: Color(0xFFE8E8E8),
+  );
+
+  /// Maximum-contrast dark palette: pure white text and rules on black.
+  static const highContrastDark = AppPalette(
+    background: Color(0xFF000000),
+    surfaceMuted: Color(0xFF0A0A0A),
+    ink: Color(0xFFFFFFFF),
+    inkSecondary: Color(0xFFFFFFFF),
+    inkMuted: Color(0xFFE0E0E0),
+    inkFaint: Color(0xFFBDBDBD),
+    rule: Color(0xFFFFFFFF),
+    ruleLight: Color(0xFFFFFFFF),
+    ruleStrong: Color(0xFFFFFFFF),
+    accent: Color(0xFFFF9099), // bright red, high contrast on black
+    accentPressed: Color(0xFFFFB8BD),
+    accentFill: Color(0xFFCE1126),
+    onAccentFill: Color(0xFFFFFFFF),
+    placeholderStart: Color(0xFF1A1A1A),
+    placeholderEnd: Color(0xFF2A2A2A),
+    highlight: Color(0xFF1A1A1A),
+  );
+
   @override
   AppPalette copyWith({
     Color? background,

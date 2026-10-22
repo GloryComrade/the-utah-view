@@ -15,6 +15,7 @@ import '../../core/router/navigation.dart';
 import '../../core/settings/app_settings.dart';
 import '../../core/theme/theme.dart';
 import '../../core/utils/links.dart';
+import '../../shared/widgets/accessibility_panel.dart';
 import '../../shared/widgets/app_shell.dart';
 import '../../shared/widgets/brand.dart';
 import '../../shared/widgets/list_rows.dart';
@@ -130,6 +131,13 @@ class _MoreScreenState extends ConsumerState<MoreScreen> {
                 const GroupLabel('Reading'),
                 const _TextSizeSetting(),
                 const _AppearanceSetting(),
+                const GroupLabel('Accessibility'),
+                NavRow(
+                  title: 'Accessibility options',
+                  subtitle: 'High contrast, reduce motion, text size',
+                  serif: false,
+                  onTap: () => showAccessibilitySheet(context),
+                ),
                 const GroupLabel('App'),
                 NavRow(
                   title: 'Visit theutahview.com',

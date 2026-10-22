@@ -6,6 +6,7 @@ import '../../../core/auth/google_auth.dart';
 import '../../../core/auth/google_signin_button.dart';
 import '../../../core/theme/theme.dart';
 import '../../../core/utils/formatters.dart';
+import '../../../shared/widgets/accessibility_panel.dart';
 import '../../../shared/widgets/brand.dart';
 import '../../../shared/widgets/html_image.dart';
 import '../../../shared/widgets/rules.dart';
@@ -80,13 +81,17 @@ class MastheadHeaderDelegate extends SliverPersistentHeaderDelegate {
             right: 0,
             child: Opacity(
               opacity: expandedOpacity,
-              child: _ExpandedMasthead(date: date, logoSize: _logo),
+              child: _ExpandedMasthead(
+                date: date,
+                logoSize: _logo,
+                showSearch: showSearch,
+              ),
             ),
           ),
           Positioned(
             top: topPadding,
             left: 56,
-            right: 56,
+            right: showSearch ? 100 : 56,
             height: toolbarHeight,
             child: Opacity(
               opacity: compactOpacity,
@@ -99,10 +104,16 @@ class MastheadHeaderDelegate extends SliverPersistentHeaderDelegate {
             Positioned(
               top: topPadding + (toolbarHeight - 48) / 2,
               right: 4,
-              child: IconButton(
-                tooltip: 'Search',
-                icon: const Icon(Icons.search_rounded),
-                onPressed: onSearch,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const AccessibilityButton(),
+                  IconButton(
+                    tooltip: 'Search',
+                    icon: const Icon(Icons.search_rounded),
+                    onPressed: onSearch,
+                  ),
+                ],
               ),
             ),
           Positioned(
@@ -128,10 +139,15 @@ class MastheadHeaderDelegate extends SliverPersistentHeaderDelegate {
 }
 
 class _ExpandedMasthead extends StatelessWidget {
-  const _ExpandedMasthead({required this.date, required this.logoSize});
+  const _ExpandedMasthead({
+    required this.date,
+    required this.logoSize,
+    required this.showSearch,
+  });
 
   final DateTime date;
   final double logoSize;
+  final bool showSearch;
 
   @override
   Widget build(BuildContext context) {
@@ -147,8 +163,9 @@ class _ExpandedMasthead extends StatelessWidget {
             height: logoSize,
             child: Center(
               child: Padding(
-                // Keep clear of the search button.
-                padding: const EdgeInsets.symmetric(horizontal: 36),
+                // Keep clear of the sign-in (left) and the accessibility +
+                // search buttons (right).
+                padding: EdgeInsets.only(left: 48, right: showSearch ? 96 : 36),
                 child: Lockup(logoSize: logoSize, wordmarkSize: logoSize * 0.6),
               ),
             ),

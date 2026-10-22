@@ -12,6 +12,7 @@ import 'core/router/navigation.dart';
 import 'core/settings/app_settings.dart';
 import 'core/theme/theme.dart';
 import 'features/saved/saved_stories.dart';
+import 'shared/widgets/skip_link.dart';
 
 class UtahViewApp extends ConsumerWidget {
   const UtahViewApp({super.key});
@@ -19,6 +20,12 @@ class UtahViewApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final themeMode = ref.watch(settingsProvider.select((s) => s.themeMode));
+    final highContrast = ref.watch(
+      settingsProvider.select((s) => s.highContrast),
+    );
+    final reduceMotion = ref.watch(
+      settingsProvider.select((s) => s.reduceMotion),
+    );
     final router = ref.watch(routerProvider);
 
     // Keep local bookmarks pushed to the server while signed in, and merge the
@@ -41,10 +48,25 @@ class UtahViewApp extends ConsumerWidget {
     return MaterialApp.router(
       title: 'The Utah View',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.light(),
-      darkTheme: AppTheme.dark(),
+      theme: AppTheme.light(
+        highContrast: highContrast,
+        reduceMotion: reduceMotion,
+      ),
+      darkTheme: AppTheme.dark(
+        highContrast: highContrast,
+        reduceMotion: reduceMotion,
+      ),
       themeMode: themeMode,
       routerConfig: router,
+      builder: (context, child) {
+        final media = MediaQuery.of(context);
+        // Honor the in-app toggle and the OS reduce-motion setting.
+        final reduce = reduceMotion || media.disableAnimations;
+        return MediaQuery(
+          data: media.copyWith(disableAnimations: reduce),
+          child: withSkipLink(child ?? const SizedBox.shrink()),
+        );
+      },
     );
   }
 }
