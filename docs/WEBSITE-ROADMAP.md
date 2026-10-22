@@ -23,7 +23,7 @@ the new logo) and add animations and features from the later Flutter versions
 | 4 | Text size A− / A+ | A−/A+ buttons in the byline row; five steps (88–140%) like the app; scales paragraphs, subheads, pull quotes, lists; remembered between visits | **Live** 2026-10-22 |
 | 5 | Loading placeholders | Pulsing light-grey bars shaped like the homepage grid, list views, article and static pages while they load (no pulse under reduce motion) | **Live** 2026-10-22 |
 | 6 | Briefing: tap to see all | Scrolling bar kept, with a "See all ›" hint; tap/Enter opens the full list (panel on desktop, bottom sheet on phones; Esc/×/outside closes); a blank briefing hides the bar. Bar shrunk to 34px. Editor: headlines one per line, plus website bar height (Slim 27 / Normal 34 / Tall 44px) and scroll speed (Slow 45s / Normal 30s / Fast 20s), saved as `ticker_height` / `ticker_speed` in the layout (the app ignores them) | **Live** 2026-10-22 |
-| 7 | Listen (read aloud) | Browser speech; play/pause/stop | |
+| 7 | Listen (read aloud) | Browser speech (Web Speech API, en-US local voice preferred): ▶ Listen / ❚❚ Pause / ▶ Resume / ■ Stop in the byline row; reads headline, summary, then the text (no captions) in ≤~240-char pieces split at sentence ends, not abbreviations; hidden where unsupported; stops on leaving the page | **Live** 2026-10-22 |
 | 8 | Search | Find stories by headline, author or region as you type | |
 | 9 | Smooth page changes | Quick fade (about 0.25s); browsers without support load normally | |
 | 10 | Shrinking masthead | **Computers only**; phones keep the header as it is | |
