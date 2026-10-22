@@ -26,7 +26,7 @@ the new logo) and add animations and features from the later Flutter versions
 | 7 | Listen (read aloud) | Browser speech (Web Speech API, en-US local voice preferred): ▶ Listen / ❚❚ Pause / ▶ Resume / ■ Stop in the byline row; reads headline, summary, then the text (no captions) in ≤~240-char pieces split at sentence ends, not abbreviations; hidden where unsupported; stops on leaving the page | **Live** 2026-10-22 |
 | 8 | Search | Shared `site/search.js`: "Search" in the top bar (magnifier only on phones) or the / key opens a panel; results as you type, same rules as the app (every word in headline/author/region/summary, accents ignored, headline matches first, then newest); highlighted words; ↑↓ + Enter; Esc/×/outside closes; full screen on phones | **Live** 2026-10-22 |
 | 9 | Smooth page changes | CSS cross-document view transitions (`@view-transition`) on all five public pages: 0.25s cross-fade; Chrome/Edge 126+ and Safari 18.2+ fade, others (Firefox) load normally; off under reduce motion | **Live** 2026-10-22 |
-| 10 | Shrinking masthead | **Computers only**; phones keep the header as it is | |
+| 10 | Shrinking masthead | **Computers only** (>900px): a slim white bar (28px logo + name, section links, search) slides down and pins once the masthead's section menu scrolls away, and hides on the way back up; section links drop out under 1040px; the big masthead itself is unchanged; logo scrolls to top on the front page | **Live** 2026-10-22 |
 | 11 | Dark mode | Follows the device setting, plus a sun/moon switch in the top bar | |
 
 Not wanted (for now): the accessibility panel.

@@ -205,6 +205,24 @@ body { font-family:var(--serif); color:var(--black); background:var(--white); -w
   .sub-input { border-right:1px solid var(--gray-200); }
 }
 @media print { .ticker-bar,.sub-banner,.main-nav,.top-bar { display:none; } body { font-size:11pt; } .container { max-width:100%; } }
+/* Shrinking masthead (computers only): a slim pinned bar slides in once the big
+   masthead and section menu have scrolled away. */
+.mini-mast { position:fixed; top:0; left:0; right:0; z-index:400; background:var(--white); border-bottom:2px solid var(--black); transform:translateY(-105%); transition:transform .22s ease; }
+.mini-mast.show { transform:none; box-shadow:0 2px 10px rgba(0,0,0,.06); }
+.mini-mast-inner { display:flex; align-items:center; gap:24px; height:52px; }
+.mini-lockup { display:flex; align-items:center; gap:10px; text-decoration:none; flex-shrink:0; }
+.mini-lockup svg { width:28px; height:28px; }
+.mini-title { font-family:var(--sans); font-size:16px; font-weight:800; letter-spacing:1px; text-transform:uppercase; color:var(--black); }
+.mini-lockup:hover .mini-title { color:var(--red); }
+.mini-nav { display:flex; gap:18px; flex:1; justify-content:center; flex-wrap:nowrap; overflow:hidden; }
+.mini-nav a { font-family:var(--sans); font-size:12.5px; font-weight:600; color:var(--gray-700); text-decoration:none; white-space:nowrap; }
+.mini-nav a:hover, .mini-nav a.active { color:var(--red); }
+.mini-search { margin-left:auto; flex-shrink:0; display:inline-flex; align-items:center; gap:6px; background:none; border:none; cursor:pointer; font-family:var(--sans); font-size:12.5px; color:var(--gray-500); padding:4px 0; }
+.mini-search:hover { color:var(--red); }
+@media (max-width:1040px) { .mini-nav { display:none; } }
+@media (max-width:900px) { .mini-mast { display:none; } }
+@media (prefers-reduced-motion: reduce) { .mini-mast { transition:none; } }
+@media print { .mini-mast { display:none; } }
 /* Smooth page changes: a quick cross-fade between pages of this site (browsers
    without cross-document view transitions just load normally). */
 @view-transition { navigation: auto; }
@@ -252,6 +270,13 @@ body { font-family:var(--serif); color:var(--black); background:var(--white); -w
   <nav class="main-nav" id="mainNav">
     <a href="?cat=The Americas">The Americas</a><a href="?cat=Europe">Europe</a><a href="?cat=Asia-Pacific">Asia-Pacific</a><a href="?cat=Middle East">Middle East</a><a href="?cat=Africa">Africa</a><a href="?cat=Analysis">Analysis</a><a href="?cat=Opinion">Opinion</a><a href="?cat=Data">Data</a>
   </nav>
+</div>
+<div class="mini-mast" id="miniMast" aria-hidden="true" inert>
+  <div class="container"><div class="mini-mast-inner">
+    <a class="mini-lockup" href="index.html" id="miniHome" aria-label="The Utah View home"><span id="miniLogo"></span><span class="mini-title">The Utah View</span></a>
+    <nav class="mini-nav" id="miniNav" aria-label="Sections"></nav>
+    <button class="mini-search" type="button" onclick="window.openSearch&&openSearch()" aria-label="Search stories"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M20 20l-4.6-4.6"/></svg>Search</button>
+  </div></div>
 </div>
 <div class="ticker-bar" role="button" tabindex="0" aria-haspopup="dialog" aria-label="Briefing: show all items" onclick="openBriefing()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openBriefing()}">
   <div class="container"><div class="ticker-inner"><span class="ticker-label">Briefing</span><span class="ticker-text" id="tickerText"></span><span class="ticker-more" aria-hidden="true">See all &rsaquo;</span></div></div>
@@ -310,6 +335,16 @@ function setBriefing(t,L){BRIEF=String(t).split(/\s*[•·|]\s*/).map(function(x
 function openBriefing(){if(!BRIEF.length)return;var l=document.getElementById('briefList');l.innerHTML='';BRIEF.forEach(function(t){var li=document.createElement('li');li.textContent=t;l.appendChild(li)});briefReturn=document.activeElement;document.getElementById('briefOverlay').hidden=false;document.body.style.overflow='hidden';document.getElementById('briefClose').focus()}
 function closeBriefing(){var o=document.getElementById('briefOverlay');if(o.hidden)return;o.hidden=true;document.body.style.overflow='';if(briefReturn&&briefReturn.focus)briefReturn.focus()}
 document.addEventListener('keydown',function(e){if(e.key==='Escape')closeBriefing()});
+// Shrinking masthead: show the slim bar once the section menu has scrolled
+// above the window (computers only; hidden by CSS on smaller screens).
+(function(){var mm=document.getElementById('miniMast'),nav=document.getElementById('mainNav');if(!mm||!nav||!('IntersectionObserver' in window))return;
+  var logo=document.querySelector('.masthead-logo-row svg');if(logo){var c=logo.cloneNode(true);c.setAttribute('width','28');c.setAttribute('height','28');c.setAttribute('aria-hidden','true');document.getElementById('miniLogo').appendChild(c)}
+  var built=false;function build(){if(built)return;built=true;var mn=document.getElementById('miniNav');nav.querySelectorAll('a').forEach(function(a){var x=a.cloneNode(true);x.removeAttribute('id');mn.appendChild(x)})}
+  function show(on){if(on){build();mm.classList.add('show');mm.removeAttribute('inert');mm.setAttribute('aria-hidden','false')}else{mm.classList.remove('show');mm.setAttribute('inert','');mm.setAttribute('aria-hidden','true')}}
+  new IntersectionObserver(function(es){var e=es[0];show(!e.isIntersecting&&e.boundingClientRect.top<0)}).observe(nav);
+  // On the front page itself, the logo scrolls back to the top instead of reloading.
+  document.getElementById('miniHome').addEventListener('click',function(ev){if(location.search)return;ev.preventDefault();window.scrollTo({top:0,behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'})});
+})();
 function renderHome(){
   var L=LC,S=SC,tk=document.getElementById('tickerText');if(tk)tk.textContent=L.ticker||'';setBriefing(L.ticker||'',L);var h='';
   var lead=S[L.hero_lead],sec=S[L.hero_secondary],ctr=S[L.hero_center];
