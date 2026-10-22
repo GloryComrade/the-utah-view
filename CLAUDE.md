@@ -33,6 +33,14 @@ standalone **admin editor** at `site/editor.html`.
 - The apps share and deep-link the same URLs (`article.html?id=`,
   `page.html?p=`, `?cat=`, `?view=`), so links work in both.
 
+## Logo (everywhere)
+- One mark for the app, website, icons and splash: `assets/brand/logo.svg`,
+  traced from Ryan's artwork `tool/brand_assets/logo-source.png` (red `#B53816`,
+  white counters). The app draws it with `UtvLogoPainter` (brand.dart); every
+  PNG (app icon, adaptive/themed icon, splash, `logo.png`, web icons, the site's
+  `favicon.png`/`apple-touch-icon.png`/`logo.png`) and the inline SVGs in
+  `site/*.html` come from that one vector. Pipeline: `tool/brand_assets/vectorize_logo.py`.
+
 ## App design system (2026 red/white redesign — Flutter app only)
 - **Two fonts only.** `ArchivoBlack` for the "THE UTAH VIEW" wordmark (an
   Arial Black stand-in — Arial can't be bundled); **Newsreader** for everything

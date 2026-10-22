@@ -11,12 +11,17 @@ abstract final class BrandColors {
   /// Deep red — accent text, links and pressed fills (AA on white and grey).
   static const redDark = Color(0xFFA11121);
 
+  /// The logo's own red (the mark artwork's color, used only by the logo).
+  static const logo = Color(0xFFB53816);
+
   /// Near-black ink — a neutral, not a mid-tone.
   static const ink = Color(0xFF15171B);
   static const gray700 = Color(0xFF2C3036); // secondary text
   static const gray500 = Color(0xFF4F545C); // metadata
   static const gray400 = Color(0xFF7A7F88); // icons / decoration (≥3:1)
-  static const gray300 = Color(0xFFA2A9AF); // decorative mid-grey ONLY, never text
+  static const gray300 = Color(
+    0xFFA2A9AF,
+  ); // decorative mid-grey ONLY, never text
   static const gray200 = Color(0xFFE3E3E3); // hairline rules
   static const gray100 = Color(0xFFEEEEEF); // light hairline
   static const gray50 = Color(0xFFF2F2F3); // tinted panels
