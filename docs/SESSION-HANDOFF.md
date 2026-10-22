@@ -195,9 +195,15 @@ Git carries everything except a few machine-local items. In order:
    `A9:17:9A:3F:CD:11:72:97:5F:85:E2:F2:8C:DD:E7:B9:9E:2C:7E:28`
    (check with `keytool -printcert -jarfile <aab>`).
 5. **iOS builds need a Mac** with Xcode, signed in to the Apple ID for team
-   `WJV7UGJ2AS`; phones are installed with `xcrun devicectl` (command in §3
-   of the old workflow notes below and `docs/RELEASE.md`). On Windows only
-   web/Android are possible.
+   `WJV7UGJ2AS` (on Windows only web/Android are possible). Build and install
+   to a plugged-in, unlocked iPhone (`xcrun devicectl list devices` shows
+   whether it's "available"):
+   ```bash
+   flutter build ios --release
+   xcrun devicectl device install app --device 00008130-001E258138A1401C build/ios/iphoneos/Runner.app   # iPhone 15 Pro
+   xcrun devicectl device install app --device 00008140-000E39AA0C28801C build/ios/iphoneos/Runner.app   # iPhone 16 Pro
+   ```
+   Android release bundle: `flutter build appbundle --release` (needs step 4).
 6. **Claude Code memory does not transfer** (it lives in `~/.claude` on each
    machine). This file + `CLAUDE.md` + `docs/WEBSITE-ROADMAP.md` are the
    source of truth. Start the first session with:
