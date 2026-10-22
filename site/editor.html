@@ -462,18 +462,35 @@ function getImgUrl(cb){
 function sPv(){var el=$('spv');if(!el)return;var img=$('fimg')?$('fimg').value.trim():'',cap=$('fcap')?$('fcap').value.trim():'',cred=$('fcred')?$('fcred').value.trim():'';var lead=img?'<img src="'+esc(img)+'" style="width:100%;border-radius:4px;display:block">'+((cap||cred)?'<div style="font-size:12px;color:#777;margin:6px 0 14px">'+esc(cap)+(cap&&cred?' — ':'')+esc(cred)+'</div>':'<div style="margin-bottom:14px"></div>'):'';el.innerHTML=lead+'<div class="pr">'+esc($('fr')?$('fr').value:'')+'</div><div class="pt">'+(esc($('ft').value)||'Untitled')+'</div><div class="ps">'+esc($('fsum')?$('fsum').value:'')+'</div><div class="pm">By <b>'+esc($('fa')?$('fa').value:'')+'</b></div><div class="pc">'+($('fbody')?$('fbody').innerHTML:'')+'</div>'}
 function collectStory(status){
   var t=$('ft').value.trim(),a=$('fa').value.trim();
-  var id=editId||t.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').substring(0,60)||('story-'+Date.now());
+  var id=editId||freeId(t.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').substring(0,60)||('story-'+Date.now()));
   var rt=$('frt').value.trim();
   return {id:id,title:t,author:a,region:$('fr').value,status:status,summary:$('fsum').value.trim(),
     body:$('fbody').innerHTML,read_time:rt,readTime:rt,date:$('fd').value||today(),
     image_url:$('fimg')?$('fimg').value.trim():'',image_caption:$('fcap')?$('fcap').value.trim():'',image_credit:$('fcred')?$('fcred').value.trim():''};
 }
+// A new story's address comes from its headline. If that address is already
+// taken (by any story, draft or live), add -2, -3… so it never replaces it.
+function freeId(base,taken){var S=stories(),id=base,n=1;while(S[id]||(taken&&taken[id]))id=base+'-'+(++n);return id}
+// Create a new story. If the server says the address is taken (a story this
+// browser hasn't seen yet), try the next free one.
+function createStory(d,base,taken,tries){
+  if(!apiOk){toast('⚠️ Not connected — story not saved. Try again in a moment.');return Promise.resolve(false);}
+  base=base||d.id;taken=taken||{};tries=tries||0;
+  return api('POST','/api/admin/stories',d).then(function(r){
+    if(r.status===409&&tries<20){taken[d.id]=1;d.id=freeId(base,taken);return createStory(d,base,taken,tries+1);}
+    if(!r.ok){toast(r.status===401||r.status===403?'⚠️ Not authorized':'⚠️ Save error');return false;}
+    return true;
+  }).catch(function(){toast('⚠️ Network error');return false;});
+}
 function saveFromForm(status){
   var t=$('ft').value.trim(),a=$('fa').value.trim();
   if(!t||!a){toast('⚠️ Headline and author are required');return;}
-  var d=collectStory(status);var existed=!!stories()[d.id];
-  var S=stories();S[d.id]=d;s('utv_stories',S);editId=d.id;
-  saveStory(d,existed).then(function(){
+  var d=collectStory(status),existed=!!editId,S=stories();
+  if(existed){S[d.id]=d;s('utv_stories',S);}
+  (existed?saveStory(d,true):createStory(d)).then(function(ok){
+    // On failure stay on the form (the error toast is showing) so nothing typed is lost.
+    if(!ok)return;
+    if(!existed){S=stories();S[d.id]=d;s('utv_stories',S);editId=d.id;}
     toast(status==='published'?'✅ Published — live now':'💾 Draft saved');
     go('stories');
   });
