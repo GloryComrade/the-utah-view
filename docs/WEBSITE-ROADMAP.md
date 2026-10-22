@@ -20,7 +20,7 @@ the new logo) and add animations and features from the later Flutter versions
 | 1 | Reading progress bar | 3px bar in the site red, pinned to the top of the window; full at the end of the article text | **Live** 2026-10-22 |
 | 2 | Styled quotes & captions | Pull quotes large italic with a red rule (back-to-back quote blocks joined on display; writer's bold kept); small grey captions under in-article photos | **Live** 2026-10-22 |
 | 3 | Lead photo + credit | Story's lead image after the headline/byline, text-column width, max 560px tall (cropped toward the top); caption + italic credit | **Live** 2026-10-22 |
-| 4 | Text size A− / A+ | A−/A+ buttons in the byline row; five steps (88–140%) like the app; scales paragraphs, subheads, pull quotes, lists; remembered between visits | Committed, preview only (not live yet) |
+| 4 | Text size A− / A+ | A−/A+ buttons in the byline row; five steps (88–140%) like the app; scales paragraphs, subheads, pull quotes, lists; remembered between visits | **Live** 2026-10-22 |
 | 5 | Loading placeholders | Pulsing grey bars while stories load (no pulse under reduce motion) | |
 | 6 | Briefing: tap to see all | Keep the scrolling Briefing bar; tapping opens the full list | |
 | 7 | Listen (read aloud) | Browser speech; play/pause/stop | |
