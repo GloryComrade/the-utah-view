@@ -4,7 +4,7 @@
     "start_url": ".",
     "display": "standalone",
     "background_color": "#FFFFFF",
-    "theme_color": "#B53816",
+    "theme_color": "#CE1126",
     "description": "Global politics, every region, every month.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,

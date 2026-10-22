@@ -65,6 +65,8 @@ void main() {
       logoFraction: 0.46,
       painter: const UtvLogoPainter(color: Color(0xFF000000), innerColor: null),
     );
+    // Runtime mark used in the masthead and app bars (transparent canvas).
+    await _render('$dir/logo.png', size: 512, logoFraction: 1);
     // iOS / pre-12 Android splash, authored at 4x (120pt logo).
     await _render('$dir/splash_logo.png', size: 480, logoFraction: 1);
     // Android 12+ splash: 288dp icon area at 4x, logo inside the 192dp
