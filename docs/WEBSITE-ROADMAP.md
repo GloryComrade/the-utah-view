@@ -21,7 +21,7 @@ the new logo) and add animations and features from the later Flutter versions
 | 2 | Styled quotes & captions | Pull quotes large italic with a red rule (back-to-back quote blocks joined on display; writer's bold kept); small grey captions under in-article photos | **Live** 2026-10-22 |
 | 3 | Lead photo + credit | Story's lead image after the headline/byline, text-column width, max 560px tall (cropped toward the top); caption + italic credit | **Live** 2026-10-22 |
 | 4 | Text size A− / A+ | A−/A+ buttons in the byline row; five steps (88–140%) like the app; scales paragraphs, subheads, pull quotes, lists; remembered between visits | **Live** 2026-10-22 |
-| 5 | Loading placeholders | Pulsing grey bars while stories load (no pulse under reduce motion) | |
+| 5 | Loading placeholders | Pulsing light-grey bars shaped like the homepage grid, list views, article and static pages while they load (no pulse under reduce motion) | **Live** 2026-10-22 |
 | 6 | Briefing: tap to see all | Keep the scrolling Briefing bar; tapping opens the full list | |
 | 7 | Listen (read aloud) | Browser speech; play/pause/stop | |
 | 8 | Search | Find stories by headline, author or region as you type | |
