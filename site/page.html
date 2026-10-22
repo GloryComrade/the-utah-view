@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Page | The Utah View</title>
+<style>
+:root { --red: #C4352A; --red-dark: #9E2A22; --black: #121212; --gray-700: #333; --gray-500: #666; --gray-400: #888; --gray-200: #d4d4d4; --gray-100: #eee; --gray-50: #f7f7f7; --white: #fff; --serif: 'Georgia','Times New Roman','Times',serif; --sans: 'Helvetica Neue','Arial',sans-serif; }
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: var(--serif); color: var(--black); background: var(--white); -webkit-font-smoothing: antialiased; line-height: 1.6; }
+.container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+.narrow { max-width: 720px; margin: 0 auto; padding: 0 20px; }
+.top-bar { padding: 8px 0; border-bottom: 1px solid var(--gray-200); font-family: var(--sans); font-size: 12px; color: var(--gray-500); display: flex; justify-content: space-between; align-items: center; }
+.top-bar-links { display: flex; align-items: center; gap: 6px; }
+.top-bar-links a { color: var(--gray-500); text-decoration: none; padding: 2px 8px; }
+.top-bar-links a:hover { color: var(--red); }
+.header-bar { padding: 14px 0; border-bottom: 2px solid var(--black); display: flex; align-items: center; justify-content: center; gap: 12px; }
+.header-logo-text { font-family: var(--sans); font-size: 18px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; color: var(--black); text-decoration: none; }
+.header-logo-text:hover { color: var(--red); }
+.page-header { padding: 40px 0 24px; border-bottom: 1px solid var(--gray-200); margin-bottom: 32px; }
+.page-title { font-size: clamp(28px, 5vw, 42px); font-weight: 700; line-height: 1.12; margin-bottom: 8px; }
+.page-subtitle { font-size: 18px; color: var(--gray-500); line-height: 1.45; }
+.page-body { padding-bottom: 72px; }
+.page-body p { font-size: 18px; line-height: 1.7; margin-bottom: 20px; color: var(--gray-700); }
+.page-body h3 { font-size: 24px; font-weight: 700; margin: 36px 0 16px; color: var(--black); }
+.page-body strong { color: var(--black); }
+.page-body img { max-width: 100%; height: auto; border-radius: 4px; margin: 16px 0; }
+.page-body blockquote { border-left: 3px solid var(--red); padding-left: 16px; color: var(--gray-500); font-style: italic; margin: 16px 0; }
+.page-body ul, .page-body ol { padding-left: 24px; margin-bottom: 16px; font-size: 18px; line-height: 1.7; color: var(--gray-700); }
+.page-body a { color: var(--red); }
+.not-found { text-align: center; padding: 80px 20px 72px; }
+.not-found h1 { font-size: 36px; margin-bottom: 12px; }
+.not-found p { font-size: 18px; color: var(--gray-500); margin-bottom: 24px; }
+.not-found a { font-family: var(--sans); font-size: 14px; color: var(--red); text-decoration: none; font-weight: 600; }
+@media print { .top-bar, .header-bar { display: none; } .narrow { max-width: 100%; } }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="top-bar">
+    <span style="letter-spacing:0.5px" id="todayDate"></span>
+    <div class="top-bar-links">
+      <a href="index.html">Home</a>
+      <a href="index.html?view=archive">Archive</a>
+      <a href="page.html?p=our-mission">About</a>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="header-bar">
+    <svg width="28" height="28" viewBox="0 0 100 100" fill="none"><path d="M4 4 H40 V16 H16 V52 H4 Z" fill="#C4352A"/><path d="M20 20 H56 V32 H32 V68 H20 Z" fill="#C4352A"/><rect x="40" y="40" width="56" height="56" fill="#C4352A"/><rect x="48" y="48" width="40" height="40" fill="white"/><text x="68" y="76" text-anchor="middle" font-family="'Helvetica Neue',Arial,sans-serif" font-size="24" font-weight="700" fill="#C4352A">UT</text></svg>
+    <a class="header-logo-text" href="index.html">The Utah View</a>
+  </div>
+</div>
+
+<div id="pageContent"></div>
+
+<script>
+var API = 'https://api.theutahview.com';
+
+function renderPage() {
+  var params = new URLSearchParams(window.location.search);
+  var slug = params.get('p');
+  var el = document.getElementById('pageContent');
+  if (!slug) { showNotFound(el); return; }
+
+  fetch(API + '/api/pages/' + slug)
+    .then(function(r) { if (!r.ok) throw new Error('Not found'); return r.json(); })
+    .then(function(page) {
+      document.title = page.title + ' | The Utah View';
+      var html = '<div class="narrow"><div class="page-header"><h1 class="page-title">' + page.title + '</h1>';
+      if (page.subtitle) html += '<p class="page-subtitle">' + page.subtitle + '</p>';
+      html += '</div><div class="page-body">' + page.body + '</div></div>';
+      el.innerHTML = html;
+    })
+    .catch(function() {
+      var pages = {};
+      try { pages = JSON.parse(localStorage.getItem('utv_pages')) || {}; } catch(e) {}
+      var page = pages[slug];
+      if (!page) { showNotFound(el); return; }
+      document.title = page.title + ' | The Utah View';
+      var html = '<div class="narrow"><div class="page-header"><h1 class="page-title">' + page.title + '</h1>';
+      if (page.subtitle) html += '<p class="page-subtitle">' + page.subtitle + '</p>';
+      html += '</div><div class="page-body">' + page.body + '</div></div>';
+      el.innerHTML = html;
+    });
+}
+
+function showNotFound(el) {
+  el.innerHTML = '<div class="narrow"><div class="not-found"><h1>Page not found</h1><p>This page doesn\'t exist yet.</p><a href="index.html">← Back to The Utah View</a></div></div>';
+  document.title = 'Not Found | The Utah View';
+}
+
+document.getElementById('todayDate').textContent = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+renderPage();
+</script>
+</body>
+</html>

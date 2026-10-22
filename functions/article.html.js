@@ -1,12 +1,14 @@
-// Cloudflare Pages Function: serves the Flutter app shell for /article.html,
-// but injects per-story Open Graph/Twitter tags so shared links preview the
-// actual story (title + summary) instead of the generic site. Humans still get
-// the app, which deep-links to the story; crawlers get rich metadata.
+// Cloudflare Pages Function: serves the static article page (site/article.html)
+// for /article.html, but injects per-story Open Graph/Twitter tags so shared
+// links preview the actual story (title + summary) instead of the generic page.
+// Humans get the normal article page; crawlers get rich metadata.
 export async function onRequest(context) {
   const { request, env } = context;
   const url = new URL(request.url);
   const id = url.searchParams.get('id');
-  const shell = await env.ASSETS.fetch(new URL('/index.html', url));
+  // "/article", not "/article.html": Pages answers the .html path with a
+  // pretty-URL redirect instead of the page.
+  const shell = await env.ASSETS.fetch(new URL('/article', url));
   if (!id) return shell;
   let html = await shell.text();
   try {
@@ -32,7 +34,7 @@ export async function onRequest(context) {
         '<meta name="twitter:description" content="' + desc + '">';
       html = html.replace(/<title>[\s\S]*?<\/title>/i, og);
     }
-  } catch (e) { /* fall back to the plain shell */ }
+  } catch (e) { /* fall back to the plain page */ }
   return new Response(html, {
     headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' },
   });

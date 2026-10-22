@@ -5,11 +5,14 @@ machine. Keep this file current when workflows change.
 
 ## What this is
 **The Utah View** (theutahview.com) — a monthly global-politics publication based
-in Salt Lake City. This repo is one Flutter codebase that ships **iOS, Android,
-and web** from `lib/`, plus a **Cloudflare** backend in `backend/` and
-`functions/`, and a standalone **admin editor** at `web/editor.html`.
+in Salt Lake City. This repo holds the **website** (a hand-written static site
+in `site/`), one Flutter codebase that ships the **iOS and Android apps** from
+`lib/`, a **Cloudflare** backend in `backend/` and `functions/`, and a
+standalone **admin editor** at `site/editor.html`.
 
-- Live site + web app: https://theutahview.com (Cloudflare Pages project `the-utah-view`)
+- Website: https://theutahview.com (Cloudflare Pages project `the-utah-view`,
+  production branch `main`) — deployed from `site/`, **not** from the Flutter
+  web build. The Flutter web build is dev-only; never deploy it to production.
 - API: https://api.theutahview.com (Cloudflare Worker `utv-api`)
 - Admin editor: https://theutahview.com/editor (Google sign-in only)
 - Repo: https://github.com/GloryComrade/the-utah-view (**PUBLIC** — never commit secrets)
@@ -17,7 +20,20 @@ and web** from `lib/`, plus a **Cloudflare** backend in `backend/` and
 > **Resuming a session?** Read **`docs/SESSION-HANDOFF.md`** first — current
 > deploy/device state, environment gotchas, and what the last redesign changed.
 
-## Design system (2026 red/white redesign)
+## The website (`site/`)
+- Plain HTML/CSS/JS, no build step: `index.html` (front page, sections, archive,
+  saved), `article.html?id=…`, `page.html?p=…`, plus `editor.html`,
+  `privacy.html`, `delete-account.html`, `logo.png`, `_headers`.
+- `index.html`, `article.html` and `page.html` are the original May 2026 site
+  (Pages deployment `e233abd9`), restored 2026-10-21 at Ryan's request. They
+  read the live API (`/api/stories`, `/api/config/layout`, `/api/config/site`).
+  Their look is separate from the app's: Georgia/Helvetica, red `#C4352A`.
+- `functions/article.html.js` serves `site/article.html` with per-story share
+  (Open Graph) tags injected.
+- The apps share and deep-link the same URLs (`article.html?id=`,
+  `page.html?p=`, `?cat=`, `?view=`), so links work in both.
+
+## App design system (2026 red/white redesign — Flutter app only)
 - **Two fonts only.** `ArchivoBlack` for the "THE UTAH VIEW" wordmark (an
   Arial Black stand-in — Arial can't be bundled); **Newsreader** for everything
   else. `AppFonts.sans`/`body` deliberately alias to Newsreader, so all UI chrome
@@ -38,7 +54,8 @@ and web** from `lib/`, plus a **Cloudflare** backend in `backend/` and
 | Path | What |
 |------|------|
 | `lib/` | The Flutter app (Riverpod + go_router + dio). Features in `lib/features/`, shared in `lib/shared/`, core/api/auth/theme in `lib/core/`. |
-| `web/` | Web shell. **`web/editor.html`** is the admin console (plain HTML/JS, no framework). `_redirects`, `_headers` ship with the build. |
+| `site/` | **The website** as deployed (static HTML). **`site/editor.html`** is the admin console (plain HTML/JS, no framework). |
+| `web/` | Flutter web shell (dev/preview only — not deployed). |
 | `backend/deploy/` | The Worker (`worker.js`) + `wrangler.toml`. D1/R2/KV bindings. |
 | `backend/migrations/` | D1 SQL migrations (already applied to production). |
 | `functions/` | Cloudflare **Pages Functions** (e.g. `article.html.js` injects per-story share/OG meta). Must stay at repo root, not inside `build/`. |
@@ -61,9 +78,8 @@ Install the **Flutter**, **Dart**, and **Claude Code** VS Code extensions.
 
 ## Common commands
 ```bash
-flutter run -d chrome                # web preview (works without Xcode/Android SDK)
+flutter run -d chrome                # app preview in Chrome (dev only; the website is site/)
 flutter test                         # on the Mac, prefix: NO_PROXY=localhost,127.0.0.1,::1 flutter test
-flutter build web --release          # output in build/web
 dart run build_runner build --delete-conflicting-outputs   # only after editing a @freezed / json model
 ```
 Note: `pubspec.yaml` pins `analyzer: '>=14.0.0 <14.5.0'` (build_runner 2.16.1
@@ -71,18 +87,19 @@ incompatibility). Don't bump it without testing codegen.
 
 ## Deploy
 ```bash
-# Web / editor (Pages). editor.html lives in web/, so it's copied by the build.
-flutter build web --release
-wrangler pages deploy build/web --project-name=the-utah-view
+# Website + editor (Pages): ship site/ as-is, from the repo root so the
+# functions/ directory is picked up. --branch=main is production; any other
+# branch name makes a preview at <branch>.the-utah-view.pages.dev.
+wrangler pages deploy site --project-name=the-utah-view --branch=main
 
 # Backend Worker
 wrangler deploy --config backend/deploy/wrangler.toml
 ```
-After editing only `web/editor.html`, you can `cp web/editor.html build/web/editor.html`
-and redeploy without a full rebuild. **Always `node --check` the editor's JS before
-deploying** (a past single-quote bug blanked the site).
+**Always syntax-check the pages' inline JS before deploying** (a past single-quote
+bug blanked the site). Preview first (`--branch=preview`), look at it, then
+deploy `--branch=main`.
 
-## Admin editor (`web/editor.html`)
+## Admin editor (`site/editor.html`)
 - **Google sign-in only**; no admin key in the source. Access is gated by the
   `users` table (admin/editor roles), managed in the **Access** panel.
 - Google ID tokens expire ~1h; the editor silently re-issues one before admin

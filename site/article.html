@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Article | The Utah View</title>
+<style>
+:root { --red: #C4352A; --red-dark: #9E2A22; --black: #121212; --gray-700: #333; --gray-500: #666; --gray-400: #888; --gray-200: #d4d4d4; --gray-100: #eee; --gray-50: #f7f7f7; --white: #fff; --serif: 'Georgia','Times New Roman','Times',serif; --sans: 'Helvetica Neue','Arial',sans-serif; }
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: var(--serif); color: var(--black); background: var(--white); -webkit-font-smoothing: antialiased; line-height: 1.6; }
+.container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+.narrow { max-width: 720px; margin: 0 auto; padding: 0 20px; }
+.top-bar { padding: 8px 0; border-bottom: 1px solid var(--gray-200); font-family: var(--sans); font-size: 12px; color: var(--gray-500); display: flex; justify-content: space-between; align-items: center; }
+.top-bar-links { display: flex; align-items: center; gap: 6px; }
+.top-bar-links a { color: var(--gray-500); text-decoration: none; padding: 2px 8px; }
+.top-bar-links a:hover { color: var(--red); }
+.g-btn { display: inline-flex; align-items: center; gap: 8px; padding: 5px 14px; font-family: var(--sans); font-size: 12px; font-weight: 600; color: var(--gray-700); background: var(--white); border: 1px solid var(--gray-200); border-radius: 3px; cursor: pointer; }
+.g-btn:hover { border-color: var(--gray-400); background: var(--gray-50); }
+.user-pill { display: none; align-items: center; gap: 8px; cursor: pointer; position: relative; font-family: var(--sans); font-size: 12px; }
+.user-pill.active { display: inline-flex; }
+.user-avatar { width: 26px; height: 26px; border-radius: 50%; background: var(--red); color: var(--white); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; }
+.user-name { font-weight: 600; color: var(--gray-700); }
+.user-drop { display: none; position: absolute; top: calc(100% + 8px); right: 0; background: var(--white); border: 1px solid var(--gray-200); box-shadow: 0 4px 16px rgba(0,0,0,0.1); min-width: 200px; z-index: 200; }
+.user-drop.open { display: block; }
+.user-drop a, .user-drop button { display: block; width: 100%; text-align: left; padding: 10px 16px; font-family: var(--sans); font-size: 13px; color: var(--gray-700); text-decoration: none; border: none; background: none; border-bottom: 1px solid var(--gray-100); cursor: pointer; }
+.user-drop a:last-child, .user-drop button:last-child { border-bottom: none; }
+.user-drop a:hover, .user-drop button:hover { background: var(--gray-50); color: var(--red); }
+.user-drop-email { padding: 10px 16px; font-family: var(--sans); font-size: 11px; color: var(--gray-400); border-bottom: 1px solid var(--gray-200); }
+.header-bar { padding: 14px 0; border-bottom: 2px solid var(--black); display: flex; align-items: center; justify-content: center; gap: 12px; }
+.header-logo-text { font-family: var(--sans); font-size: 18px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; color: var(--black); text-decoration: none; }
+.header-logo-text:hover { color: var(--red); }
+.article-header { padding: 40px 0 24px; border-bottom: 1px solid var(--gray-200); margin-bottom: 32px; }
+.article-region { font-family: var(--sans); font-size: 12px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--red); margin-bottom: 12px; }
+.article-title { font-size: clamp(28px, 5vw, 42px); font-weight: 700; line-height: 1.12; margin-bottom: 16px; }
+.article-summary { font-size: 20px; line-height: 1.45; color: var(--gray-500); margin-bottom: 16px; }
+.article-meta { font-family: var(--sans); font-size: 13px; color: var(--gray-400); display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.article-meta strong { color: var(--black); font-weight: 600; }
+.article-actions { display: flex; gap: 8px; margin-left: auto; }
+.action-btn { font-family: var(--sans); font-size: 12px; padding: 6px 14px; border: 1px solid var(--gray-200); background: var(--white); color: var(--gray-500); border-radius: 3px; cursor: pointer; transition: all 0.15s; }
+.action-btn:hover { border-color: var(--red); color: var(--red); }
+.action-btn.saved { background: var(--red); color: var(--white); border-color: var(--red); }
+.article-body { padding-bottom: 48px; }
+.article-body p { font-size: 18px; line-height: 1.7; margin-bottom: 20px; color: var(--gray-700); }
+.article-body h3 { font-size: 24px; font-weight: 700; margin: 36px 0 16px; color: var(--black); }
+.article-body strong { color: var(--black); }
+.article-body img { max-width: 100%; height: auto; border-radius: 4px; margin: 16px 0; }
+.related { padding: 32px 0 72px; border-top: 3px solid var(--black); }
+.related-title { font-family: var(--sans); font-size: 14px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 20px; }
+.related-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+.related-card { border-bottom: 2px solid var(--gray-200); padding-bottom: 16px; }
+.related-card:hover { border-color: var(--red); }
+.related-region { font-family: var(--sans); font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--red); margin-bottom: 6px; }
+.related-hl { font-size: 17px; font-weight: 700; line-height: 1.25; margin-bottom: 6px; }
+.related-hl a { color: inherit; text-decoration: none; }
+.related-hl a:hover { color: var(--red-dark); }
+.related-by { font-family: var(--sans); font-size: 11px; color: var(--gray-400); }
+.not-found { text-align: center; padding: 80px 20px 72px; }
+.not-found h1 { font-size: 36px; margin-bottom: 12px; }
+.not-found p { font-size: 18px; color: var(--gray-500); margin-bottom: 24px; }
+.not-found a { font-family: var(--sans); font-size: 14px; color: var(--red); text-decoration: none; font-weight: 600; }
+.toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px); font-family: var(--sans); font-size: 14px; background: var(--black); color: var(--white); padding: 12px 24px; border-radius: 4px; z-index: 999; opacity: 0; transition: all 0.3s ease; pointer-events: none; }
+.toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+@media (max-width: 700px) { .related-grid { grid-template-columns: 1fr; } .article-actions { margin-left: 0; margin-top: 8px; } .article-meta { flex-direction: column; align-items: flex-start; gap: 8px; } }
+@media print { .top-bar, .header-bar, .article-actions, .related { display: none; } .narrow { max-width: 100%; } }
+</style>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+</head>
+<body>
+<div class="container">
+  <div class="top-bar">
+    <span style="letter-spacing:0.5px" id="todayDate"></span>
+    <div class="top-bar-links">
+      <a href="index.html">Home</a>
+      <a href="index.html?view=archive">Archive</a>
+      <button class="g-btn" id="signInBtn" onclick="signIn()">
+        <svg width="16" height="16" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+        Sign in
+      </button>
+      <div class="user-pill" id="userPill" onclick="toggleDrop(event)">
+        <div class="user-avatar" id="uAvatar"></div>
+        <span class="user-name" id="uName"></span>
+        <svg width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1L5 5L9 1" stroke="#888" stroke-width="1.5" stroke-linecap="round"/></svg>
+        <div class="user-drop" id="uDrop">
+          <div class="user-drop-email" id="uEmail"></div>
+          <a href="editor.html" id="editorLink" style="display:none">Editor Dashboard</a>
+          <a href="index.html?view=saved">Saved Stories</a>
+          <a href="index.html">Home</a>
+          <a href="index.html?view=archive">Archive</a>
+          <button onclick="signOut()">Sign out</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="container">
+  <div class="header-bar">
+    <svg width="28" height="28" viewBox="0 0 100 100" fill="none"><path d="M4 4 H40 V16 H16 V52 H4 Z" fill="#C4352A"/><path d="M20 20 H56 V32 H32 V68 H20 Z" fill="#C4352A"/><rect x="40" y="40" width="56" height="56" fill="#C4352A"/><rect x="48" y="48" width="40" height="40" fill="white"/><text x="68" y="76" text-anchor="middle" font-family="'Helvetica Neue',Arial,sans-serif" font-size="24" font-weight="700" fill="#C4352A">UT</text></svg>
+    <a class="header-logo-text" href="index.html">The Utah View</a>
+  </div>
+</div>
+<div id="articleContent"></div>
+<div class="toast" id="toast"></div>
+<script>
+var API='https://api.theutahview.com';
+var GCID='562818410025-d6n1627aucueem1npk03mg5n7gs8i5t7.apps.googleusercontent.com';
+function getUser(){try{return JSON.parse(localStorage.getItem('utv_user'))}catch(e){return null}}
+function getToken(){return localStorage.getItem('utv_token')||''}
+function getSaved(){try{return JSON.parse(localStorage.getItem('utv_saved'))||[]}catch(e){return[]}}
+function signIn(){google.accounts.id.initialize({client_id:GCID,callback:function(r){localStorage.setItem('utv_token',r.credential);var p=JSON.parse(atob(r.credential.split('.')[1]));var u={email:p.email.toLowerCase(),name:p.name,initial:p.name.charAt(0).toUpperCase()};localStorage.setItem('utv_user',JSON.stringify(u));fetch(API+'/api/me',{headers:{'Authorization':'Bearer '+r.credential}}).then(function(x){return x.json()}).then(function(d){if(d.role){u.role=d.role;localStorage.setItem('utv_user',JSON.stringify(u))}updateAuth()}).catch(function(){updateAuth()});toast('Signed in as '+p.email)}});google.accounts.id.prompt()}
+function signOut(){localStorage.removeItem('utv_user');localStorage.removeItem('utv_token');updateAuth();toast('Signed out')}
+function toggleDrop(e){e.stopPropagation();document.getElementById('uDrop').classList.toggle('open')}
+function updateAuth(){var u=getUser();document.getElementById('signInBtn').style.display=u?'none':'inline-flex';var pill=document.getElementById('userPill');if(u){pill.classList.add('active');document.getElementById('uAvatar').textContent=u.initial;document.getElementById('uName').textContent=u.name;document.getElementById('uEmail').textContent=u.email;document.getElementById('editorLink').style.display=(u.role==='admin'||u.role==='editor')?'block':'none'}else{pill.classList.remove('active')}loadArticle()}
+document.addEventListener('click',function(e){if(!e.target.closest('.user-pill'))document.getElementById('uDrop').classList.remove('open')});
+function toast(m){var t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(function(){t.classList.remove('show')},2500)}
+function toggleSave(id){var u=getUser();if(!u){signIn();return}var s=getSaved();if(s.includes(id)){s=s.filter(function(x){return x!==id});toast('Removed from saved')}else{s.push(id);toast('Story saved')}localStorage.setItem('utv_saved',JSON.stringify(s));loadArticle()}
+function loadArticle(){var ps=new URLSearchParams(window.location.search);var id=ps.get('id');if(!id){showNF();return}var u=getUser();fetch(API+'/api/stories/'+id).then(function(r){if(!r.ok)throw new Error('nf');return r.json()}).then(function(s){renderStory(id,s,u)}).catch(function(){var ls={};try{ls=JSON.parse(localStorage.getItem('utv_stories'))||{}}catch(e){}if(ls[id]){renderStory(id,ls[id],u)}else{showNF()}})}
+function showNF(){document.getElementById('articleContent').innerHTML='<div class="narrow"><div class="not-found"><h1>Article not found</h1><p>This page doesn\'t exist yet.</p><a href="index.html">← Back to The Utah View</a></div></div>';document.title='Not Found | The Utah View'}
+function renderStory(id,s,u){document.title=s.title+' | The Utah View';var sv=getSaved(),isSv=sv.includes(id);var ds=s.date?new Date(s.date+'T00:00:00').toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'}):'';var h='<div class="narrow"><div class="article-header"><div class="article-region">'+(s.region||'Analysis')+'</div><h1 class="article-title">'+s.title+'</h1><p class="article-summary">'+s.summary+'</p><div class="article-meta"><span>By <strong>'+s.author+'</strong></span>';if(ds)h+='<span>'+ds+'</span>';if(s.read_time||s.readTime)h+='<span>'+(s.read_time||s.readTime)+' read</span>';h+='<div class="article-actions">';if(u){h+='<button class="action-btn'+(isSv?' saved':'')+'" onclick="toggleSave(\''+id+'\')">'+(isSv?'✓ Saved':'Save')+'</button>'}else{h+='<button class="action-btn" onclick="signIn()">Sign in to save</button>'}h+='</div></div></div><div class="article-body">'+s.body+'</div></div>';fetch(API+'/api/stories').then(function(r){return r.json()}).then(function(d){var ot=(d.stories||[]).filter(function(x){return x.id!==id});var rl=ot.sort(function(){return 0.5-Math.random()}).slice(0,3);if(rl.length){h+='<div class="container"><div class="related"><div class="related-title">More from this issue</div><div class="related-grid">';rl.forEach(function(r){h+='<div class="related-card"><div class="related-region">'+(r.region||'')+'</div><div class="related-hl"><a href="article.html?id='+r.id+'">'+r.title+'</a></div><div class="related-by">By '+r.author+'</div></div>'});h+='</div></div></div>'}document.getElementById('articleContent').innerHTML=h}).catch(function(){document.getElementById('articleContent').innerHTML=h})}
+document.getElementById('todayDate').textContent=new Date().toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+updateAuth();
+</script>
+</body>
+</html>

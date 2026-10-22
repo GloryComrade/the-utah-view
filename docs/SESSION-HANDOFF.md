@@ -8,9 +8,12 @@
 ## 1. Current state (as of HEAD `e232277`)
 
 - **Branch `main`, all pushed** to `github.com/GloryComrade/the-utah-view` (**PUBLIC**).
-- **Web is LIVE**: built + deployed to Cloudflare Pages project `the-utah-view`
-  (production → theutahview.com). Latest deploy alias:
-  `production.the-utah-view.pages.dev`.
+- **Website (updated 2026-10-21, later session):** theutahview.com is the
+  original May 2026 **static site**, restored from Pages deployment `e233abd9`
+  and now kept in `site/` (with today's editor/privacy/delete-account pages).
+  The red/white Flutter redesign below was never live on the web (its deploys
+  went to a preview branch) and the website no longer uses the Flutter build.
+  The apps keep the Flutter redesign.
 - **iOS app installed** on **Ryan's iPhone 15 Pro** (`00008130-001E258138A1401C`),
   bundle `com.theutahview.app`. The **iPhone 16 Pro** (`00008140-000E39AA0C28801C`)
   was NOT updated (it was unavailable) — reinstall there when it's connected.
@@ -45,11 +48,13 @@ These are non-obvious and WILL bite a fresh session:
 ```bash
 cd "/Users/ryancheng/Downloads/the utah view app /testing"
 
-# Web (site + editor)
-NO_PROXY=localhost,127.0.0.1,::1 flutter build web --release
+# Website (site/ + editor)
 unset HTTP_PROXY HTTPS_PROXY ALL_PROXY http_proxy https_proxy all_proxy
-NO_PROXY=localhost,127.0.0.1,::1 npx wrangler@4.151.1 pages deploy build/web \
-  --project-name=the-utah-view --branch=production
+# The website is the static site in site/ (since 2026-10-21) — not the
+# Flutter web build. Production branch is `main`; any other --branch (e.g.
+# "production") only makes a PREVIEW that never reaches theutahview.com.
+NO_PROXY=localhost,127.0.0.1,::1 npx wrangler@4.151.1 pages deploy site \
+  --project-name=the-utah-view --branch=main
 
 # Read/write prod config or data (D1)
 NO_PROXY=localhost,127.0.0.1,::1 npx wrangler@4.151.1 d1 execute utv-db --remote \
