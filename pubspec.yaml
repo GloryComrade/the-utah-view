@@ -86,52 +86,17 @@ flutter:
     - assets/licenses/
 
   fonts:
-    # Source Serif 4 (text optical size) for article body and summaries.
-    - family: SourceSerif4
+    # Archivo Black (SIL OFL) — the "THE UTAH VIEW" wordmark ONLY. A heavy
+    # neutral grotesque standing in for Arial Black, which can't be bundled.
+    - family: ArchivoBlack
       fonts:
-        - asset: assets/fonts/SourceSerif4-Regular.ttf
-        - asset: assets/fonts/SourceSerif4-Italic.ttf
-          style: italic
-        - asset: assets/fonts/SourceSerif4-SemiBold.ttf
-          weight: 600
-        - asset: assets/fonts/SourceSerif4-Bold.ttf
-          weight: 700
-        - asset: assets/fonts/SourceSerif4-BoldItalic.ttf
-          weight: 700
-          style: italic
-    # Source Serif 4 cut at the display optical size for headlines.
-    - family: SourceSerif4Display
-      fonts:
-        - asset: assets/fonts/SourceSerif4Display-SemiBold.ttf
-          weight: 600
-        - asset: assets/fonts/SourceSerif4Display-Bold.ttf
-          weight: 700
-        - asset: assets/fonts/SourceSerif4Display-BoldItalic.ttf
-          weight: 700
-          style: italic
-    # Inter for UI chrome: labels, bylines, buttons, navigation.
-    - family: Inter
-      fonts:
-        - asset: assets/fonts/Inter-Regular.ttf
-        - asset: assets/fonts/Inter-Medium.ttf
-          weight: 500
-        - asset: assets/fonts/Inter-SemiBold.ttf
-          weight: 600
-        - asset: assets/fonts/Inter-Bold.ttf
-          weight: 700
-        - asset: assets/fonts/Inter-ExtraBold.ttf
-          weight: 800
-    # Newsreader (variable opsz,wght) — display headlines and deks. 2026 redesign.
+        - asset: assets/fonts/ArchivoBlack-Regular.ttf
+    # Newsreader (variable opsz,wght) — the one text face: headlines, body,
+    # dates, image credits, section labels and all UI chrome.
     - family: Newsreader
       fonts:
         - asset: assets/fonts/Newsreader.ttf
         - asset: assets/fonts/Newsreader-Italic.ttf
-          style: italic
-    # IBM Plex Sans (variable wdth,wght) — body copy and all UI chrome.
-    - family: IBMPlexSans
-      fonts:
-        - asset: assets/fonts/IBMPlexSans.ttf
-        - asset: assets/fonts/IBMPlexSans-Italic.ttf
           style: italic
 
 # App icon, generated from the logo painter by
@@ -150,15 +115,15 @@ flutter_launcher_icons:
     generate: true
     image_path: assets/brand/app_icon.png
     background_color: "#FFFFFF"
-    theme_color: "#C4352A"
+    theme_color: "#CE1126"
 
 # White launch screen with the logo.
 # Regenerate with: dart run flutter_native_splash:create
 flutter_native_splash:
-  color: "#FAF8F3"
+  color: "#FFFFFF"
   image: assets/brand/splash_logo.png
   android_12:
-    color: "#FAF8F3"
+    color: "#FFFFFF"
     image: assets/brand/splash_logo_android12.png
-    icon_background_color: "#FAF8F3"
+    icon_background_color: "#FFFFFF"
   web: false

@@ -31,7 +31,7 @@ void main() {
       await settle(tester);
 
       expect(find.text(lead.title), findsOneWidget);
-      expect(find.text('EVERY REGION · EVERY MONTH'), findsOneWidget);
+      expect(find.text('Industry and Everything Else'), findsOneWidget);
 
       for (final heading in [
         'EDITORIAL & OPINION',
@@ -148,7 +148,7 @@ void main() {
 
       await tester.tap(find.byType(BackButton));
       await settle(tester);
-      expect(find.text('EVERY REGION · EVERY MONTH'), findsOneWidget);
+      expect(find.text('Industry and Everything Else'), findsOneWidget);
     });
 
     testWidgets('an unknown story shows a friendly message', (tester) async {

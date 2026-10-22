@@ -18,10 +18,10 @@ class StoryShareCard {
   static const double _margin = 96;
   static const double _contentW = _w - _margin * 2;
 
-  static const Color _cream = Color(0xFFF7F6F4);
-  static const Color _ink = Color(0xFF141414);
-  static const Color _red = Color(0xFFB53816);
-  static const Color _gray = Color(0xFF6B6B6B);
+  static const Color _cream = Color(0xFFFFFFFF);
+  static const Color _ink = Color(0xFF15171B);
+  static const Color _red = Color(0xFFCE1126);
+  static const Color _gray = Color(0xFF4F545C);
   static const Color _white = Color(0xFFFFFFFF);
 
   /// PNG bytes for the card.
@@ -53,11 +53,11 @@ class StoryShareCard {
     final wordmark = _painter(
       'THE UTAH VIEW',
       const TextStyle(
-        fontFamily: 'Inter',
-        fontWeight: FontWeight.w800,
+        fontFamily: 'ArchivoBlack',
+        fontWeight: FontWeight.w400,
         fontSize: 36,
         color: _ink,
-        letterSpacing: 2,
+        letterSpacing: 0,
       ),
       _w - wordmarkX - _margin,
       maxLines: 1,
@@ -76,11 +76,11 @@ class StoryShareCard {
       final kp = _painter(
         kicker.toUpperCase(),
         const TextStyle(
-          fontFamily: 'Inter',
-          fontWeight: FontWeight.w800,
+          fontFamily: 'Newsreader',
+          fontWeight: FontWeight.w700,
           fontSize: 32,
           color: _red,
-          letterSpacing: 2.5,
+          letterSpacing: 0.5,
         ),
         _contentW,
         maxLines: 2,
@@ -92,7 +92,7 @@ class StoryShareCard {
     final headline = _painter(
       title.isEmpty ? 'The Utah View' : title,
       const TextStyle(
-        fontFamily: 'SourceSerif4Display',
+        fontFamily: 'Newsreader',
         fontWeight: FontWeight.w700,
         fontSize: 78,
         height: 1.1,
@@ -108,7 +108,7 @@ class StoryShareCard {
       final bp = _painter(
         byline,
         const TextStyle(
-          fontFamily: 'Inter',
+          fontFamily: 'Newsreader',
           fontWeight: FontWeight.w500,
           fontSize: 34,
           color: _gray,
@@ -127,7 +127,7 @@ class StoryShareCard {
     final footer = _painter(
       'Read the full story  ·  theutahview.com',
       const TextStyle(
-        fontFamily: 'Inter',
+        fontFamily: 'Newsreader',
         fontWeight: FontWeight.w600,
         fontSize: 34,
         color: _white,

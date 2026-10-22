@@ -3,22 +3,42 @@ import 'package:material_ui/material_ui.dart';
 import 'app_colors.dart';
 
 /// Font families bundled in `assets/fonts` (see pubspec.yaml).
+///
+/// Two faces, by design: **Archivo Black** for the "THE UTAH VIEW" wordmark
+/// (a heavy neutral grotesque standing in for Arial Black, which can't be
+/// legally bundled) and **Newsreader** for every other piece of text —
+/// headlines, body, dates, image credits, section labels and UI chrome. The
+/// `sans`/`body` aliases below now resolve to Newsreader too, so the whole
+/// interface reads in the one editorial serif.
 abstract final class AppFonts {
+  /// The wordmark / display face. Only "THE UTAH VIEW".
+  static const display = 'ArchivoBlack';
+
   /// Newsreader (variable opsz,wght). Deks and summaries (often italic).
   static const serif = 'Newsreader';
 
   /// Newsreader at display optical sizes. Headlines.
   static const headline = 'Newsreader';
 
-  /// IBM Plex Sans. Body copy and all UI chrome (labels, bylines, buttons).
-  static const sans = 'IBMPlexSans';
+  /// Newsreader. Kept as the "sans" alias so UI chrome reads in the one face.
+  static const sans = 'Newsreader';
 
-  /// IBM Plex Sans. Article body copy.
-  static const body = 'IBMPlexSans';
+  /// Newsreader. Article body copy.
+  static const body = 'Newsreader';
 
   /// Fallbacks used while a glyph is missing from the subset fonts.
   static const serifFallback = <String>['Georgia', 'Times New Roman', 'serif'];
-  static const sansFallback = <String>['Helvetica Neue', 'Arial', 'sans-serif'];
+
+  /// The text aliases are serif now, so they fall back to a serif too.
+  static const sansFallback = <String>['Georgia', 'Times New Roman', 'serif'];
+
+  /// The wordmark falls back to a heavy neutral grotesque.
+  static const displayFallback = <String>[
+    'Arial Black',
+    'Helvetica Neue',
+    'Arial',
+    'sans-serif',
+  ];
 }
 
 /// The editorial type scale. Read it with `context.news` (see
@@ -127,12 +147,24 @@ class NewsTextStyles extends ThemeExtension<NewsTextStyles> {
     );
 
     return NewsTextStyles(
-      wordmark: sans(20, FontWeight.w800, p.ink, spacing: 2.2, height: 1.1),
-      tagline: sans(10.5, FontWeight.w600, p.inkMuted, spacing: 2.6),
-      dateline: sans(11, FontWeight.w600, p.inkMuted, spacing: 1.1),
-      sectionLabel: sans(11, FontWeight.w700, p.accent, spacing: 1.5),
-      sectionLabelMuted: sans(11, FontWeight.w700, p.inkMuted, spacing: 1.5),
-      blockTitle: sans(13, FontWeight.w800, p.ink, spacing: 1.2),
+      // The one display face: Archivo Black, set tight with no tracking.
+      wordmark: TextStyle(
+        fontFamily: AppFonts.display,
+        fontFamilyFallback: AppFonts.displayFallback,
+        fontSize: 20,
+        fontWeight: FontWeight.w400,
+        color: p.ink,
+        letterSpacing: 0,
+        height: 1.05,
+        leadingDistribution: TextLeadingDistribution.even,
+      ),
+      // Motto under the flag: editorial serif italic, untracked.
+      tagline: serif(13, 1.3, p.inkMuted, italic: true),
+      // Dateline set to match the article serif (no tracking).
+      dateline: serif(12, 1.3, p.inkMuted, weight: FontWeight.w600),
+      sectionLabel: sans(11, FontWeight.w700, p.accent, spacing: 0.5),
+      sectionLabelMuted: sans(11, FontWeight.w700, p.inkMuted, spacing: 0.5),
+      blockTitle: sans(13, FontWeight.w800, p.ink, spacing: 0.3),
       headlineXL: head(30, 1.12, spacing: -0.4),
       headlineL: head(24, 1.15, spacing: -0.3),
       headlineM: head(21, 1.2),
@@ -154,9 +186,9 @@ class NewsTextStyles extends ThemeExtension<NewsTextStyles> {
         weight: FontWeight.w600,
         spacing: -0.5,
       ).copyWith(color: p.inkMuted),
-      button: sans(12.5, FontWeight.w700, p.onAccentFill, spacing: 0.9),
-      ticker: sans(13.5, FontWeight.w700, p.onAccentFill, spacing: 1, height: 1.35),
-      tickerLabel: sans(10.5, FontWeight.w800, BrandColors.red, spacing: 1.5),
+      button: sans(12.5, FontWeight.w700, p.onAccentFill, spacing: 0.3),
+      ticker: sans(13.5, FontWeight.w700, p.onAccentFill, spacing: 0.3, height: 1.35),
+      tickerLabel: sans(10.5, FontWeight.w800, p.accent, spacing: 0.8),
       listTitle: head(20, 1.2, weight: FontWeight.w600),
     );
   }

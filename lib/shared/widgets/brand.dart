@@ -97,10 +97,10 @@ class UtvLogoPainter extends CustomPainter {
       text: TextSpan(
         text: 'UT',
         style: TextStyle(
-          fontFamily: AppFonts.sans,
-          fontFamilyFallback: AppFonts.sansFallback,
+          fontFamily: AppFonts.display,
+          fontFamilyFallback: AppFonts.displayFallback,
           fontSize: 24,
-          fontWeight: FontWeight.w700,
+          fontWeight: FontWeight.w400,
           letterSpacing: -0.3,
           color: color,
           height: 1,
@@ -141,7 +141,7 @@ class Wordmark extends StatelessWidget {
       textScaler: TextScaler.noScaling,
       style: context.news.wordmark.copyWith(
         fontSize: fontSize,
-        letterSpacing: fontSize * 0.11,
+        letterSpacing: 0,
         color: color,
       ),
     );
@@ -183,8 +183,8 @@ class Tagline extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Text(
-      'EVERY REGION · EVERY MONTH',
-      semanticsLabel: 'Every region, every month',
+      'Industry and Everything Else',
+      semanticsLabel: 'Industry and everything else',
       textAlign: TextAlign.center,
       style: context.news.tagline,
     );

@@ -5,23 +5,28 @@ import 'package:material_ui/material_ui.dart';
 /// Widgets should not use these directly; read the semantic [AppPalette]
 /// from the theme instead so dark mode keeps working.
 abstract final class BrandColors {
-  /// Red-rock terracotta — the single signature accent (2026 redesign).
-  static const red = Color(0xFFB5401F);
-  static const redDark = Color(0xFF8F3015);
-  static const ink = Color(0xFF1A1A18);
-  static const gray700 = Color(0xFF403D36);
-  static const gray500 = Color(0xFF6B655C);
-  static const gray400 = Color(0xFF847D72);
-  static const gray200 = Color(0xFFDED8CD);
-  static const gray100 = Color(0xFFECE8DF);
-  static const gray50 = Color(0xFFF2EFE7);
+  /// Flag red — the signature accent fill (2026 red/white/grey scheme).
+  static const red = Color(0xFFCE1126);
+
+  /// Deep red — accent text, links and pressed fills (AA on white and grey).
+  static const redDark = Color(0xFFA11121);
+
+  /// Near-black ink — a neutral, not a mid-tone.
+  static const ink = Color(0xFF15171B);
+  static const gray700 = Color(0xFF2C3036); // secondary text
+  static const gray500 = Color(0xFF4F545C); // metadata
+  static const gray400 = Color(0xFF7A7F88); // icons / decoration (≥3:1)
+  static const gray300 = Color(0xFFA2A9AF); // decorative mid-grey ONLY, never text
+  static const gray200 = Color(0xFFE3E3E3); // hairline rules
+  static const gray100 = Color(0xFFEEEEEF); // light hairline
+  static const gray50 = Color(0xFFF2F2F3); // tinted panels
   static const white = Color(0xFFFFFFFF);
 
-  /// Newsprint-warm page base.
-  static const paper = Color(0xFFFAF8F3);
+  /// Page base — pure white.
+  static const paper = Color(0xFFFFFFFF);
 
-  /// Terracotta lifted for dark backgrounds (AA on the warm near-black base).
-  static const redOnDark = Color(0xFFE0724C);
+  /// Red lifted for dark backgrounds (AA on the near-black base).
+  static const redOnDark = Color(0xFFF26A72);
 }
 
 /// Semantic color tokens for one brightness.
@@ -96,18 +101,18 @@ class AppPalette extends ThemeExtension<AppPalette> {
   final Color highlight;
 
   static const light = AppPalette(
-    background: BrandColors.paper, // newsprint-warm #FAF8F3
-    surfaceMuted: BrandColors.gray50, // #F2EFE7
-    ink: BrandColors.ink, // #1A1A18
-    inkSecondary: BrandColors.gray700, // #403D36
-    inkMuted: BrandColors.gray500, // #6B655C
-    inkFaint: BrandColors.gray400,
-    rule: BrandColors.gray200, // #DED8CD warm hairline
+    background: BrandColors.white, // pure white
+    surfaceMuted: BrandColors.gray50, // #F2F2F3
+    ink: BrandColors.ink, // #15171B
+    inkSecondary: BrandColors.gray700, // #2C3036
+    inkMuted: BrandColors.gray500, // #4F545C
+    inkFaint: BrandColors.gray400, // #7A7F88 (decoration, ≥3:1)
+    rule: BrandColors.gray200, // #E3E3E3 hairline
     ruleLight: BrandColors.gray100,
     ruleStrong: BrandColors.ink,
-    accent: BrandColors.red, // terracotta #B5401F
-    accentPressed: BrandColors.redDark,
-    accentFill: BrandColors.red,
+    accent: BrandColors.redDark, // #A11121 text/links (8:1 on white)
+    accentPressed: Color(0xFF7E0E19),
+    accentFill: BrandColors.red, // #CE1126 fills
     onAccentFill: BrandColors.white,
     placeholderStart: BrandColors.gray100,
     placeholderEnd: BrandColors.gray200,
@@ -115,22 +120,22 @@ class AppPalette extends ThemeExtension<AppPalette> {
   );
 
   static const dark = AppPalette(
-    background: Color(0xFF161411), // warm near-black
-    surfaceMuted: Color(0xFF201D18),
-    ink: Color(0xFFF2EDE4),
-    inkSecondary: Color(0xFFD4CEC2),
-    inkMuted: Color(0xFFA49D90),
-    inkFaint: Color(0xFF7E776B),
-    rule: Color(0xFF343029),
-    ruleLight: Color(0xFF26231D),
-    ruleStrong: Color(0xFFD4CEC2),
-    accent: BrandColors.redOnDark, // #E0724C
-    accentPressed: Color(0xFFEC8260),
-    accentFill: BrandColors.red,
+    background: Color(0xFF111113), // near-black
+    surfaceMuted: Color(0xFF1C1C20),
+    ink: Color(0xFFF2F3F5),
+    inkSecondary: Color(0xFFC9CCD2),
+    inkMuted: Color(0xFF9CA1A9),
+    inkFaint: Color(0xFF71767E),
+    rule: Color(0xFF2E2F33),
+    ruleLight: Color(0xFF232428),
+    ruleStrong: Color(0xFFC9CCD2),
+    accent: BrandColors.redOnDark, // #F26A72 (AA on near-black)
+    accentPressed: Color(0xFFF7858B),
+    accentFill: BrandColors.red, // #CE1126 fills, white text
     onAccentFill: BrandColors.white,
-    placeholderStart: Color(0xFF221F19),
-    placeholderEnd: Color(0xFF2B281F),
-    highlight: Color(0xFF201D18),
+    placeholderStart: Color(0xFF1E1E22),
+    placeholderEnd: Color(0xFF27272C),
+    highlight: Color(0xFF1C1C20),
   );
 
   @override

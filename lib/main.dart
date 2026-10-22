@@ -40,12 +40,13 @@ Future<void> main() async {
   unawaited(push.initialize());
 }
 
-/// Source Serif 4 and Inter are SIL OFL fonts; list them on the licenses page.
+/// Newsreader and Archivo Black are SIL OFL fonts; list them on the licenses
+/// page.
 void _registerFontLicenses() {
   LicenseRegistry.addLicense(() async* {
     for (final (family, file) in [
-      ('Source Serif 4', 'OFL-SourceSerif4.txt'),
-      ('Inter', 'OFL-Inter.txt'),
+      ('Newsreader', 'OFL-Newsreader.txt'),
+      ('Archivo Black', 'ArchivoBlack-OFL.txt'),
     ]) {
       final text = await rootBundle.loadString('assets/licenses/$file');
       yield LicenseEntryWithLineBreaks([family], text);
