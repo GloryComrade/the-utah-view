@@ -21,17 +21,21 @@ standalone **admin editor** at `site/editor.html`.
 > deploy/device state, environment gotchas, and what the last redesign changed.
 
 ## The website (`site/`)
-- Plain HTML/CSS/JS, no build step: `index.html` (front page, sections, archive,
-  saved), `article.html?id=…`, `page.html?p=…`, plus `editor.html`,
-  `privacy.html`, `delete-account.html`, `logo.png`, `_headers`.
-- `index.html`, `article.html` and `page.html` are the original May 2026 site
-  (Pages deployment `e233abd9`), restored 2026-10-21 at Ryan's request. They
-  read the live API (`/api/stories`, `/api/config/layout`, `/api/config/site`).
-  Their look is separate from the app's: Georgia/Helvetica, red `#C4352A`.
-- `functions/article.html.js` serves `site/article.html` with per-story share
-  (Open Graph) tags injected.
+- Plain HTML/CSS/JS, no build step: `index.html` (front page, sections,
+  archive, saved), `article.html?id=…`, `page.html?p=…`, `search.js`,
+  `theme.css`/`theme.js` (dark mode + wordmark font), `fonts/`, plus
+  `editor.html`, `privacy.html`, `delete-account.html`, logos, `_headers`.
+- Base: the original May 2026 site (Pages deployment `e233abd9`), restored
+  2026-10-21 at Ryan's request, then extended one approved feature at a time —
+  see **`docs/WEBSITE-ROADMAP.md`** (all 11 items live). Look: Georgia body,
+  Helvetica UI, red `#C4352A`, Playfair Display Black Italic wordmark, light +
+  dark mode. Separate from the app's design system below.
+- Reads the live API (`/api/stories`, `/api/config/layout`, `/api/config/site`).
+  `functions/article.html.js` injects per-story share (Open Graph) tags.
 - The apps share and deep-link the same URLs (`article.html?id=`,
   `page.html?p=`, `?cat=`, `?view=`), so links work in both.
+- **Always preview a visual change and get Ryan's yes before deploying to
+  `--branch=main`** (see `docs/SESSION-HANDOFF.md` §2 and §4).
 
 ## Logo (everywhere)
 - One mark for the app, website, icons and splash: `assets/brand/logo.svg`,
@@ -161,8 +165,10 @@ This Mac sits behind a transparent TLS filter (ContentKeeper) + a local proxy.
   key are **Cloudflare Worker secrets** (`wrangler secret put …`), never committed.
   Firebase *client* config (`GoogleService-Info.plist`, `google-services.json`,
   `firebase_options.dart`) is committed on purpose — those are not secrets.
-- Known hole to close someday: the Worker still accepts `Bearer <ADMIN_API_KEY>` +
-  `X-User-Email` as an auth bypass. Remove that branch, redeploy, and
-  `wrangler secret delete ADMIN_API_KEY` to rotate.
+- **Open security hole — fix soon:** the Worker still accepts
+  `Bearer <ADMIN_API_KEY>` (+ `X-User-Email`) as an admin login, and the key's
+  value was published in an old handoff commit (`15e5f57`, public repo). Remove
+  that branch, deploy the Worker, *then* `wrangler secret delete ADMIN_API_KEY`
+  (see `docs/SESSION-HANDOFF.md` §6). Needs Ryan's OK.
 - Backend is **live production with real subscriber data** — keep changes additive
   and never POST real addresses to `/api/subscribe`.
