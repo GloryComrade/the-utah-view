@@ -546,7 +546,11 @@ function vHomepage(){
   secInit(L);
   var h=head('Homepage &amp; app layout','<button class="bt bs" onclick="refreshHomepageStories(this)">&#8635; Refresh stories</button> <button class="bt bp" onclick="saveHome()">💾 Save homepage</button>');
   h+='<div class="card"><h2>🧩 Sections <span style="font-weight:600;color:var(--g5);font-size:12px">&mdash; controls the website <b>and</b> the iOS/Android apps</span></h2><p class="desc">Reorder, show/hide, and rename the red headers. In the <b>mobile apps</b> the front page renders sections in exactly this order, hides the ones toggled off, and uses these labels. On wide web screens the grid order stays fixed but still honors hide + labels. Every story slot you pick below also applies to the apps.</p><div id="secMgr"></div></div>';
-  h+='<div class="card"><h2>📢 Briefing strip</h2><div class="fl"><label>Shows as a static strip under the masthead. Separate items with • (readers tap to see them all). Leave blank to hide.</label><input id="lt" value="'+esc(L.ticker||'')+'"></div></div>';
+  var tkLines=String(L.ticker||'').split(/\s*[•·|]\s*/).map(function(x){return x.trim()}).filter(Boolean).join('\n');
+  var tkOpt=function(id,cur,opts){return '<select id="'+id+'">'+opts.map(function(o){return '<option value="'+o[0]+'"'+(cur===o[0]?' selected':'')+'>'+o[1]+'</option>'}).join('')+'</select>'};
+  h+='<div class="card"><h2>📢 Briefing strip</h2><div class="fl"><label>Headlines &mdash; one per line</label><textarea id="lt" rows="7" placeholder="One headline per line">'+esc(tkLines)+'</textarea><div style="font-size:12px;color:var(--g5);margin-top:6px">They scroll in the red Briefing bar on the website (the apps show them as a strip); readers tap it to see them all. Leave empty to hide the bar.</div></div>'+
+    '<div class="row2"><div class="fl"><label>Website bar height</label>'+tkOpt('lth',L.ticker_height||'normal',[['slim','Slim'],['normal','Normal'],['tall','Tall']])+'</div>'+
+    '<div class="fl"><label>Website scroll speed</label>'+tkOpt('lts',L.ticker_speed||'normal',[['slow','Slow'],['normal','Normal'],['fast','Fast']])+'</div></div></div>';
   h+='<div class="card"><h2>🏠 Hero</h2>'+
     '<div class="fl"><label>Hero image</label><input id="li" value="'+esc(L.hero_image||'')+'" placeholder="Image URL"><button class="bt bs bsm" style="margin-top:8px" onclick="uploadImage(\'li\')">&#8679; Upload image</button></div>'+
     '<div class="row3"><div class="fl"><label>⭐ Lead</label><select data-slot id="ll">'+storyOpts(L.hero_lead)+'</select></div>'+
@@ -581,7 +585,7 @@ function uploadImage(inputId){var inp=document.createElement('input');inp.type='
 function saveHome(){
   secCapture();
   var rn=['The Americas','Europe','Asia-Pacific','Middle East','Africa'],rg={};rn.forEach(function(r){rg[r]=$('lrg-'+r.replace(/\s/g,'-')).value});
-  var L={ticker:$('lt').value,hero_image:$('li').value.trim(),hero_lead:$('ll').value,hero_secondary:$('ls').value,hero_center:$('lct').value,
+  var L={ticker:$('lt').value.split('\n').map(function(x){return x.trim()}).filter(Boolean).join(' • '),ticker_height:$('lth').value,ticker_speed:$('lts').value,hero_image:$('li').value.trim(),hero_lead:$('ll').value,hero_secondary:$('ls').value,hero_center:$('lct').value,
     hero_right:collect('lr',6),editorial:collect('le',6),regions:rg,featured:collect('lf',10),sidebar_utah:collect('lu',4),sidebar_data:collect('ld',4),
     section_order:secOrder.slice(),hidden_sections:secHidden.slice(),section_labels:cleanLabels()};
   var ex=layout();if(ex.hero_center_caption)L.hero_center_caption=ex.hero_center_caption;

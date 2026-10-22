@@ -45,11 +45,33 @@ body { font-family:var(--serif); color:var(--black); background:var(--white); -w
 .main-nav { border-top:2px solid var(--black); border-bottom:1px solid var(--gray-200); padding:10px 0; display:flex; justify-content:center; gap:28px; flex-wrap:wrap; }
 .main-nav a { font-family:var(--sans); font-size:13px; font-weight:600; text-decoration:none; color:var(--gray-700); letter-spacing:0.3px; transition:color 0.2s; }
 .main-nav a:hover,.main-nav a.active { color:var(--red); }
-.ticker-bar { background:var(--red); color:var(--white); padding:10px 0; margin:28px 0 0; overflow:hidden; }
+.ticker-bar { background:var(--red); color:var(--white); padding:6px 0; margin:28px 0 0; overflow:hidden; }
 .ticker-inner { display:flex; align-items:center; gap:16px; }
-.ticker-label { font-family:var(--sans); font-size:11px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; background:var(--white); color:var(--red); padding:3px 10px; flex-shrink:0; position:relative; z-index:1; }
-.ticker-text { font-family:var(--sans); font-size:14px; font-weight:500; white-space:nowrap; animation:ticker-scroll 30s linear infinite; }
+.ticker-label { font-family:var(--sans); font-size:11px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; background:var(--white); color:var(--red); padding:2px 9px; flex-shrink:0; position:relative; z-index:1; }
+.ticker-text { font-family:var(--sans); font-size:13px; font-weight:500; white-space:nowrap; animation:ticker-scroll 30s linear infinite; }
 @keyframes ticker-scroll { 0%{transform:translateX(80vw)} 100%{transform:translateX(-200%)} }
+.ticker-bar.bar-slim { padding:3px 0; }
+.ticker-bar.bar-slim .ticker-label { padding:1px 8px; font-size:10px; }
+.ticker-bar.bar-tall { padding:10px 0; }
+.ticker-bar.bar-tall .ticker-label { padding:3px 10px; }
+.ticker-bar.bar-tall .ticker-text { font-size:14px; }
+.ticker-bar[role="button"] { cursor:pointer; }
+.ticker-bar[role="button"]:focus-visible { outline:3px solid var(--black); outline-offset:-3px; }
+.ticker-bar { position:relative; }
+.ticker-more { position:absolute; right:0; top:0; bottom:0; display:flex; align-items:center; z-index:1; background:var(--red); box-shadow:-18px 0 14px var(--red); padding:0 max(20px, calc((100% - 1200px) / 2 + 20px)) 0 6px; font-family:var(--sans); font-size:12px; font-weight:600; white-space:nowrap; }
+.brief-overlay { position:fixed; inset:0; z-index:500; background:rgba(0,0,0,.45); display:flex; align-items:flex-start; justify-content:center; padding:12vh 20px 20px; animation:brief-fade .2s ease-out; }
+.brief-overlay[hidden] { display:none; }
+.brief-panel { background:var(--white); width:100%; max-width:640px; max-height:76vh; overflow-y:auto; border-top:3px solid var(--red); box-shadow:0 12px 40px rgba(0,0,0,.25); animation:brief-rise .2s ease-out; }
+.brief-head { display:flex; align-items:center; justify-content:space-between; padding:16px 20px; border-bottom:1px solid var(--gray-200); position:sticky; top:0; background:var(--white); }
+.brief-close { border:none; background:none; font-size:28px; line-height:1; color:var(--gray-500); cursor:pointer; padding:0 4px; }
+.brief-close:hover { color:var(--red); }
+.brief-list { list-style:none; margin:0; padding:4px 20px 12px; }
+.brief-list li { font-family:var(--serif); font-size:18px; line-height:1.45; color:var(--black); padding:14px 0; border-bottom:1px solid var(--gray-200); }
+.brief-list li:last-child { border-bottom:none; }
+@keyframes brief-fade { from { opacity:0; } to { opacity:1; } }
+@keyframes brief-rise { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:none; } }
+@media (max-width:600px) { .brief-overlay { align-items:flex-end; padding:0; } .brief-panel { max-width:none; max-height:80vh; border-radius:12px 12px 0 0; border-top:none; } .brief-head { border-radius:12px 12px 0 0; } }
+@media (prefers-reduced-motion: reduce) { .brief-overlay, .brief-panel { animation:none; } }
 .sk { background: var(--gray-100); border-radius: 2px; animation: skPulse 1.4s ease-in-out infinite; }
 .sk-line { height: 12px; margin-bottom: 10px; }
 @keyframes skPulse { 0%, 100% { opacity: 1; } 50% { opacity: .45; } }
@@ -226,8 +248,14 @@ body { font-family:var(--serif); color:var(--black); background:var(--white); -w
     <a href="?cat=The Americas">The Americas</a><a href="?cat=Europe">Europe</a><a href="?cat=Asia-Pacific">Asia-Pacific</a><a href="?cat=Middle East">Middle East</a><a href="?cat=Africa">Africa</a><a href="?cat=Analysis">Analysis</a><a href="?cat=Opinion">Opinion</a><a href="?cat=Data">Data</a>
   </nav>
 </div>
-<div class="ticker-bar">
-  <div class="container"><div class="ticker-inner"><span class="ticker-label">Briefing</span><span class="ticker-text" id="tickerText"></span></div></div>
+<div class="ticker-bar" role="button" tabindex="0" aria-haspopup="dialog" aria-label="Briefing: show all items" onclick="openBriefing()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openBriefing()}">
+  <div class="container"><div class="ticker-inner"><span class="ticker-label">Briefing</span><span class="ticker-text" id="tickerText"></span><span class="ticker-more" aria-hidden="true">See all &rsaquo;</span></div></div>
+</div>
+<div class="brief-overlay" id="briefOverlay" hidden onclick="if(event.target===this)closeBriefing()">
+  <div class="brief-panel" role="dialog" aria-modal="true" aria-labelledby="briefTitle">
+    <div class="brief-head"><span class="ticker-label" id="briefTitle">Briefing</span><button class="brief-close" id="briefClose" onclick="closeBriefing()" aria-label="Close">&times;</button></div>
+    <ul class="brief-list" id="briefList"></ul>
+  </div>
 </div>
 <div id="dynamicContent"><div class="container sk-wrap" aria-busy="true" aria-label="Loading stories"><div class="hero-section"><hr class="rule-thick"><div style="height:18px"></div><div class="hero-grid"><div class="hero-left"><div class="sk sk-line" style="width:30%;height:10px;margin-bottom:14px"></div><div class="sk sk-line" style="width:100%;height:28px"></div><div class="sk sk-line" style="width:85%;height:28px"></div><div class="sk sk-line" style="width:60%;height:28px;margin-bottom:16px"></div><div class="sk sk-line" style="width:100%;height:13px"></div><div class="sk sk-line" style="width:92%;height:13px"></div><div class="sk sk-line" style="width:70%;height:13px"></div><div class="sk sk-line" style="width:40%;height:10px;margin-top:8px"></div></div><div class="hero-center"><div class="sk" style="width:100%;aspect-ratio:16/10;margin-bottom:14px"></div><div class="sk sk-line" style="width:95%;height:20px"></div><div class="sk sk-line" style="width:70%;height:20px;margin-bottom:12px"></div><div class="sk sk-line" style="width:100%;height:12px"></div><div class="sk sk-line" style="width:85%;height:12px"></div></div><div class="hero-right"><div class="sk sk-line" style="width:40%;height:10px;margin-bottom:14px"></div><div class="sk sk-line" style="width:90%;height:18px"></div><div class="sk sk-line" style="width:65%;height:18px;margin-bottom:12px"></div><div class="sk sk-line" style="width:100%;height:11px"></div><div class="sk sk-line" style="width:80%;height:11px"></div><div class="sk sk-line" style="width:35%;height:9px;margin-bottom:22px"></div><div class="sk sk-line" style="width:90%;height:18px"></div><div class="sk sk-line" style="width:65%;height:18px;margin-bottom:12px"></div><div class="sk sk-line" style="width:100%;height:11px"></div><div class="sk sk-line" style="width:80%;height:11px"></div><div class="sk sk-line" style="width:35%;height:9px;margin-bottom:22px"></div><div class="sk sk-line" style="width:90%;height:18px"></div><div class="sk sk-line" style="width:65%;height:18px;margin-bottom:12px"></div><div class="sk sk-line" style="width:100%;height:11px"></div><div class="sk sk-line" style="width:80%;height:11px"></div><div class="sk sk-line" style="width:35%;height:9px;margin-bottom:22px"></div></div></div></div></div></div>
 <div id="subscribeFooter"></div>
@@ -267,8 +295,18 @@ function toast(m){var t=document.getElementById('toast');t.textContent=m;t.class
 document.getElementById('todayDate').textContent=new Date().toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
 var SC={},LC={},FC={};
 function rt(id,s){if(!s)return'';return'<div class="side-hl"><a href="article.html?id='+id+'">'+s.title+'</a></div><p class="side-sum">'+s.summary+'</p><p class="side-by">By <span>'+s.author+'</span>'+(s.read_time||s.readTime?' · '+(s.read_time||s.readTime)+' read':'')+'</p>'}
+// Briefing: the scrolling bar opens the full list (items separated by • · or |,
+// as in the app). A blank briefing hides the bar, as the editor promises.
+var BRIEF=[],briefReturn=null;
+function setBriefing(t,L){BRIEF=String(t).split(/\s*[•·|]\s*/).map(function(x){return x.trim()}).filter(Boolean);var b=document.querySelector('.ticker-bar');if(!b)return;b.style.display=BRIEF.length?'':'none';L=L||{};
+  // Height and scroll speed are set in the editor (Homepage → Briefing strip).
+  b.classList.toggle('bar-slim',L.ticker_height==='slim');b.classList.toggle('bar-tall',L.ticker_height==='tall');
+  var tk=document.getElementById('tickerText');if(tk)tk.style.animationDuration={slow:'45s',fast:'20s'}[L.ticker_speed]||'30s'}
+function openBriefing(){if(!BRIEF.length)return;var l=document.getElementById('briefList');l.innerHTML='';BRIEF.forEach(function(t){var li=document.createElement('li');li.textContent=t;l.appendChild(li)});briefReturn=document.activeElement;document.getElementById('briefOverlay').hidden=false;document.body.style.overflow='hidden';document.getElementById('briefClose').focus()}
+function closeBriefing(){var o=document.getElementById('briefOverlay');if(o.hidden)return;o.hidden=true;document.body.style.overflow='';if(briefReturn&&briefReturn.focus)briefReturn.focus()}
+document.addEventListener('keydown',function(e){if(e.key==='Escape')closeBriefing()});
 function renderHome(){
-  var L=LC,S=SC,tk=document.getElementById('tickerText');if(tk)tk.textContent=L.ticker||'';var h='';
+  var L=LC,S=SC,tk=document.getElementById('tickerText');if(tk)tk.textContent=L.ticker||'';setBriefing(L.ticker||'',L);var h='';
   var lead=S[L.hero_lead],sec=S[L.hero_secondary],ctr=S[L.hero_center];
   h+='<div class="container"><div class="hero-section"><hr class="rule-thick"><div style="height:18px"></div><div class="hero-grid"><div class="hero-left"><p class="section-tag">Lead Analysis</p>';
   if(lead){h+='<h1 class="hero-headline"><a href="article.html?id='+L.hero_lead+'">'+lead.title+'</a></h1><p class="hero-summary">'+lead.summary+'</p><p class="hero-byline">By <span>'+lead.author+'</span>'+(lead.read_time?' · '+lead.read_time+' read':'')+'</p>'}
