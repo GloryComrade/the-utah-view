@@ -80,7 +80,7 @@
     '.srch-link:hover{color:var(--red,#C4352A)}' +
     '.srch-overlay{position:fixed;inset:0;z-index:600;background:rgba(0,0,0,.45);display:flex;align-items:flex-start;justify-content:center;padding:8vh 20px 20px;animation:srch-fade .18s ease-out}' +
     '.srch-overlay[hidden]{display:none}' +
-    '.srch-panel{background:#fff;width:100%;max-width:680px;max-height:80vh;display:flex;flex-direction:column;border-top:3px solid var(--red,#C4352A);box-shadow:0 12px 40px rgba(0,0,0,.25);animation:srch-rise .18s ease-out}' +
+    '.srch-panel{background:var(--white,#fff);width:100%;max-width:680px;max-height:80vh;display:flex;flex-direction:column;border-top:3px solid var(--red,#C4352A);box-shadow:0 12px 40px rgba(0,0,0,.25);animation:srch-rise .18s ease-out}' +
     '.srch-head{display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid var(--gray-200,#d4d4d4)}' +
     '.srch-head svg{flex-shrink:0;color:var(--gray-400,#888)}' +
     '.srch-input{flex:1;border:none;outline:none;font-family:var(--serif,Georgia,serif);font-size:20px;color:var(--black,#121212);background:transparent;min-width:0;-webkit-appearance:none;appearance:none}' +
@@ -94,7 +94,7 @@
     '.srch-item:hover,.srch-item.on{background:var(--gray-50,#f7f7f7)}' +
     '.srch-region{font-family:var(--sans,Helvetica,Arial,sans-serif);font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--red,#C4352A);margin-bottom:3px}' +
     '.srch-title{font-family:var(--serif,Georgia,serif);font-size:18px;font-weight:700;line-height:1.25;color:var(--black,#121212)}' +
-    '.srch-title mark{background:#F6DEDA;color:inherit;padding:0 1px}' +
+    '.srch-title mark{background:var(--mark-bg,#F6DEDA);color:inherit;padding:0 1px}' +
     '.srch-by{font-family:var(--sans,Helvetica,Arial,sans-serif);font-size:12px;color:var(--gray-400,#888);margin-top:4px}' +
     '@keyframes srch-fade{from{opacity:0}to{opacity:1}}' +
     '@keyframes srch-rise{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}' +

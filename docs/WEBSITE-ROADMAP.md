@@ -27,7 +27,7 @@ the new logo) and add animations and features from the later Flutter versions
 | 8 | Search | Shared `site/search.js`: "Search" in the top bar (magnifier only on phones) or the / key opens a panel; results as you type, same rules as the app (every word in headline/author/region/summary, accents ignored, headline matches first, then newest); highlighted words; ↑↓ + Enter; Esc/×/outside closes; full screen on phones | **Live** 2026-10-22 |
 | 9 | Smooth page changes | CSS cross-document view transitions (`@view-transition`) on all five public pages: 0.25s cross-fade; Chrome/Edge 126+ and Safari 18.2+ fade, others (Firefox) load normally; off under reduce motion | **Live** 2026-10-22 |
 | 10 | Shrinking masthead | **Computers only** (>900px): a slim white bar (28px logo + name, section links, search) slides down and pins once the masthead's section menu scrolls away, and hides on the way back up; section links drop out under 1040px; the big masthead itself is unchanged; logo scrolls to top on the front page | **Live** 2026-10-22 |
-| 11 | Dark mode | Follows the device setting, plus a sun/moon switch in the top bar | |
+| 11 | Dark mode | `site/theme.css` + `site/theme.js` on all five public pages: follows the device setting (applied in `<head>` before first paint, follows live changes) plus a sun/moon switch at the end of the top bar; the choice is remembered, and choosing the device's own theme clears it. Dark palette #141414 / #ececec; lighter red #ef6a58 for text (6:1), deeper #b8322a behind white text (6:1). Logo keeps its white counters. Editor not themed | **Live** 2026-10-22 |
 
 Not wanted (for now): the accessibility panel.
 

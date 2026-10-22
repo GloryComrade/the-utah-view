@@ -1,0 +1,46 @@
+/* Dark mode for the website. A small script in each page's <head> sets
+   data-theme="dark" from the visitor's sun/moon choice (theme.js) or, if they
+   haven't chosen, from their device setting — before the first paint. */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --white: #141414;
+  --black: #ececec;
+  --gray-900: #e6e6e6;
+  --gray-700: #cfcfcf;
+  --gray-500: #a8a8a8;
+  --gray-400: #8f8f8f;
+  --gray-300: #6b6b6b;
+  --gray-200: #343434;
+  --gray-100: #262626;
+  --gray-50: #1d1d1d;
+  /* Red text and links need a lighter red on dark (6:1); white text sits on
+     the deeper --fill-red (6:1) instead. */
+  --red: #ef6a58;
+  --red-dark: #f48a7b;
+  --red-light: #4a2622;
+  --fill-red: #b8322a;
+  --mark-bg: #5a2a24;
+  /* privacy.html and delete-account.html */
+  --ink: #ececec;
+  --g6: #a8a8a8;
+  --g2: #343434;
+  --bg: #141414;
+  --w: #1d1d1d;
+}
+
+/* Red fills that carry white text keep white text on the deeper red. */
+:root[data-theme="dark"] .ticker-bar { background: var(--fill-red); color: #fff; }
+:root[data-theme="dark"] .ticker-more { background: var(--fill-red); box-shadow: -18px 0 14px var(--fill-red); }
+:root[data-theme="dark"] .ticker-label { background: #fff; color: var(--fill-red); }
+:root[data-theme="dark"] .user-avatar,
+:root[data-theme="dark"] .sub-btn { background: var(--fill-red); color: #fff; }
+:root[data-theme="dark"] .action-btn.saved { background: var(--fill-red); border-color: var(--fill-red); color: #fff; }
+
+/* The sun/moon switch in the top bar. */
+.theme-toggle { display: inline-flex; align-items: center; justify-content: center; background: none; border: none; cursor: pointer; color: var(--gray-500, #666); padding: 2px 6px; }
+.theme-toggle:hover { color: var(--red, #C4352A); }
+.theme-toggle svg { width: 16px; height: 16px; display: block; }
+@media (max-width: 400px) { .theme-toggle { padding: 2px 3px; } }
+/* Very small phones: make room for the switch in the homepage's busy top bar. */
+@media (max-width: 380px) { .top-bar-links a { padding: 2px 3px !important; } .top-bar .g-btn { padding: 4px 8px; gap: 6px; } }
+@media print { .theme-toggle { display: none; } }
