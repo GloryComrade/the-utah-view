@@ -1,5 +1,29 @@
 # Releasing The Utah View
 
+## What's in this build (2026 red/white redesign)
+
+Current status: **web is live** on Cloudflare Pages; the iOS build is **installed
+on the iPhone 15 Pro** (dev-signed). Not yet submitted to either store.
+`version: 1.0.0+1` — **bump the build number before any store upload**. Full
+detail + resume notes: **`docs/SESSION-HANDOFF.md`**; design tokens: `CLAUDE.md`.
+
+What changed (store "What's new" / review context):
+- **New identity:** two fonts only — Archivo Black wordmark + Newsreader
+  everywhere else — on a white / `#CE1126` red / grey palette. Logo, icons and
+  splash recolored to the new red (splash background is now white).
+- **Desktop/web navigation:** bottom tab bar replaced by a top menu + search on
+  wide screens; phones keep the bottom bar.
+- **Accessibility (first-party, not OS-reliant):** in-app text size, high-contrast
+  mode, reduce motion, a web skip link, and **article read-aloud** via
+  `flutter_tts`.
+- Removed the home "Stay briefed" card and two footer links (newsletter pages).
+
+**Store answers are unchanged by TTS:** `flutter_tts` uses the OS speech engine
+(`AVSpeechSynthesizer` / Android TextToSpeech) and needs **no new permission** and
+collects **no data** — the "email only, no tracking" privacy declarations below
+still hold. It does not support Swift Package Manager, so iOS keeps using
+**CocoaPods** (already covered in Machine setup).
+
 ## 1. Machine setup
 
 As of October 6, 2026, `flutter doctor` on the development Mac reports three
