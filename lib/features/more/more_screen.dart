@@ -442,6 +442,19 @@ class _SignInSectionState extends ConsumerState<_SignInSection> {
     });
   }
 
+  Future<void> _googleSignIn() async {
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    final err = await ref.read(authControllerProvider.notifier).signIn();
+    if (!mounted) return;
+    setState(() {
+      _busy = false;
+      _error = err;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final reader = ref.watch(readerAccountProvider);
@@ -516,7 +529,7 @@ class _SignInSectionState extends ConsumerState<_SignInSection> {
             )
           else
             OutlinedButton.icon(
-              onPressed: () => ref.read(authControllerProvider.notifier).signIn(),
+              onPressed: _busy ? null : _googleSignIn,
               icon: const Icon(Icons.login_rounded),
               label: const Text('Continue with Google'),
             ),
