@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
@@ -14,6 +15,10 @@ class AuthController extends AsyncNotifier<AuthUser?> {
   bool _listening = false;
   AuthUser? _current;
 
+  /// Why setup failed, if it did. Kept so the button can say so instead of
+  /// silently doing nothing.
+  Object? _initError;
+
   @override
   Future<AuthUser?> build() async {
     await _init();
@@ -22,6 +27,7 @@ class AuthController extends AsyncNotifier<AuthUser?> {
 
   Future<void> _init() async {
     try {
+      _initError = null;
       final signIn = GoogleSignIn.instance;
       await signIn.initialize(
         clientId: kIsWeb ? googleWebClientId : null,
@@ -29,11 +35,19 @@ class AuthController extends AsyncNotifier<AuthUser?> {
       );
       if (!_listening) {
         _listening = true;
-        signIn.authenticationEvents.listen(_onEvent);
+        signIn.authenticationEvents.listen(
+          _onEvent,
+          // Failures are already reported by signIn(); don't log them twice
+          // as unhandled.
+          onError: (Object e) => debugPrint('Google sign-in event: $e'),
+        );
       }
       await signIn.attemptLightweightAuthentication();
-    } catch (_) {
+    } catch (e) {
       // Sign-in unavailable (e.g. origin not yet authorized); stay signed out.
+      // A failed lightweight attempt after a good initialize is not an error.
+      if (!_listening) _initError = e;
+      debugPrint('Google sign-in setup: $e');
     }
   }
 
@@ -54,12 +68,20 @@ class AuthController extends AsyncNotifier<AuthUser?> {
   }
 
   /// Interactive sign-in on platforms that support it (mobile/desktop).
-  Future<void> signIn() async {
+  /// Returns a message for the reader when it fails, or null on success or
+  /// when they cancelled.
+  Future<String?> signIn() async {
+    if (_initError != null) return googleSignInErrorMessage(_initError!);
     final signIn = GoogleSignIn.instance;
-    if (signIn.supportsAuthenticate()) {
-      try {
-        await signIn.authenticate();
-      } catch (_) {}
+    if (!signIn.supportsAuthenticate()) {
+      return "Google sign-in isn't available on this device.";
+    }
+    try {
+      await signIn.authenticate();
+      return null;
+    } catch (e) {
+      debugPrint('Google sign-in: $e');
+      return googleSignInErrorMessage(e);
     }
   }
 
@@ -75,3 +97,32 @@ class AuthController extends AsyncNotifier<AuthUser?> {
 final authControllerProvider = AsyncNotifierProvider<AuthController, AuthUser?>(
   AuthController.new,
 );
+
+/// What to tell the reader when Google sign-in fails. Null means say nothing
+/// (they closed the Google sheet themselves).
+String? googleSignInErrorMessage(Object error) {
+  if (error is GoogleSignInException) {
+    final detail = error.description?.trim();
+    final suffix = detail == null || detail.isEmpty ? '' : ' ($detail)';
+    switch (error.code) {
+      case GoogleSignInExceptionCode.canceled:
+        return null;
+      case GoogleSignInExceptionCode.clientConfigurationError:
+      case GoogleSignInExceptionCode.providerConfigurationError:
+        return "Google sign-in isn't set up for this version of the app yet. "
+            'Please use email instead for now.$suffix';
+      case GoogleSignInExceptionCode.uiUnavailable:
+      case GoogleSignInExceptionCode.interrupted:
+        return 'Google sign-in was interrupted. Please try again.$suffix';
+      default:
+        return 'Google sign-in failed. Please try again.$suffix';
+    }
+  }
+  // iOS reports a missing GIDClientID as a plain PlatformException.
+  if (error is PlatformException &&
+      '${error.message}'.contains('No active configuration')) {
+    return "Google sign-in isn't set up for this version of the app yet. "
+        'Please use email instead for now. (${error.message})';
+  }
+  return 'Google sign-in failed. Please try again. ($error)';
+}
