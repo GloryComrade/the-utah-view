@@ -269,6 +269,37 @@ body.has-dirty .main{padding-bottom:80px}
   .brand span{display:none}
   .userchip .em{display:none}
 }
+
+/* front page: slots, picker, status */
+.slot{display:flex;gap:10px;align-items:flex-start;width:100%;min-height:62px;text-align:left;padding:9px 10px;border:1px solid var(--g2);border-radius:10px;background:var(--w);cursor:pointer;font:inherit;color:var(--g8)}
+.slot:hover{border-color:var(--g4)}
+.slot:focus-visible{outline:2px solid var(--red);outline-offset:2px}
+.slot.empty{border-style:dashed;color:var(--g4);align-items:center}
+.slot.warn{border-color:#e0b44a;background:var(--warnbg)}
+.slot.bad{border-color:var(--red)}
+.slot .st{width:44px;height:44px;flex-shrink:0;border-radius:6px;background:var(--g1) center/cover no-repeat}
+.slot .sx{min-width:0;flex:1}
+.slot .sh{font-size:13.5px;font-weight:700;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.slot .sm{font-size:12px;color:var(--g5);margin-top:2px}
+.chip{display:inline-block;font-size:11px;font-weight:700;padding:1px 7px;border-radius:99px;margin:4px 4px 0 0;background:var(--g1);color:var(--g6)}
+.chip.w{background:#fbe7b5;color:#6b4a00}
+.chip.n{background:#fde2df;color:#8a1c12}
+.hstat{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 16px;margin-bottom:16px;border:1px solid var(--g2);border-radius:var(--rad);background:var(--w);font-size:14px}
+.hstat .sp{flex:1}
+.hstat b.dr{color:var(--warn)}
+.cardwarn{font-size:13px;color:#6b4a00;background:var(--warnbg);border-radius:8px;padding:8px 10px;margin:0 0 12px}
+.pk-list{margin-top:10px;max-height:52vh;overflow-y:auto;border-top:1px solid var(--g1)}
+.pk{display:flex;gap:10px;align-items:center;width:100%;text-align:left;padding:9px 4px;border:0;border-bottom:1px solid var(--g1);background:none;font:inherit;color:var(--g8);cursor:pointer}
+.pk:hover,.pk:focus-visible{background:var(--g1)}
+.pk.dr{opacity:.6}
+.pk.cur{background:#fdf1ef}
+.pk .st{width:48px;height:36px;flex-shrink:0;border-radius:5px;background:var(--g1) center/cover no-repeat}
+.pk .sh{font-size:14px;font-weight:700;line-height:1.3}
+.pk .sm{font-size:12px;color:var(--g5)}
+.chgl{list-style:none;margin:8px 0 0;font-size:13.5px}
+.chgl li{padding:6px 0;border-top:1px solid var(--g1)}
+.chgl .f{font-weight:700}
+.chgl .o{color:var(--g5);text-decoration:line-through}
 </style>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
@@ -436,13 +467,14 @@ var EDIT_VIEWS={story:1,page:1,homepage:1,footer:1},dirty=false,_auto=null;
 function markDirty(){if(!EDIT_VIEWS[curView])return;if(!dirty){dirty=true;$('dirtybar').classList.add('on');document.body.classList.add('has-dirty');$('dirtySave').textContent=saveLabel();}
   clearTimeout(_auto);_auto=setTimeout(autosave,1500)}
 function clearDirty(){dirty=false;clearTimeout(_auto);$('dirtybar').classList.remove('on');document.body.classList.remove('has-dirty');$('dirtyNote').textContent=''}
-function saveLabel(){if(curView==='story')return storyIsLive()?'Update':'Save draft';if(curView==='page')return 'Save page';if(curView==='homepage')return 'Save homepage';return 'Save'}
-function dirtySave(){if(curView==='story'){if(storyIsLive())updateLive();else saveFromForm('draft');}else if(curView==='page')savePage();else if(curView==='homepage')saveHome();else if(curView==='footer')saveFooter()}
+function saveLabel(){if(curView==='story')return storyIsLive()?'Update':'Save draft';if(curView==='page')return 'Save page';if(curView==='homepage')return 'Launch…';return 'Save'}
+function dirtySave(){if(curView==='story'){if(storyIsLive())updateLive();else saveFromForm('draft');}else if(curView==='page')savePage();else if(curView==='homepage')openLaunch();else if(curView==='footer')saveFooter()}
 function discardChanges(){modal('Discard your changes?','Everything you changed since the last save on this screen goes back to how it was.',[{label:'Keep editing'},{label:'Discard',cls:'bd',run:function(){dropLocal();clearDirty();if(curView==='story'&&editId)editStory(editId,true);else if(curView==='page')editPage(editSlug);else render();}}])}
-function localKey(){if(curView==='story')return 'utv_local_story_'+(editId||'new');if(curView==='page')return 'utv_local_page_'+(editSlug||'new');return ''}
+function localKey(){if(curView==='story')return 'utv_local_story_'+(editId||'new');if(curView==='page')return 'utv_local_page_'+(editSlug||'new');if(curView==='homepage')return 'utv_local_home';return ''}
 function autosave(){var k=localKey();if(!k||!dirty)return;var d;
   if(curView==='story'&&$('ft'))d={title:$('ft').value,author:$('fa').value,region:$('fr').value,date:$('fd').value,read_time:$('frt').value,summary:$('fsum').value,image_url:$('fimg').value,image_caption:$('fcap').value,image_credit:$('fcred').value,body:$('fbody').innerHTML};
   else if(curView==='page'&&$('pt'))d={title:$('pt').value,subtitle:$('psub').value,slug:$('pslug')?$('pslug').value:'',body:$('pbody').innerHTML};
+  else if(curView==='homepage'&&$('lt'))d={value:collectHome()};
   if(!d)return;d.saved_at=Date.now();try{localStorage.setItem(k,JSON.stringify(d))}catch(e){}
   $('dirtyNote').textContent='· copy kept in this browser '+new Date().toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})}
 function dropLocal(k){k=k||localKey();if(k)try{localStorage.removeItem(k)}catch(e){}}
@@ -457,8 +489,8 @@ function offerRestore(k,cur,fill){var c=localCopy(k);if(!c)return;var diff=Objec
 // Leaving an edit screen with unsaved changes asks first.
 function guard(next){if(!dirty){next();return;}modal('Leave without saving?','Your changes on this screen haven’t been saved. If you leave now they’re lost'+(localKey()?' (a copy stays in this browser and is offered back next time you open it)':'')+'.',[{label:'Stay'},{label:'Leave',cls:'bd',run:function(){clearDirty();next()}}])}
 window.addEventListener('beforeunload',function(e){if(dirty){autosave();e.preventDefault();e.returnValue='';}});
-document.addEventListener('input',function(e){if($('view')&&$('view').contains(e.target))markDirty()});
-document.addEventListener('change',function(e){if($('view')&&$('view').contains(e.target)&&e.target.tagName==='SELECT')markDirty()});
+document.addEventListener('input',function(e){if($('view')&&$('view').contains(e.target)){markDirty();homeChanged()}});
+document.addEventListener('change',function(e){if($('view')&&$('view').contains(e.target)&&e.target.tagName==='SELECT'){markDirty();homeChanged()}});
 
 /* ---------- clean paste ---------- */
 // Text pasted from Google Docs, Word or a web page keeps paragraphs, bold,
@@ -908,49 +940,140 @@ var SEC_IDS=['hero','editorial','regions','featured','utahLens','dataBrief'];
 var SEC_NAMES={hero:'Hero / Lead',editorial:'Editorial & Opinion',regions:'Around the World',featured:'In This Issue',utahLens:'The Utah Lens',dataBrief:'Data Brief'};
 var SEC_LABELABLE={editorial:1,regions:1,featured:1,utahLens:1,dataBrief:1};
 var secOrder=[],secHidden=[],secLabels={};
-function storyOpts(v){var S=stories();var ar=Object.keys(S).map(function(i){return S[i]}).sort(function(a,b){return (a.title||'').localeCompare(b.title||'')});
-  var h='<option value="">— none —</option>';ar.forEach(function(x){h+='<option value="'+esc(x.id)+'"'+(x.id===v?' selected':'')+'>'+esc((x.title||x.id).substring(0,60))+(x.status!=='published'?' (draft)':'')+'</option>'});return h}
-function slots(label,prefix,arr,n){var h='';for(var i=0;i<n;i++)h+='<div class="fl"><label>'+label+' #'+(i+1)+'</label><select data-slot id="'+prefix+i+'">'+storyOpts((arr||[])[i]||'')+'</select></div>';return h}
-// Re-pull the story list from the API and repopulate every slot dropdown in
-// place, keeping each current selection — so stories published after the
-// Homepage panel was opened become selectable without losing your work.
+// Each front-page slot is a button showing the story in it; the value lives on
+// the button (.value), so collect() and saveHome() read it like a select.
+function slotBtn(id,name,v){return '<button type="button" class="slot" data-slot data-name="'+esc(name)+'" id="'+id+'" value="'+esc(v||'')+'" onclick="pickSlot(this)"></button>'}
+function slots(label,prefix,arr,n){var h='';for(var i=0;i<n;i++)h+='<div class="fl"><label for="'+prefix+i+'">'+label+' #'+(i+1)+'</label>'+slotBtn(prefix+i,label+' #'+(i+1),(arr||[])[i]||'')+'</div>';return h}
+function newestFirst(a,b){return String(b.date||'').localeCompare(String(a.date||''))||String(b.updated_at||'').localeCompare(String(a.updated_at||''))}
+function shortT(t,n){t=String(t||'');n=n||70;return t.length>n?t.slice(0,n-1)+'…':t}
+function photoOf(x){var u=String(x&&x.image_url||'').trim();if(!u)return '';if(u.indexOf('//')===0)u='https:'+u;else if(!/^https?:/i.test(u))u=API+(u.charAt(0)==='/'?'':'/')+u;return u}
+function bgImg(u){return u?' style="background-image:url(&quot;'+esc(u).replace(/"/g,'%22')+'&quot;)"':''}
+// Where each story sits right now: {id:[slot names]}
+function slotUses(){var m={};document.querySelectorAll('[data-slot]').forEach(function(b){if(b.value)(m[b.value]=m[b.value]||[]).push(b.dataset.name)});return m}
+// Draw every slot with its story, and flag problems in place.
+function paintSlots(){var S=stories(),U=slotUses(),n=0;
+  document.querySelectorAll('[data-slot]').forEach(function(b){var v=b.value,x=S[v],ch=[],cls='';
+    if(!v){b.className='slot empty';b.innerHTML='<span class="sx">+ Choose a story</span>';b.setAttribute('aria-label',b.dataset.name+': empty. Choose a story');return}
+    if(!x){ch.push('<span class="chip n">Story not found</span>');cls=' bad';n++}
+    else{if(x.status!=='published'){ch.push('<span class="chip w">Draft · won’t show until published</span>');cls=' warn';n++}
+      var o=(U[v]||[]).filter(function(nm){return nm!==b.dataset.name});if(o.length){ch.push('<span class="chip w">Also in '+esc(o.join(', '))+'</span>');cls=' warn';n++}}
+    b.className='slot'+cls;
+    b.innerHTML='<span class="st"'+bgImg(photoOf(x))+'></span><span class="sx"><span class="sh">'+esc(x?x.title||v:v)+'</span><span class="sm">'+(x?esc((x.region||'')+(x.date?' · '+fmtDate(x.date):'')):'It may have been deleted. Choose another.')+'</span>'+(ch.length?'<span style="display:block">'+ch.join('')+'</span>':'')+'</span>';
+    b.setAttribute('aria-label',b.dataset.name+': '+(x?x.title:'story not found')+(ch.length?' (has a warning)':'')+'. Change');
+  });
+  var hw=$('heroWarn');if(hw){var m=[];if(!$('li').value.trim())m.push('No hero photo: the top of the front page shows a grey box.');else if(!$('lcap').value.trim())m.push('The hero photo has no caption or credit.');hw.innerHTML=m.join('<br>');hw.style.display=m.length?'':'none';n+=m.length}
+  return n}
+// The story chooser: search, newest first, photo, section and date.
+function pickSlot(btn){var S=stories(),U=slotUses();
+  var ar=Object.keys(S).map(function(k){return S[k]}).sort(newestFirst);
+  modal('Choose a story for '+esc(btn.dataset.name),'<div class="fl" style="margin:0"><input id="pkQ" type="search" placeholder="Search headlines, authors, sections" autocomplete="off" aria-label="Search stories"></div><div class="pk-list" id="pkList" role="list"></div>',
+    [{label:'Cancel'},{label:'Leave empty',run:function(){setSlot(btn,'')}}]);
+  var q=$('pkQ'),list=$('pkList');
+  function draw(){var t=q.value.trim().toLowerCase(),hits=ar.filter(function(x){return !t||[x.title,x.author,x.region,x.id].join(' ').toLowerCase().indexOf(t)>=0}).slice(0,80);
+    list.innerHTML=hits.length?hits.map(function(x){var o=(U[x.id]||[]).filter(function(nm){return nm!==btn.dataset.name}),live=x.status==='published';
+      return '<button type="button" role="listitem" class="pk'+(live?'':' dr')+(x.id===btn.value?' cur':'')+'" data-id="'+esc(x.id)+'"><span class="st"'+bgImg(photoOf(x))+'></span><span><span class="sh">'+esc(shortT(x.title||x.id,110))+'</span><br><span class="sm">'+esc((x.region||'')+(x.date?' · '+fmtDate(x.date):'')+(x.author?' · '+x.author:''))+'</span>'+
+        (live?'':'<span class="chip w">Not live yet</span>')+(o.length?'<span class="chip">In '+esc(o.join(', '))+'</span>':'')+(x.id===btn.value?'<span class="chip">In this slot now</span>':'')+'</span></button>'}).join(''):'<p class="su" style="padding:12px 0">No stories match.</p>';
+    list.querySelectorAll('.pk').forEach(function(el){el.onclick=function(){closeModal();setSlot(btn,el.dataset.id)}})}
+  q.addEventListener('input',draw);
+  q.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();e.stopPropagation();var f=list.querySelector('.pk');if(f)f.click()}else if(e.key==='ArrowDown'){var f2=list.querySelector('.pk');if(f2){e.preventDefault();f2.focus()}}});
+  list.addEventListener('keydown',function(e){var el=document.activeElement;if(!el||!el.classList.contains('pk'))return;if(e.key==='ArrowDown'&&el.nextElementSibling){e.preventDefault();el.nextElementSibling.focus()}else if(e.key==='ArrowUp'){e.preventDefault();(el.previousElementSibling||q).focus()}});
+  draw()}
+function setSlot(btn,id){if(btn.value===id)return;btn.value=id;markDirty();homeChanged();btn.focus()}
+// Re-pull the story list from the API and redraw every slot in place, keeping
+// each current pick, so stories published after the panel was opened show up.
 function refreshHomepageStories(btn){
   if(btn){btn.disabled=true;btn.textContent='Refreshing…';}
   var done=function(){if(btn){btn.disabled=false;btn.innerHTML='&#8635; Refresh stories';}};
   api('GET','/api/admin/stories').then(function(r){return r.ok?r.json():null}).then(function(d){
     if(d&&d.stories){var S={},cur=stories();d.stories.forEach(function(x){var old=cur[x.id]||{};S[x.id]=x;if(!x.body&&old.body)S[x.id].body=old.body;});s('utv_stories',S);
-      if(curView==='homepage')document.querySelectorAll('select[data-slot]').forEach(function(sel){sel.innerHTML=storyOpts(sel.value);});
+      if(curView==='homepage')homeChanged();
       if(btn)toast('✅ Stories updated');
     } else if(btn)toast('⚠️ Could not refresh');
     done();
   }).catch(function(){done();if(btn)toast('⚠️ Network error');});
 }
-function vHomepage(){
-  var L=layout();
+/* Draft front, Preview, Launch. HOME_LIVE is the layout as it was on the
+   server when this screen opened; edits build up as a draft until Launch. */
+var HOME_LIVE=null,_hcT=null,homePvOpen=false;
+var HOME_SLOTS=[['hero_lead','Hero · Lead'],['hero_secondary','Hero · Secondary'],['hero_center','Hero · Center']];
+var HOME_LISTS=[['hero_right','From This Issue'],['editorial','Opinion'],['featured','In This Issue'],['sidebar_utah','Utah Lens'],['sidebar_data','Data Brief']];
+var HOME_REGIONS=['The Americas','Europe','Asia-Pacific','Middle East','Africa'];
+function homeNorm(L){L=L||{};var o={ticker:String(L.ticker||'').trim(),ticker_height:L.ticker_height||'normal',ticker_speed:L.ticker_speed||'normal',hero_image:String(L.hero_image||'').trim(),hero_center_caption:String(L.hero_center_caption||'').trim(),hero_image_alt:String(L.hero_image_alt||'').trim()};
+  HOME_SLOTS.forEach(function(f){o[f[0]]=L[f[0]]||''});HOME_LISTS.forEach(function(f){o[f[0]]=(L[f[0]]||[]).filter(Boolean)});
+  o.regions={};HOME_REGIONS.forEach(function(r){o.regions[r]=(L.regions||{})[r]||''});
+  var so=(L.section_order&&L.section_order.length)?L.section_order.slice():SEC_IDS.slice();SEC_IDS.forEach(function(id){if(so.indexOf(id)<0)so.push(id)});
+  o.sections=JSON.stringify([so.filter(function(id){return SEC_IDS.indexOf(id)>=0}),(L.hidden_sections||[]).slice().sort(),Object.keys(L.section_labels||{}).sort().map(function(k){return [k,String(L.section_labels[k]||'').trim()]}).filter(function(x){return x[1]})]);
+  return o}
+function homeTitle(id){if(!id)return 'empty';var x=stories()[id];return x?shortT(x.title||id,60):'(missing story)'}
+// Plain-language list of what Launch would change.
+function homeChanges(){var a=homeNorm(HOME_LIVE),b=homeNorm(collectHome()),c=[];
+  function story(f,o,n){if(o!==n)c.push({f:f,o:homeTitle(o),n:homeTitle(n)})}
+  HOME_SLOTS.forEach(function(f){story(f[1],a[f[0]],b[f[0]])});
+  HOME_LISTS.forEach(function(f){var x=a[f[0]],y=b[f[0]];for(var i=0;i<Math.max(x.length,y.length);i++)story(f[1]+' #'+(i+1),x[i]||'',y[i]||'')});
+  HOME_REGIONS.forEach(function(r){story('Around the World · '+r,a.regions[r],b.regions[r])});
+  if(a.hero_image!==b.hero_image)c.push({f:'Hero photo',n:b.hero_image?'new photo':'removed'});
+  if(a.hero_center_caption!==b.hero_center_caption)c.push({f:'Hero caption',n:b.hero_center_caption||'removed'});
+  if(a.hero_image_alt!==b.hero_image_alt)c.push({f:'Hero photo description',n:b.hero_image_alt||'removed'});
+  if(a.ticker!==b.ticker||a.ticker_height!==b.ticker_height||a.ticker_speed!==b.ticker_speed)c.push({f:'Briefing strip',n:'edited'});
+  if(a.sections!==b.sections)c.push({f:'Sections',n:'order, visibility or headers changed'});
+  return c}
+function homeChanged(){if(curView!=='homepage')return;var n=paintSlots(),c=HOME_LIVE?homeChanges():[],el=$('homeStat');
+  if(el)el.innerHTML=(c.length?'<b class="dr">Draft · '+c.length+' change'+(c.length===1?'':'s')+'</b> <span class="su">Not live until you launch.</span>':'<b>Matches the live front page</b>')+
+    (n?' <button class="linkish" onclick="jumpWarn()">⚠ '+n+' warning'+(n===1?'':'s')+'</button>':'')+'<span class="sp"></span>'+
+    (prevLaunch()?'<button class="bt bs bsm" onclick="undoLaunch()">↶ Undo last launch</button>':'')+
+    '<button class="bt bs bsm" onclick="openHomePreview()">Preview front page ↗</button><button class="bt bp bsm" onclick="openLaunch()">Launch…</button>';
+  if(!c.length&&dirty){clearDirty();dropLocal('utv_local_home')}
+  if(homePvOpen){clearTimeout(_hcT);_hcT=setTimeout(pushHomePreview,300)}}
+function jumpWarn(){var el=document.querySelector('.slot.warn,.slot.bad,#heroWarn:not([style*="none"])');if(el){el.scrollIntoView({block:'center'});if(el.focus)el.focus()}}
+function collectHome(){secCapture();
+  var rg={};HOME_REGIONS.forEach(function(r){var el=$('lrg-'+r.replace(/\s/g,'-'));rg[r]=el?el.value:''});
+  // start from the live copy so settings this screen doesn't show are kept
+  var L=Object.assign({},HOME_LIVE||layout(),{ticker:$('lt').value.split('\n').map(function(x){return x.trim()}).filter(Boolean).join(' • '),ticker_height:$('lth').value,ticker_speed:$('lts').value,hero_image:$('li').value.trim(),hero_lead:$('ll').value,hero_secondary:$('ls').value,hero_center:$('lct').value,
+    hero_right:collect('lr',6),editorial:collect('le',6),regions:rg,featured:collect('lf',10),sidebar_utah:collect('lu',4),sidebar_data:collect('ld',4),
+    section_order:secOrder.slice(),hidden_sections:secHidden.slice(),section_labels:cleanLabels()});
+  var cap=$('lcap').value.trim(),alt=$('lalt').value.trim();if(cap)L.hero_center_caption=cap;else delete L.hero_center_caption;if(alt)L.hero_image_alt=alt;else delete L.hero_image_alt;
+  return L}
+function pushHomePreview(){try{localStorage.setItem('utv_preview_layout',JSON.stringify(collectHome()))}catch(e){}}
+function openHomePreview(){pushHomePreview();homePvOpen=true;var w=window.open('index.html?preview=1','utvhomepreview');if(!w)toast('⚠️ Your browser blocked the preview window. Allow pop-ups for this site.')}
+function prevLaunch(){var p=localCopy('utv_layout_prev');return p&&p.value&&(Date.now()-p.at<7*864e5)?p:null}
+function vHomepage(D){
+  if(!D)HOME_LIVE=JSON.parse(JSON.stringify(layout()));
+  var L=D||layout();
   secInit(L);
-  var h=head('Homepage &amp; app layout','<button class="bt bs" onclick="refreshHomepageStories(this)">&#8635; Refresh stories</button> <button class="bt bp" onclick="saveHome()">💾 Save homepage</button>');
+  var h=head('Homepage &amp; app layout','<button class="bt bs" onclick="refreshHomepageStories(this)">&#8635; Refresh stories</button>');
+  h+='<div class="hstat" id="homeStat" role="status"></div>';
   h+='<div class="card"><h2>🧩 Sections <span style="font-weight:600;color:var(--g5);font-size:12px">&mdash; controls the website <b>and</b> the iOS/Android apps</span></h2><p class="desc">Reorder, show/hide, and rename the red headers. In the <b>mobile apps</b> the front page renders sections in exactly this order, hides the ones toggled off, and uses these labels. On wide web screens the grid order stays fixed but still honors hide + labels. Every story slot you pick below also applies to the apps.</p><div id="secMgr"></div></div>';
   var tkLines=String(L.ticker||'').split(/\s*[•·|]\s*/).map(function(x){return x.trim()}).filter(Boolean).join('\n');
   var tkOpt=function(id,cur,opts){return '<select id="'+id+'">'+opts.map(function(o){return '<option value="'+o[0]+'"'+(cur===o[0]?' selected':'')+'>'+o[1]+'</option>'}).join('')+'</select>'};
   h+='<div class="card"><h2>📢 Briefing strip</h2><div class="fl"><label>Headlines &mdash; one per line</label><textarea id="lt" rows="7" placeholder="One headline per line">'+esc(tkLines)+'</textarea><div style="font-size:12px;color:var(--g5);margin-top:6px">They scroll in the red Briefing bar on the website (the apps show them as a strip); readers tap it to see them all. Leave empty to hide the bar.</div></div>'+
     '<div class="row2"><div class="fl"><label>Website bar height</label>'+tkOpt('lth',L.ticker_height||'normal',[['slim','Slim'],['normal','Normal'],['tall','Tall']])+'</div>'+
     '<div class="fl"><label>Website scroll speed</label>'+tkOpt('lts',L.ticker_speed||'normal',[['slow','Slow'],['normal','Normal'],['fast','Fast']])+'</div></div></div>';
-  h+='<div class="card"><h2>🏠 Hero</h2>'+
+  h+='<div class="card"><h2>🏠 Hero</h2><div class="cardwarn" id="heroWarn" style="display:none"></div>'+
     '<div class="fl"><label>Hero image</label><input id="li" value="'+esc(L.hero_image||'')+'" placeholder="Image URL"><button class="bt bs bsm" style="margin-top:8px" onclick="uploadImage(\'li\')">&#8679; Upload image</button></div>'+
     '<div class="fl"><label>Photo caption &amp; credit</label><input id="lcap" value="'+esc(L.hero_center_caption||'')+'" placeholder="e.g. Batan Island, Batanes. Photo: Name / Wikimedia Commons, CC BY-SA 4.0"><div class="hint">Shown under the homepage photo. Free-licensed photos must credit the photographer here.</div></div>'+
     '<div class="fl"><label>Photo description (for screen readers)</label><input id="lalt" value="'+esc(L.hero_image_alt||'')+'" placeholder="e.g. Batan Island seen from the sea under storm clouds"></div>'+
-    '<div class="row3"><div class="fl"><label>⭐ Lead</label><select data-slot id="ll">'+storyOpts(L.hero_lead)+'</select></div>'+
-    '<div class="fl"><label>Secondary</label><select data-slot id="ls">'+storyOpts(L.hero_secondary)+'</select></div>'+
-    '<div class="fl"><label>Center</label><select data-slot id="lct">'+storyOpts(L.hero_center)+'</select></div></div>'+
+    '<div class="row3"><div class="fl"><label for="ll">⭐ Lead</label>'+slotBtn('ll','Hero · Lead',L.hero_lead)+'</div>'+
+    '<div class="fl"><label for="ls">Secondary</label>'+slotBtn('ls','Hero · Secondary',L.hero_secondary)+'</div>'+
+    '<div class="fl"><label for="lct">Center</label>'+slotBtn('lct','Hero · Center',L.hero_center)+'</div></div>'+
     '<div class="row3">'+slots('From This Issue','lr',L.hero_right,6)+'</div></div>';
   h+='<div class="card"><h2>✍️ Editorial &amp; Opinion</h2><div class="row3">'+slots('Opinion','le',L.editorial,6)+'</div></div>';
   var rn=['The Americas','Europe','Asia-Pacific','Middle East','Africa'],rg=L.regions||{};
-  h+='<div class="card"><h2>🌍 Around the World</h2><div class="row3">'+rn.map(function(r){return '<div class="fl"><label>'+r+'</label><select data-slot id="lrg-'+r.replace(/\s/g,'-')+'">'+storyOpts(rg[r]||'')+'</select></div>'}).join('')+'</div></div>';
-  h+='<div class="card"><h2>📰 In This Issue</h2><div class="row3">'+slots('Featured','lf',L.featured,10)+'</div></div>';
+  h+='<div class="card"><h2>🌍 Around the World</h2><div class="row3">'+rn.map(function(r){var id='lrg-'+r.replace(/\s/g,'-');return '<div class="fl"><label for="'+id+'">'+r+'</label>'+slotBtn(id,'Around the World · '+r,rg[r]||'')+'</div>'}).join('')+'</div></div>';
+  h+='<div class="card"><h2>📰 In This Issue</h2><div class="row3">'+slots('In This Issue','lf',L.featured,10)+'</div></div>';
   h+='<div class="card"><h2>📋 Sidebar</h2><div class="row2">'+slots('Utah Lens','lu',L.sidebar_utah,4)+'</div><div class="row3" style="margin-top:4px">'+slots('Data Brief','ld',L.sidebar_data,4)+'</div></div>';
-  h+='<div class="toolbar"><button class="bt bp" onclick="saveHome()">💾 Save homepage</button></div>';
-  $('view').innerHTML=h;renderSections();refreshHomepageStories();
+  h+='<div class="toolbar"><button class="bt bs" onclick="openHomePreview()">Preview front page ↗</button><button class="bt bp" onclick="openLaunch()">Launch…</button></div>';
+  $('view').innerHTML=h;renderSections();homeChanged();refreshHomepageStories();
+  if(!D){offerHomeRestore();
+    // pick up a launch made elsewhere since this browser last loaded the layout
+    fetch(API+'/api/config/layout').then(function(r){return r.json()}).then(function(d){if(!d.value||curView!=='homepage'||dirty)return;if(JSON.stringify(d.value)!==JSON.stringify(HOME_LIVE)){s('utv_layout',d.value);vHomepage()}}).catch(function(){})}
 }
+// A homepage draft left in this browser (closed tab) is offered back.
+function offerHomeRestore(){var c=localCopy('utv_local_home');if(!c||!c.value)return;
+  if(JSON.stringify(homeNorm(c.value))===JSON.stringify(homeNorm(HOME_LIVE))){dropLocal('utv_local_home');return}
+  var bar=document.createElement('div');bar.className='restore';bar.innerHTML='<span>You have a front-page draft from <b>'+new Date(c.saved_at).toLocaleString([],{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})+'</b> that wasn’t launched.</span><span class="sp"></span>';
+  var no=document.createElement('button');no.className='bt bs bsm';no.textContent='Throw away';no.onclick=function(){dropLocal('utv_local_home');bar.remove()};
+  var yes=document.createElement('button');yes.className='bt bp bsm';yes.textContent='Restore draft';yes.onclick=function(){vHomepage(c.value);markDirty();homeChanged()};
+  bar.appendChild(no);bar.appendChild(yes);var v=$('view');v.insertBefore(bar,$('homeStat'))}
 function secInit(L){var o=(L.section_order&&L.section_order.length)?L.section_order.slice():SEC_IDS.slice();SEC_IDS.forEach(function(id){if(o.indexOf(id)<0)o.push(id)});o=o.filter(function(id){return SEC_IDS.indexOf(id)>=0});secOrder=o;secHidden=(L.hidden_sections||[]).slice();secLabels=Object.assign({},L.section_labels||{})}
 function secCapture(){secOrder.forEach(function(id){var v=$('sec_vis_'+id);if(v){secHidden=secHidden.filter(function(x){return x!==id});if(!v.checked)secHidden.push(id)}var l=$('sec_lbl_'+id);if(l)secLabels[id]=l.value})}
 function cleanLabels(){var o={};Object.keys(secLabels).forEach(function(k){var v=(secLabels[k]||'').trim();if(v)o[k]=v});return o}
@@ -961,24 +1084,39 @@ function renderSections(){var el=$('secMgr');if(!el)return;el.innerHTML=secOrder
     (SEC_LABELABLE[id]?'<input type="text" id="sec_lbl_'+id+'" placeholder="Custom red header (optional)" value="'+esc(secLabels[id]||'')+'">':'<span style="flex:1"></span>')+
     '</div>';
 }).join('')}
-function secMove(id,d){secCapture();var i=secOrder.indexOf(id),j=i+d;if(j<0||j>=secOrder.length)return;var t=secOrder[i];secOrder[i]=secOrder[j];secOrder[j]=t;renderSections()}
+function secMove(id,d){secCapture();var i=secOrder.indexOf(id),j=i+d;if(j<0||j>=secOrder.length)return;var t=secOrder[i];secOrder[i]=secOrder[j];secOrder[j]=t;renderSections();markDirty();homeChanged()}
 function collect(prefix,n){var a=[];for(var i=0;i<n;i++){var el=$(prefix+i);if(el&&el.value)a.push(el.value)}return a}
 function uploadImage(inputId){var inp=document.createElement('input');inp.type='file';inp.accept='image/*';
   inp.onchange=function(){var f=inp.files&&inp.files[0];if(!f)return;if(f.size>5*1024*1024){toast('Image too large (5MB max)');return;}var fd=new FormData();fd.append('file',f);toast('Uploading…');
-    fetch(API+'/api/upload',{method:'POST',headers:{'Authorization':'Bearer '+token()},body:fd}).then(function(r){return r.json()}).then(function(d){if(d.url){var el=$(inputId);if(el)el.value=d.url;toast('✅ Uploaded')}else toast('⚠️ '+(d.error||'Upload failed'))}).catch(function(){toast('⚠️ Upload failed')});};
+    fetch(API+'/api/upload',{method:'POST',headers:{'Authorization':'Bearer '+token()},body:fd}).then(function(r){return r.json()}).then(function(d){if(d.url){var el=$(inputId);if(el)el.value=d.url;markDirty();homeChanged();toast('✅ Uploaded')}else toast('⚠️ '+(d.error||'Upload failed'))}).catch(function(){toast('⚠️ Upload failed')});};
   inp.click();
 }
+// Launch: say what will change and what looks wrong, check nobody else
+// launched meanwhile, keep the old layout for Undo, then go live.
+function openLaunch(){var c=homeChanges(),n=paintSlots(),w=[];
+  document.querySelectorAll('.slot.warn,.slot.bad').forEach(function(b){w.push(esc(b.dataset.name)+': '+esc([].map.call(b.querySelectorAll('.chip'),function(x){return x.textContent}).join(', ')))});
+  if($('heroWarn')&&$('heroWarn').innerHTML)w.unshift($('heroWarn').innerHTML);
+  if(!c.length){toast('Nothing to launch: this matches the live front page.');return}
+  var body='<p>These go live on the website and in the apps at once.</p><ul class="chgl">'+c.slice(0,14).map(function(x){return '<li><span class="f">'+esc(x.f)+'</span><br>'+(x.o!==undefined?'<span class="o">'+esc(x.o)+'</span> → ':'')+esc(x.n)+'</li>'}).join('')+(c.length>14?'<li>…and '+(c.length-14)+' more</li>':'')+'</ul>'+
+    (w.length?'<p style="margin-top:12px;font-weight:700">'+w.length+' warning'+(w.length===1?'':'s')+'</p><ul class="chk">'+w.slice(0,8).map(function(x){return '<li><span class="m w">!</span><span>'+x+'</span></li>'}).join('')+'</ul>':'');
+  modal('Launch the front page?',body,[{label:'Cancel'},{label:'Preview first',run:openHomePreview},{label:'Launch now',cls:'bp',run:function(){launchFresh(function(){saveHome()})}}])}
+function launchFresh(next){fetch(API+'/api/config/layout',{cache:'no-store'}).then(function(r){return r.json()}).then(function(d){
+    if(d.value&&HOME_LIVE&&JSON.stringify(d.value)!==JSON.stringify(HOME_LIVE)){
+      modal('The front page changed while you were editing','Someone launched a different front page after you opened this screen. Launching yours replaces theirs.',[{label:'Cancel'},{label:'See theirs',run:function(){clearDirty();dropLocal('utv_local_home');s('utv_layout',d.value);vHomepage()}},{label:'Launch mine anyway',cls:'bd',run:function(){HOME_LIVE=d.value;next()}}]);return}
+    next()}).catch(function(){next()})}
 function saveHome(){
-  secCapture();
-  var rn=['The Americas','Europe','Asia-Pacific','Middle East','Africa'],rg={};rn.forEach(function(r){rg[r]=$('lrg-'+r.replace(/\s/g,'-')).value});
-  var L={ticker:$('lt').value.split('\n').map(function(x){return x.trim()}).filter(Boolean).join(' • '),ticker_height:$('lth').value,ticker_speed:$('lts').value,hero_image:$('li').value.trim(),hero_lead:$('ll').value,hero_secondary:$('ls').value,hero_center:$('lct').value,
-    hero_right:collect('lr',6),editorial:collect('le',6),regions:rg,featured:collect('lf',10),sidebar_utah:collect('lu',4),sidebar_data:collect('ld',4),
-    section_order:secOrder.slice(),hidden_sections:secHidden.slice(),section_labels:cleanLabels()};
-  var cap=$('lcap').value.trim(),alt=$('lalt').value.trim();if(cap)L.hero_center_caption=cap;if(alt)L.hero_image_alt=alt;
-  s('utv_layout',L);
-  if(apiOk)api('PUT','/api/admin/config/layout',{value:L}).then(function(r){if(r.ok)clearDirty();toast(r.ok?'✅ Homepage saved — live now':(r.status===403?'⚠️ Admin only':'⚠️ Error'))}).catch(function(){toast('⚠️ Network error')});
-  else toast('⚠️ API offline');
+  var L=collectHome(),prev=HOME_LIVE;
+  if(!apiOk){toast('⚠️ API offline');return}
+  api('PUT','/api/admin/config/layout',{value:L}).then(function(r){
+    if(!r.ok){toast(r.status===403?'⚠️ Only admins can launch the front page':'⚠️ Launch failed. Nothing changed. Try again.');return}
+    try{localStorage.setItem('utv_layout_prev',JSON.stringify({value:prev,at:Date.now()}))}catch(e){}
+    s('utv_layout',L);HOME_LIVE=JSON.parse(JSON.stringify(L));clearDirty();dropLocal('utv_local_home');homeChanged();
+    toast('✅ Front page launched. It’s live now.',{undo:undoLaunchNow,ms:10000})}).catch(function(){toast('⚠️ Network error. Nothing changed.')});
 }
+function undoLaunch(){var p=prevLaunch();if(!p)return;modal('Undo the last launch?','This puts back the front page from before the launch at '+new Date(p.at).toLocaleString([],{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})+'. It goes live at once.',[{label:'Cancel'},{label:'Put it back',cls:'bp',run:undoLaunchNow}])}
+function undoLaunchNow(){var p=prevLaunch();if(!p)return;
+  api('PUT','/api/admin/config/layout',{value:p.value}).then(function(r){if(!r.ok){toast('⚠️ Couldn’t undo. Nothing changed.');return}
+    dropLocal('utv_layout_prev');s('utv_layout',p.value);clearDirty();dropLocal('utv_local_home');if(curView==='homepage')vHomepage();toast('✅ Previous front page is back.')}).catch(function(){toast('⚠️ Network error. Nothing changed.')})}
 
 /* ---------- FOOTER ---------- */
 function vFooter(){
