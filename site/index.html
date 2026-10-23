@@ -146,6 +146,8 @@ body { font-family:var(--serif); color:var(--black); background:var(--white); -w
 .sub-btn:hover { background:var(--red-dark); }
 .sub-success { display:none; font-family:var(--sans); font-size:14px; color:var(--red); margin-top:12px; font-weight:600; }
 .sub-success.show { display:block; }
+.sub-success.err { color:var(--gray-900); font-weight:400; }
+.sub-btn:disabled { opacity:0.6; cursor:default; }
 .footer { border-top:3px double var(--black); padding:28px 0 72px; }
 .footer-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:28px; }
 .footer-col-title { font-family:var(--sans); font-size:11px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; margin-bottom:10px; color:var(--gray-700); }
@@ -321,9 +323,14 @@ function updateAuth() {
 }
 document.addEventListener('click',function(e){if(!e.target.closest('.user-pill')){var d=document.getElementById('uDrop');if(d)d.classList.remove('open')}});
 function handleSubscribe(e) {
-  e.preventDefault(); var em=document.getElementById('subEmail').value.trim(); if(!em) return false;
-  fetch(API+'/api/subscribe',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:em})}).then(function(r){return r.json()}).then(function(d){document.getElementById('subSuccess').textContent=d.message==='Already subscribed'?"You're already subscribed!":'Welcome aboard. Your first briefing arrives next month.';document.getElementById('subSuccess').classList.add('show')}).catch(function(){document.getElementById('subSuccess').textContent='Welcome aboard. Your first briefing arrives next month.';document.getElementById('subSuccess').classList.add('show')});
-  document.getElementById('subEmail').value=''; return false;
+  e.preventDefault(); var inp=document.getElementById('subEmail'),btn=document.querySelector('.sub-btn'),msg=document.getElementById('subSuccess'),em=inp.value.trim(); if(!em) return false;
+  function say(t,err){msg.textContent=t;msg.classList.toggle('err',!!err);msg.classList.add('show')}
+  btn.disabled=true;btn.textContent='Subscribing…';msg.classList.remove('show');
+  fetch(API+'/api/subscribe',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:em})}).then(function(r){return r.json().catch(function(){return {}}).then(function(d){return {ok:r.ok,d:d}})}).then(function(x){
+    if(x.ok){say(x.d.message==='Already subscribed'?"You're already subscribed!":'Welcome aboard. Your first briefing arrives next month.');inp.value='';}
+    else say(x.d.error==='Invalid email'?'That email address doesn\u2019t look right. Please check it and try again.':'Sorry, we couldn\u2019t sign you up just now. Please try again in a moment.',true);
+  }).catch(function(){say(navigator.onLine===false?'You seem to be offline. Check your connection and try again.':'Sorry, we couldn\u2019t sign you up just now. Please try again in a moment.',true)}).then(function(){btn.disabled=false;btn.textContent='Subscribe'});
+  return false;
 }
 function toast(m){var t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(function(){t.classList.remove('show')},2500)}
 document.getElementById('todayDate').textContent=new Date().toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
