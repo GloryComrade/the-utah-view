@@ -55,13 +55,26 @@ extension AppNavigation on BuildContext {
 
   void openSearch() => pushNamed(RouteNames.search);
 
-  /// Handles a link tapped inside article HTML. Links to other stories open
-  /// in the app; everything else returns false so it opens in the browser.
+  /// Handles a link tapped inside article HTML. Links to stories, pages,
+  /// sections and the archive open in the app; everything else returns false
+  /// so it opens in the browser.
   bool followArticleLink(String href) {
-    if (DeepLinks.parseLink(href) case StoryTarget(:final id)) {
-      openStoryById(id);
-      return true;
+    switch (DeepLinks.parseLink(href)) {
+      case StoryTarget(:final id):
+        openStoryById(id);
+      case PageTarget(:final slug):
+        openPage(slug);
+      case CategoryTarget(:final name):
+        openCategory(name);
+      case ArchiveTarget():
+        openArchive();
+      case SavedTarget():
+        goNamed(RouteNames.saved);
+      case HomeTarget():
+        goNamed(RouteNames.home);
+      case null:
+        return false;
     }
-    return false;
+    return true;
   }
 }
