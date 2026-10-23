@@ -216,6 +216,7 @@ a{color:var(--red)}
     <div class="side-hd" data-admin>Admin</div>
     <button class="nav" data-v="access" data-admin onclick="go('access')"><span class="ic">&#128273;</span> Access</button>
     <button class="nav" data-v="subs" data-admin onclick="go('subs')"><span class="ic">&#128236;</span> Subscribers</button>
+    <button class="nav" data-v="activity" data-admin onclick="go('activity')"><span class="ic">&#128203;</span> Activity &amp; backup</button>
     <div class="side-foot">Signed in as <strong id="uEm2"></strong></div>
   </nav>
   <main class="main" id="main"><div class="wrap" id="view"></div></main>
@@ -333,6 +334,7 @@ function render(){
   if(v==='footer')return vFooter();
   if(v==='access')return vAccess();
   if(v==='subs')return vSubs();
+  if(v==='activity')return vActivity();
 }
 function head(title,actionsHtml){return '<div class="page-head"><h1>'+title+'</h1><div class="sp"></div>'+(actionsHtml||'')+'</div>'}
 
@@ -709,6 +711,28 @@ function aRm(e){if(!confirm('Remove access for '+e+'?'))return;
 }
 
 /* ---------- SUBSCRIBERS ---------- */
+/* ---------- ACTIVITY LOG + BACKUP (admin) ---------- */
+var ACT=[];
+var ACT_WORDS={create:'created',update:'updated',delete:'deleted',publish:'published',upload:'uploaded',grant_access:'gave access to',revoke_access:'removed access for',subscribe:'subscribed',unsubscribe:'unsubscribed',send_newsletter:'sent the newsletter',remove_subscriber:'removed subscriber'};
+function vActivity(){
+  var h=head('Activity &amp; backup','<button class="bt bp" onclick="downloadBackup()">&#11015; Download backup</button>');
+  h+='<div class="card"><p class="desc" style="margin:0">The backup is one JSON file with every story, the homepage and footer settings, who has access, and the subscriber list. Keep it somewhere private: it contains readers’ email addresses.</p></div>';
+  h+='<div class="fl"><input id="actQ" placeholder="Filter by person, action or item" oninput="renderAct()"></div><div class="list" id="actList"><p class="empty"><span class="spin"></span> Loading…</p></div>';
+  $('view').innerHTML=h;
+  api('GET','/api/admin/audit?limit=300').then(function(r){if(!r.ok)throw r.status;return r.json()}).then(function(d){ACT=d.entries||[];renderAct()}).catch(function(){if($('actList'))$('actList').innerHTML='<p class="empty">Couldn’t load the activity log (admin only, or offline).</p>'});
+}
+function renderAct(){var el=$('actList');if(!el)return;var q=($('actQ')?$('actQ').value:'').trim().toLowerCase();
+  var L=ACT.filter(function(x){return !q||[x.user_email,x.action,x.resource_type,x.resource_id,x.details].join(' ').toLowerCase().indexOf(q)>=0});
+  if(!L.length){el.innerHTML='<p class="empty">'+(ACT.length?'No match.':'No activity yet.')+'</p>';return;}
+  el.innerHTML=L.slice(0,300).map(function(x){var verb=ACT_WORDS[x.action]||String(x.action||'').replace(/_/g,' ');var what=esc(x.resource_type||'')+(x.resource_id?' <b>'+esc(x.resource_id)+'</b>':'');if(x.action==='subscribe'||x.action==='unsubscribe'||x.action==='send_newsletter')what='';
+    return '<div class="row"><div class="meta"><div class="ti" style="cursor:default;font-weight:400"><b>'+esc(x.user_email||'?')+'</b> '+esc(verb)+' '+what+'</div><div class="su">'+esc(String(x.timestamp||'').replace('T',' ').slice(0,16))+' UTC</div></div></div>'}).join('');
+}
+function downloadBackup(){toast('Preparing backup…');
+  api('GET','/api/admin/backup').then(function(r){if(!r.ok)throw r.status;return r.text()}).then(function(t){
+    var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t],{type:'application/json'}));a.download='utah-view-backup-'+today()+'.json';document.body.appendChild(a);a.click();a.remove();toast('✅ Backup downloaded');
+  }).catch(function(e){toast(e===403||e===401?'⚠️ Admin only':'⚠️ Backup failed')});
+}
+
 var SUBS=[];
 function vSubs(){
   $('view').innerHTML=head('Subscribers')+'<div class="card"><p class="empty"><span class="spin"></span> Loading…</p></div>';
