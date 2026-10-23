@@ -110,6 +110,14 @@ a{color:var(--red)}
 .row .ti:hover{color:var(--red)}
 .row .su{font-size:12.5px;color:var(--g5);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:2px}
 .row .acts{display:flex;gap:4px;flex-shrink:0;align-items:center}
+/* Phones: the headline gets its own full line; badge and actions sit under it. */
+@media(max-width:600px){
+  .row{flex-wrap:wrap;row-gap:6px}
+  .row .meta{order:1;flex:1 1 calc(100% - 60px)}
+  .row .ti{white-space:normal;overflow:visible}
+  .row .badge{order:2;margin-left:58px}
+  .row .acts{order:3;margin-left:auto}
+}
 .badge{font-size:10px;font-weight:700;padding:3px 9px;border-radius:999px;text-transform:uppercase;letter-spacing:.4px;flex-shrink:0}
 .badge.live{background:var(--okbg);color:var(--ok)}
 .badge.draft{background:var(--warnbg);color:var(--warn)}
@@ -156,6 +164,38 @@ a{color:var(--red)}
 .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(80px);background:var(--bk);color:#fff;
   padding:12px 20px;border-radius:10px;font-size:14px;z-index:999;opacity:0;transition:.25s;pointer-events:none;box-shadow:0 8px 24px rgba(0,0,0,.25);max-width:92vw}
 .toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+/* An error stays until it's closed or replaced, so it can't be missed. */
+.toast.err{background:#7a1d0c;pointer-events:auto;padding-right:44px}
+.toast .tx{position:absolute;right:8px;top:50%;transform:translateY(-50%);border:none;background:none;color:#fff;font-size:20px;line-height:1;padding:4px 8px;opacity:.8}
+.toast .tx:hover{opacity:1}
+.toast .undo{margin-left:14px;border:none;background:none;color:#ffb4a1;font-weight:700;font-size:14px;padding:0;text-decoration:underline}
+.toast.act{pointer-events:auto}
+
+/* ---------- unsaved-changes bar ---------- */
+.dirtybar{position:fixed;left:0;right:0;bottom:0;z-index:50;display:none;align-items:center;gap:10px;padding:10px 18px;
+  background:var(--w);border-top:1px solid var(--g2);box-shadow:0 -4px 16px rgba(0,0,0,.06);font-size:14px}
+.dirtybar.on{display:flex}
+.dirtybar .dot{width:8px;height:8px;border-radius:50%;background:var(--warn);flex-shrink:0}
+.dirtybar .sp{flex:1}
+.dirtybar small{color:var(--g5)}
+body.has-dirty .main{padding-bottom:80px}
+.restore{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 16px;margin-bottom:14px;border:1px solid #f0d58a;background:var(--warnbg);border-radius:var(--rad);font-size:14px;color:var(--g7)}
+.restore .sp{flex:1}
+.status-pill{font-size:11px;font-weight:700;padding:4px 10px;border-radius:999px;text-transform:uppercase;letter-spacing:.4px}
+
+/* ---------- dialog ---------- */
+.modal-bg{position:fixed;inset:0;z-index:200;background:rgba(20,20,20,.45);display:flex;align-items:center;justify-content:center;padding:18px}
+.modal{width:100%;max-width:480px;max-height:calc(100dvh - 36px);overflow-y:auto;background:var(--w);border-radius:14px;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.modal h2{font-size:18px;font-weight:800;padding:20px 22px 4px;line-height:1.3}
+.modal .mb{padding:4px 22px 16px;font-size:14px;color:var(--g6)}
+.modal .mf{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;padding:14px 22px;border-top:1px solid var(--g1);background:var(--g0)}
+.chk{list-style:none;margin:10px 0 0}
+.chk li{display:flex;gap:10px;align-items:baseline;padding:8px 0;border-top:1px solid var(--g1);color:var(--g7)}
+.chk .m{width:16px;flex-shrink:0;font-weight:800;text-align:center}
+.chk .y{color:var(--ok)}.chk .n{color:var(--red)}.chk .w{color:var(--warn)}
+.chk .lk{border:none;background:none;color:var(--red);font-weight:700;font-size:14px;padding:0 2px;white-space:nowrap;text-decoration:underline}
+.goes{margin-top:14px;padding:12px 14px;border-radius:9px;background:#fbefeb;border:1px solid #f1d6cc;color:var(--g7)}
+.goes b{display:block;font-size:11px;letter-spacing:.8px;text-transform:uppercase;color:var(--red);margin-bottom:4px}
 .spin{width:18px;height:18px;border:2px solid var(--g2);border-top-color:var(--red);border-radius:50%;display:inline-block;animation:sp .7s linear infinite;vertical-align:-3px}
 @keyframes sp{to{transform:rotate(360deg)}}
 
@@ -223,7 +263,8 @@ a{color:var(--red)}
   <main class="main" id="main"><div class="wrap" id="view"></div></main>
 </div>
 
-<div class="toast" id="toast"></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<div class="dirtybar" id="dirtybar" role="region" aria-label="Unsaved changes"><span class="dot"></span><span><b>Unsaved changes</b> <small id="dirtyNote"></small></span><span class="sp"></span><button class="bt bs bsm" onclick="discardChanges()">Discard</button><button class="bt bp bsm" id="dirtySave" onclick="dirtySave()">Save</button></div>
 
 <script src="/site-defaults.js"></script>
 <script>
@@ -259,7 +300,26 @@ function refreshToken(){return new Promise(function(resolve){
 })}
 function rawApi(m,p,b){return fetch(API+p,{method:m,headers:hd(),body:b?JSON.stringify(b):undefined}).then(function(r){apiOk=true;return r;})}
 function api(m,p,b){if(tokenFresh())return rawApi(m,p,b);return refreshToken().then(function(){return rawApi(m,p,b)})}
-function toast(m){var t=$('toast');t.innerHTML=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(function(){t.classList.remove('show')},2800)}
+// Errors (⚠️) stay on screen until closed or replaced and are announced
+// right away; everything else fades after a few seconds. opt.undo adds an
+// Undo button, and opt.ms sets how long the toast stays.
+function toast(m,opt){opt=opt||{};var t=$('toast'),err=/^⚠️/.test(String(m));clearTimeout(t._t);
+  t.className='toast show'+(err?' err':'')+(opt.undo?' act':'');t.setAttribute('role',err?'alert':'status');
+  t.innerHTML=m+(opt.undo?'<button class="undo" onclick="toastUndo()">Undo</button>':'')+(err?'<button class="tx" aria-label="Close message" onclick="hideToast()">&times;</button>':'');
+  t._undo=opt.undo||null;if(!err)t._t=setTimeout(hideToast,opt.ms||2800)}
+function hideToast(){var t=$('toast');clearTimeout(t._t);t.classList.remove('show');t._undo=null}
+function toastUndo(){var t=$('toast'),u=t._undo;hideToast();if(u)u()}
+/* ---------- in-page dialog (the browser's confirm() can't explain enough) ---------- */
+function modal(title,body,buttons){closeModal();var bg=document.createElement('div');bg.className='modal-bg';bg.id='modalBg';
+  bg.innerHTML='<div class="modal" role="dialog" aria-modal="true" aria-labelledby="mTitle"><h2 id="mTitle">'+title+'</h2><div class="mb">'+body+'</div><div class="mf">'+
+    buttons.map(function(b,i){return '<button class="bt '+(b.cls||'bs')+'" id="mBtn'+i+'"'+(b.disabled?' disabled style="opacity:.45;cursor:not-allowed"':'')+'>'+b.label+'</button>'}).join('')+'</div></div>';
+  document.body.appendChild(bg);
+  buttons.forEach(function(b,i){$('mBtn'+i).onclick=function(){if(b.disabled)return;closeModal();if(b.run)b.run()}});
+  bg.addEventListener('click',function(e){if(e.target===bg)closeModal()});
+  var f=buttons.length-1;while(f>0&&buttons[f].disabled)f--;$('mBtn'+f).focus();
+}
+function closeModal(){var m=$('modalBg');if(m)m.remove()}
+document.addEventListener('keydown',function(e){if(e.key==='Escape'&&$('modalBg'))closeModal()});
 function fmtDate(d){if(!d)return'';try{return new Date(d+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}catch(e){return d}}
 function today(){return new Date().toISOString().split('T')[0]}
 function isAdmin(){var u=user();return u&&u.role==='admin'}
@@ -305,10 +365,42 @@ function enter(){
 }
 function toggleNav(force){var sd=$('side'),sc=$('scrim');var open=force===undefined?!sd.classList.contains('open'):force;sd.classList.toggle('open',open);sc.classList.toggle('show',open)}
 
+/* ---------- unsaved changes ---------- */
+// Any typing in an edit screen marks it dirty: a bar offers Save / Discard,
+// leaving asks first, and the story and page editors keep a copy in this
+// browser every couple of seconds so a closed tab or crash loses nothing.
+var EDIT_VIEWS={story:1,page:1,homepage:1,footer:1},dirty=false,_auto=null;
+function markDirty(){if(!EDIT_VIEWS[curView])return;if(!dirty){dirty=true;$('dirtybar').classList.add('on');document.body.classList.add('has-dirty');$('dirtySave').textContent=saveLabel();}
+  clearTimeout(_auto);_auto=setTimeout(autosave,1500)}
+function clearDirty(){dirty=false;clearTimeout(_auto);$('dirtybar').classList.remove('on');document.body.classList.remove('has-dirty');$('dirtyNote').textContent=''}
+function saveLabel(){if(curView==='story')return storyIsLive()?'Update':'Save draft';if(curView==='page')return 'Save page';if(curView==='homepage')return 'Save homepage';return 'Save'}
+function dirtySave(){if(curView==='story'){if(storyIsLive())updateLive();else saveFromForm('draft');}else if(curView==='page')savePage();else if(curView==='homepage')saveHome();else if(curView==='footer')saveFooter()}
+function discardChanges(){modal('Discard your changes?','Everything you changed since the last save on this screen goes back to how it was.',[{label:'Keep editing'},{label:'Discard',cls:'bd',run:function(){dropLocal();clearDirty();if(curView==='story'&&editId)editStory(editId,true);else if(curView==='page')editPage(editSlug);else render();}}])}
+function localKey(){if(curView==='story')return 'utv_local_story_'+(editId||'new');if(curView==='page')return 'utv_local_page_'+(editSlug||'new');return ''}
+function autosave(){var k=localKey();if(!k||!dirty)return;var d;
+  if(curView==='story'&&$('ft'))d={title:$('ft').value,author:$('fa').value,region:$('fr').value,date:$('fd').value,read_time:$('frt').value,summary:$('fsum').value,image_url:$('fimg').value,image_caption:$('fcap').value,image_credit:$('fcred').value,body:$('fbody').innerHTML};
+  else if(curView==='page'&&$('pt'))d={title:$('pt').value,subtitle:$('psub').value,slug:$('pslug')?$('pslug').value:'',body:$('pbody').innerHTML};
+  if(!d)return;d.saved_at=Date.now();try{localStorage.setItem(k,JSON.stringify(d))}catch(e){}
+  $('dirtyNote').textContent='· copy kept in this browser '+new Date().toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})}
+function dropLocal(k){k=k||localKey();if(k)try{localStorage.removeItem(k)}catch(e){}}
+function localCopy(k){try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}}
+// Offer back an unsaved copy left by a closed tab, if it differs from what's saved.
+function offerRestore(k,cur,fill){var c=localCopy(k);if(!c)return;var diff=Object.keys(c).some(function(f){return f!=='saved_at'&&f!=='slug'&&String(c[f]||'')!==String(cur[f]||'')});
+  if(!diff){dropLocal(k);return;}
+  var bar=document.createElement('div');bar.className='restore';bar.innerHTML='<span>You have unsaved changes from <b>'+new Date(c.saved_at).toLocaleString([],{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})+'</b> that weren’t saved.</span><span class="sp"></span>';
+  var no=document.createElement('button');no.className='bt bs bsm';no.textContent='Throw away';no.onclick=function(){dropLocal(k);bar.remove()};
+  var yes=document.createElement('button');yes.className='bt bp bsm';yes.textContent='Restore them';yes.onclick=function(){fill(c);bar.remove();markDirty()};
+  bar.appendChild(no);bar.appendChild(yes);var v=$('view');v.insertBefore(bar,v.children[1]||null)}
+// Leaving an edit screen with unsaved changes asks first.
+function guard(next){if(!dirty){next();return;}modal('Leave without saving?','Your changes on this screen haven’t been saved. If you leave now they’re lost'+(localKey()?' (a copy stays in this browser and is offered back next time you open it)':'')+'.',[{label:'Stay'},{label:'Leave',cls:'bd',run:function(){clearDirty();next()}}])}
+window.addEventListener('beforeunload',function(e){if(dirty){autosave();e.preventDefault();e.returnValue='';}});
+document.addEventListener('input',function(e){if($('view')&&$('view').contains(e.target))markDirty()});
+document.addEventListener('change',function(e){if($('view')&&$('view').contains(e.target)&&e.target.tagName==='SELECT')markDirty()});
+
 /* ---------- data refresh ---------- */
 function refreshAll(){
   api('GET','/api/admin/stories').then(function(r){return r.ok?r.json():null}).then(function(d){if(d&&d.stories){apiOk=true;var S=stories();var N={};d.stories.forEach(function(x){var old=S[x.id]||{};N[x.id]=x;if(!x.body&&old.body)N[x.id].body=old.body});s('utv_stories',N);if(curView==='dashboard')vDashboard();else if(curView==='stories')renderStoryList();}}).catch(function(){});
-  fetch(API+'/api/pages').then(function(r){return r.json()}).then(function(d){var P={},ex=pages();(d.pages||[]).forEach(function(p){P[p.slug]=p;if(!p.body&&ex[p.slug]&&ex[p.slug].body)P[p.slug].body=ex[p.slug].body});s('utv_pages',P);if(curView==='pages')render();}).catch(function(){});
+  fetch(API+'/api/pages').then(function(r){return r.json()}).then(function(d){var P={},ex=pages();(d.pages||[]).forEach(function(p){P[p.slug]=p;if(!p.body&&ex[p.slug]&&ex[p.slug].body)P[p.slug].body=ex[p.slug].body});s('utv_pages',P);if(curView==='pages')render();else if(curView==='dashboard')vDashboard();}).catch(function(){});
   fetch(API+'/api/config/layout').then(function(r){return r.json()}).then(function(d){if(d.value)s('utv_layout',d.value)}).catch(function(){});
   fetch(API+'/api/config/site').then(function(r){return r.json()}).then(function(d){if(d.value)s('utv_site',d.value)}).catch(function(){});
 }
@@ -317,15 +409,17 @@ function refreshAll(){
 // Admin-only screens: editors are sent to the dashboard instead of a panel
 // whose saves the server would refuse.
 var ADMIN_VIEWS=['pages','page','homepage','footer','access','subs'];
-function go(v){if(!isAdmin()&&ADMIN_VIEWS.indexOf(v)>=0)v='dashboard';curView=v;editId=null;editSlug=null;
-  document.querySelectorAll('.nav').forEach(function(n){n.classList.toggle('on',n.getAttribute('data-v')===v)});
+function go(v){guard(function(){goNow(v)})}
+function goNow(v){if(!isAdmin()&&ADMIN_VIEWS.indexOf(v)>=0)v='dashboard';curView=v;editId=null;editSlug=null;
   if(window.innerWidth<=820)toggleNav(false);
   if($('main'))$('main').scrollTop=0;
   render();
 }
 function render(){
   if(!isAdmin()&&ADMIN_VIEWS.indexOf(curView)>=0)curView='dashboard';
-  var v=curView;
+  var v=curView,nv=v==='story'?'stories':v==='page'?'pages':v;
+  document.querySelectorAll('.nav').forEach(function(n){n.classList.toggle('on',n.getAttribute('data-v')===nv)});
+  if(!EDIT_VIEWS[v])clearDirty();
   if(v==='dashboard')return vDashboard();
   if(v==='stories')return vStories();
   if(v==='story')return vStoryEdit();
@@ -342,7 +436,7 @@ function head(title,actionsHtml){return '<div class="page-head"><h1>'+title+'</h
 
 /* ---------- DASHBOARD ---------- */
 function vDashboard(){
-  var S=stories(),ids=Object.keys(S);
+  var S=stories(),ids=Object.keys(S).filter(function(i){return !pendingDel[i]});
   var pub=ids.filter(function(i){return S[i].status==='published'}).length;
   var dr=ids.length-pub;
   var pg=Object.keys(pages()).length;
@@ -376,10 +470,9 @@ function storyRow(x){
     '<div class="meta"><span class="ti" onclick="editStory(\''+x.id+'\')">'+esc(x.title||'(untitled)')+'</span>'+
     '<div class="su">'+esc(x.region||'')+(x.author?' · '+esc(x.author):'')+(x.date?' · '+fmtDate(x.date):'')+'</div></div>'+
     '<div class="acts">'+
-      '<button class="bt bs bsm" onclick="togglePub(\''+x.id+'\')">'+(live?'Unpublish':'Publish')+'</button>'+
-      '<button class="btn-ghost" title="Edit" onclick="editStory(\''+x.id+'\')">&#9998;</button>'+
-      '<button class="btn-ghost" title="Duplicate" onclick="dupStory(\''+x.id+'\')">&#10697;</button>'+
-      (isAdmin()?'<button class="btn-ghost" title="Delete" onclick="delStory(\''+x.id+'\')">&#128465;</button>':'')+
+      '<button class="btn-ghost" title="Edit" aria-label="Edit story" onclick="editStory(\''+x.id+'\')">&#9998;</button>'+
+      '<button class="btn-ghost" title="Duplicate" aria-label="Duplicate story" onclick="dupStory(\''+x.id+'\')">&#10697;</button>'+
+      (isAdmin()?'<button class="btn-ghost" title="Delete" aria-label="Delete story" onclick="delStory(\''+x.id+'\')">&#128465;</button>':'')+
     '</div></div>';
 }
 function vStories(){
@@ -393,7 +486,7 @@ function vStories(){
 }
 function setFilter(f){storyFilter=f;document.querySelectorAll('.segment button').forEach(function(b){b.classList.toggle('on',b.textContent===(f==='all'?'All':f==='published'?'Live':'Drafts'))});renderStoryList()}
 function renderStoryList(){
-  var S=stories();var arr=Object.keys(S).map(function(i){return S[i]});
+  var S=stories();var arr=Object.keys(S).filter(function(i){return !pendingDel[i]}).map(function(i){return S[i]});
   arr=arr.filter(function(x){
     if(storyFilter==='published'&&x.status!=='published')return false;
     if(storyFilter==='draft'&&x.status==='published')return false;
@@ -404,27 +497,44 @@ function renderStoryList(){
   if(!arr.length){el.innerHTML='<div class="list"><p class="empty">No stories'+(storyQuery?' match “'+esc(storyQuery)+'”':storyFilter!=='all'?' in this view':'')+'.</p></div>';return;}
   el.innerHTML='<div class="list">'+arr.map(storyRow).join('')+'</div>';
 }
-function newStory(){editId=null;curView='story';render()}
-function editStory(id){editId=id;curView='story';render();
-  if(apiOk)api('GET','/api/stories/'+id).then(function(r){return r.ok?r.json():null}).then(function(x){if(x){var S=stories();S[id]=Object.assign(S[id]||{},x);s('utv_stories',S);if(curView==='story'&&editId===id){var b=$('fbody');if(b&&x.body&&(!b.innerHTML||b.innerHTML==='<p>Start writing…</p>')){b.innerHTML=x.body;sPv();}}}}).catch(function(){});
+function newStory(){guard(function(){editId=null;curView='story';render()})}
+// Opening a story pulls the server's latest copy. If nothing has been typed
+// yet the form is redrawn from it, and its updated_at becomes the version
+// this edit started from (used to spot someone else's save in between).
+var baseUpdated='';
+function editStory(id,now){if(!now&&curView!=='story'){guard(function(){editStory(id,true)});return;}
+  editId=id;curView='story';baseUpdated=(stories()[id]||{}).updated_at||'';render();
+  if(apiOk)api('GET','/api/stories/'+id).then(function(r){return r.ok?r.json():null}).then(function(x){if(x){var S=stories();S[id]=Object.assign(S[id]||{},x);s('utv_stories',S);if(curView==='story'&&editId===id&&!dirty){baseUpdated=x.updated_at||'';vStoryEdit();}}}).catch(function(){});
 }
-function togglePub(id){var S=stories();var x=S[id];if(!x)return;var ns=x.status==='published'?'draft':'published';x.status=ns;s('utv_stories',S);
-  saveStory(x,true).then(function(){toast(ns==='published'?'✅ Published':'Moved to draft');render()});
-}
+function storyIsLive(){var x=editId&&stories()[editId];return !!(x&&x.status==='published')}
 function dupStory(id){var S=stories();var x=S[id];if(!x)return;dupSeed={title:(x.title||'Untitled')+' (copy)',author:x.author||'',region:x.region||'Global',summary:x.summary||'',body:x.body||'',read_time:x.read_time||x.readTime||'',image_url:x.image_url||'',image_caption:x.image_caption||'',image_credit:x.image_credit||'',status:'draft',date:today()};editId=null;curView='story';render();}
 var dupSeed=null;
 // Delete on the server first; only drop the story here once the server agrees,
 // so a refused delete doesn't make it vanish from the list.
-function delStory(id){if(!confirm('Delete this story? This cannot be undone.'))return;
-  function drop(){var S=stories();delete S[id];s('utv_stories',S);if(curView==='story')go('stories');else render();}
+// Delete waits 8 seconds with an Undo before anything is sent, then only
+// drops the story here once the server agrees. Until then it's just hidden.
+var pendingDel={};
+function delStory(id){
   if(!apiOk){toast('⚠️ Not connected — nothing deleted. Try again in a moment.');return;}
-  api('DELETE','/api/admin/stories/'+id).then(function(r){if(r.ok){drop();toast('Deleted');}else toast(r.status===401||r.status===403?'⚠️ Only admins can delete stories':'⚠️ Delete failed')}).catch(function(){toast('⚠️ Network error — nothing deleted')});
+  var x=stories()[id]||{},t=x.title||'this story';
+  if(x.status==='published'){modal('Delete a live story?','<b>'+esc(t)+'</b> is on the website now. Deleting it removes it from the site and the apps, and any links to it stop working. If you only want it off the site, unpublish it instead.',[{label:'Cancel'},{label:'Delete',cls:'bd',run:function(){queueDel(id,t)}}]);return;}
+  queueDel(id,t);
 }
+function queueDel(id,t){pendingDel[id]=setTimeout(function(){sendDel(id)},8000);
+  if(curView==='story'){clearDirty();dropLocal();goNow('stories');}else render();
+  toast('Deleted “'+esc(t.length>40?t.slice(0,40)+'…':t)+'”',{ms:8000,undo:function(){clearTimeout(pendingDel[id]);delete pendingDel[id];render();toast('Delete undone')}});
+}
+function sendDel(id){delete pendingDel[id];
+  function drop(){var S=stories();delete S[id];s('utv_stories',S);render();}
+  api('DELETE','/api/admin/stories/'+id).then(function(r){if(r.ok)drop();else{render();toast(r.status===401||r.status===403?'⚠️ Only admins can delete stories. Nothing was deleted.':'⚠️ Delete failed. The story is still there.')}}).catch(function(){render();toast('⚠️ Network error. Nothing was deleted.')});
+}
+window.addEventListener('beforeunload',function(){Object.keys(pendingDel).forEach(function(id){clearTimeout(pendingDel[id]);fetch(API+'/api/admin/stories/'+id,{method:'DELETE',headers:hd(),keepalive:true})})});
 function vStoryEdit(){
   var x=editId?stories()[editId]:(dupSeed||null);dupSeed=null;
   if(!x)x={title:'',author:user()?user().name:'',region:'Global',summary:'',body:'',status:'draft',date:today(),read_time:''};
   var regions=['Global','The Americas','Europe','Asia-Pacific','Middle East','Africa','The Utah Lens','Analysis','Opinion','Data'];if(x.region&&regions.indexOf(x.region)<0)regions.push(x.region);
-  var h=head(editId?'Edit story':'New story','<button class="bt bs" onclick="go(\'stories\')">&larr; Back</button>');
+  var live=!!(editId&&x.status==='published');
+  var h=head((editId?'Edit story':'New story')+' <span class="status-pill badge '+(live?'live':'draft')+'">'+(live?'Live':editId?'Draft':'Not saved yet')+'</span>','<button class="bt bs" onclick="go(\'stories\')">&larr; Back</button>');
   h+='<div class="card">'+
     '<div class="row2"><div class="fl"><label>Headline</label><input id="ft" value="'+esc(x.title)+'" oninput="sPv()" placeholder="Story headline"></div>'+
     '<div class="fl"><label>Author</label><input id="fa" value="'+esc(x.author)+'" oninput="sPv()"></div></div>'+
@@ -443,13 +553,54 @@ function vStoryEdit(){
       '</div>'+
       '<div class="re" id="fbody" contenteditable="true" oninput="sPv()">'+(x.body||'<p>Start writing…</p>')+'</div></div>'+
     '<div class="toolbar" style="margin:14px 0 0">'+
-      '<button class="bt bp" onclick="saveFromForm(\'published\')">✅ Publish</button>'+
-      '<button class="bt bs" onclick="saveFromForm(\'draft\')">Save draft</button>'+
+      // A live story is updated in place; it never drops back to draft by accident.
+      (live?'<button class="bt bp" onclick="updateLive()">Update</button><button class="bt bs" onclick="askUnpublish()">Unpublish…</button>'
+           :'<button class="bt bp" onclick="openPublish()">Publish…</button><button class="bt bs" onclick="saveFromForm(\'draft\')">Save draft</button>')+
       (editId&&isAdmin()?'<button class="bt bd bsm" style="margin-left:auto" onclick="delStory(\''+editId+'\')">Delete</button>':'')+
     '</div></div>'+
     '<div class="pv"><div class="pvh">Live preview</div><div class="pvb" id="spv"></div></div>';
   $('view').innerHTML=h;sPv();
+  offerRestore('utv_local_story_'+(editId||'new'),x,function(c){['title','author','region','date','read_time','summary','image_url','image_caption','image_credit'].forEach(function(f,i){var el=$(['ft','fa','fr','fd','frt','fsum','fimg','fcap','fcred'][i]);if(el&&c[f]!=null)el.value=c[f]});if(c.body!=null)$('fbody').innerHTML=c.body;sPv()});
 }
+/* ---------- publish step ---------- */
+function wordCount(){var t=($('fbody')?$('fbody').innerText:'').replace(/Start writing…/,'').trim();return t?t.split(/\s+/).length:0}
+function fixField(id){var el=$(id);if(el){el.scrollIntoView({block:'center'});el.focus()}}
+// Publish opens a short checklist and says exactly what going live does,
+// because the first publish also notifies app readers and that can't be recalled.
+function openPublish(){
+  var t=$('ft').value.trim(),a=$('fa').value.trim(),sum=$('fsum').value.trim(),img=$('fimg').value.trim(),cred=$('fcred').value.trim(),w=wordCount();
+  var items=[
+    [t?'y':'n',t?'Headline':'Headline is missing','ft'],
+    [a?'y':'n',a?'Author: '+esc(a):'Author is missing','fa'],
+    ['y','Section: '+esc($('fr').value),''],
+    [sum?'y':'w',sum?'Summary':'No summary. It shows under the headline on the front page and in shares.','fsum'],
+    [img?'y':'w',img?'Lead photo':'No lead photo. The story shows without a picture.','fimg'],
+    [!img||cred?'y':'w',!img?'Photo credit not needed':cred?'Photo credit: '+esc(cred):'The photo has no credit.','fcred'],
+    [w>=50?'y':'w',w+(w===1?' word':' words')+(w?' · about '+Math.max(1,Math.round(w/230))+' min read':''),'fbody']
+  ];
+  var blocked=!t||!a;
+  var body='<ul class="chk">'+items.map(function(i){return '<li><span class="m '+i[0]+'">'+(i[0]==='y'?'✓':'!')+'</span><span style="flex:1">'+i[1]+'</span>'+(i[0]!=='y'&&i[2]?'<button class="lk" onclick="closeModal();fixField(\''+i[2]+'\')">'+(i[0]==='n'?'Add':'Fix')+'</button>':'')+'</li>'}).join('')+'</ul>'+
+    '<div class="goes"><b>Publishing will</b>Put the story on theutahview.com and in the apps. The first time a story goes live it also sends a push notification to app readers and, if auto-post is switched on, posts it to Instagram. Those can’t be taken back.</div>';
+  modal(blocked?'Not ready to publish yet':'Publish “'+esc(t.length>60?t.slice(0,60)+'…':t)+'”?',body,[{label:'Cancel'},{label:'Publish now',cls:'bp',disabled:blocked,run:function(){saveFromForm('published')}}]);
+}
+function askUnpublish(){var t=$('ft').value.trim();
+  modal('Unpublish this story?','<b>'+esc(t)+'</b> comes off the website and the apps and goes back to Drafts. Links to it stop working until it’s published again. Readers who already got the push notification keep it, and publishing again won’t send another.'+(dirty?'<br><br>Your unsaved edits are saved with it.':''),
+    [{label:'Cancel'},{label:'Unpublish',cls:'bd',run:function(){checkFresh(function(){saveFromForm('draft',function(){toast('Unpublished. It’s in Drafts now.',{ms:8000})})})}}]);
+}
+function updateLive(){checkFresh(function(){saveFromForm('published')})}
+// Before saving over an existing story, look at the server's copy. If someone
+// saved it after this edit started, say who and when instead of silently
+// overwriting their work.
+function checkFresh(next){
+  if(!editId||!apiOk||!baseUpdated){next();return;}
+  api('GET','/api/stories/'+editId).then(function(r){return r.ok?r.json():null}).then(function(x){
+    if(!x||!x.updated_at||x.updated_at<=baseUpdated){next();return;}
+    var who=x.updated_by&&x.updated_by!==(user()||{}).email?esc(x.updated_by):'Someone (maybe you, in another tab)';
+    modal('This story changed while you were editing',who+' saved it at <b>'+esc(fmtTime(x.updated_at))+'</b>, after you opened it. Saving now replaces their version with yours.',
+      [{label:'Cancel'},{label:'See their version',run:function(){clearDirty();dropLocal();var S=stories();S[editId]=Object.assign(S[editId]||{},x);s('utv_stories',S);editStory(editId,true)}},{label:'Save mine anyway',cls:'bd',run:next}]);
+  }).catch(function(){next()});
+}
+function fmtTime(ts){try{var d=new Date(String(ts).replace(' ','T')+(/Z|[+-]\d\d:?\d\d$/.test(ts)?'':'Z'));return d.toLocaleString([],{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})}catch(e){return ts}}
 function rc(c){document.execCommand(c,false,null);$('fbody').focus()}
 function rb(t){document.execCommand('formatBlock',false,'<'+t+'>');$('fbody').focus()}
 // Insert an in-body image WITH its own caption + credit, wrapped in a
@@ -511,17 +662,19 @@ function createStory(d,base,taken,tries){
     return true;
   }).catch(function(){toast('⚠️ Network error');return false;});
 }
-function saveFromForm(status){
+function saveFromForm(status,done){
   var t=$('ft').value.trim(),a=$('fa').value.trim();
-  if(!t||!a){toast('⚠️ Headline and author are required');return;}
-  var d=collectStory(status),existed=!!editId,S=stories();
+  if(!t||!a){toast('⚠️ Headline and author are required. Fill them in, then save again.');fixField(t?'fa':'ft');return;}
+  var d=collectStory(status),existed=!!editId,S=stories();var wasLive=existed&&storyIsLive();
   if(existed){S[d.id]=d;s('utv_stories',S);}
   (existed?saveStory(d,true):createStory(d)).then(function(ok){
     // On failure stay on the form (the error toast is showing) so nothing typed is lost.
     if(!ok)return;
-    if(!existed){S=stories();S[d.id]=d;s('utv_stories',S);editId=d.id;}
-    toast(status==='published'?'✅ Published — live now':'💾 Draft saved');
-    go('stories');
+    // Note our own save's time so reopening this story doesn't mistake it for someone else's.
+    S=stories();d.updated_at=new Date().toISOString().replace('T',' ').slice(0,19);S[d.id]=d;s('utv_stories',S);
+    dropLocal('utv_local_story_'+(existed?d.id:'new'));clearDirty();
+    if(done)done();else toast(status==='published'?(wasLive?'✅ Updated':'✅ Published — live now'):'💾 Draft saved');
+    goNow('stories');
   });
 }
 function saveStory(d,existed){
@@ -553,6 +706,7 @@ function vPageEdit(){
     '<div class="toolbar" style="margin-top:14px"><button class="bt bp" onclick="savePage()">💾 Save page</button>'+(editSlug?'<button class="bt bd bsm" style="margin-left:auto" onclick="delPage(\''+editSlug+'\')">Delete</button>':'')+'</div></div>'+
     '<div class="pv"><div class="pvh">Preview</div><div class="pvb" id="ppv"></div></div>';
   $('view').innerHTML=h;pPv();
+  offerRestore('utv_local_page_'+(editSlug||'new'),p,function(c){$('pt').value=c.title||'';$('psub').value=c.subtitle||'';if($('pslug')&&c.slug)$('pslug').value=c.slug;$('pbody').innerHTML=c.body||'';pPv()});
 }
 function rc2(c){document.execCommand(c,false,null);$('pbody').focus()}
 function rb2(t){document.execCommand('formatBlock',false,'<'+t+'>');$('pbody').focus()}
@@ -560,11 +714,11 @@ function pPv(){var el=$('ppv');if(!el)return;el.innerHTML='<div class="pt">'+esc
 // A typed slug gets the same cleanup as an auto one (lowercase, no spaces), so
 // a slug like "About Us" can't produce a link that 404s.
 function slugify(x){return String(x||'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').substring(0,40)}
-function savePage(){var t=$('pt').value.trim();if(!t){toast('Title required');return;}var slug=editSlug||slugify($('pslug')?$('pslug').value:'')||slugify(t);
+function savePage(){var t=$('pt').value.trim();if(!t){toast('⚠️ The page needs a title.');fixField('pt');return;}var lk=localKey();if(dirty)autosave();var slug=editSlug||slugify($('pslug')?$('pslug').value:'')||slugify(t);
   var P=pages();P[slug]={slug:slug,title:t,subtitle:$('psub').value.trim(),body:$('pbody').innerHTML};s('utv_pages',P);editSlug=slug;
-  if(apiOk)api('POST','/api/admin/pages',{slug:slug,title:t,subtitle:P[slug].subtitle,body:P[slug].body}).then(function(r){toast(r.ok?'💾 Saved':(r.status===403?'⚠️ Admin only':'⚠️ Error'))}).catch(function(){toast('⚠️ Network error')});
-  else toast('⚠️ API offline');
-  go('pages');
+  if(apiOk)api('POST','/api/admin/pages',{slug:slug,title:t,subtitle:P[slug].subtitle,body:P[slug].body}).then(function(r){if(r.ok)dropLocal(lk);toast(r.ok?'💾 Saved':(r.status===403?'⚠️ Only admins can save pages.':'⚠️ The page didn’t save. Your copy is kept in this browser; open the page again to restore it.'))}).catch(function(){toast('⚠️ Network error. The page didn’t save; your copy is kept in this browser.')});
+  else toast('⚠️ Not connected. The page didn’t save; your copy is kept in this browser.');
+  clearDirty();goNow('pages');
 }
 function delPage(sl){if(!confirm('Delete this page?'))return;
   if(!apiOk){toast('⚠️ Not connected — nothing deleted. Try again in a moment.');return;}
@@ -644,7 +798,7 @@ function saveHome(){
     section_order:secOrder.slice(),hidden_sections:secHidden.slice(),section_labels:cleanLabels()};
   var cap=$('lcap').value.trim(),alt=$('lalt').value.trim();if(cap)L.hero_center_caption=cap;if(alt)L.hero_image_alt=alt;
   s('utv_layout',L);
-  if(apiOk)api('PUT','/api/admin/config/layout',{value:L}).then(function(r){toast(r.ok?'✅ Homepage saved — live now':(r.status===403?'⚠️ Admin only':'⚠️ Error'))}).catch(function(){toast('⚠️ Network error')});
+  if(apiOk)api('PUT','/api/admin/config/layout',{value:L}).then(function(r){if(r.ok)clearDirty();toast(r.ok?'✅ Homepage saved — live now':(r.status===403?'⚠️ Admin only':'⚠️ Error'))}).catch(function(){toast('⚠️ Network error')});
   else toast('⚠️ API offline');
 }
 
@@ -672,7 +826,7 @@ function saveFooter(){
   var ss={sub_overline:$('sol').value,sub_heading:$('shd').value,sub_desc:$('sds').value,about_text:$('sabt').value,about_url:$('sabu').value,copyright:$('scp').value,footer_cols:cols};
   var ex=site();if(ex.nav_categories)ss.nav_categories=ex.nav_categories;
   s('utv_site',ss);
-  if(apiOk)api('PUT','/api/admin/config/site',{value:ss}).then(function(r){toast(r.ok?'✅ Saved — live now':(r.status===403?'⚠️ Admin only':'⚠️ Error'))}).catch(function(){toast('⚠️ Network error')});
+  if(apiOk)api('PUT','/api/admin/config/site',{value:ss}).then(function(r){if(r.ok)clearDirty();toast(r.ok?'✅ Saved — live now':(r.status===403?'⚠️ Admin only':'⚠️ Error'))}).catch(function(){toast('⚠️ Network error')});
   else toast('⚠️ API offline');
 }
 
