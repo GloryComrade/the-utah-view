@@ -107,6 +107,7 @@ final readerAccountProvider =
 /// data tied to it (saved stories, newsletter subscription), then signs out
 /// locally. Returns null on success, or a reader-facing error message.
 Future<String?> deleteReaderAccount(WidgetRef ref) async {
+  await ref.read(authControllerProvider.notifier).ensureFreshToken();
   final token = ref.read(savedAuthTokenProvider);
   if (token == null) return 'You’re not signed in.';
   try {
@@ -251,6 +252,9 @@ class SavedSync {
   }
 
   Future<void> _syncOnce() async {
+    if (_ref.read(readerAccountProvider) == null) {
+      await _ref.read(authControllerProvider.notifier).ensureFreshToken();
+    }
     final who = _ref.read(savedSyncIdentityProvider);
     if (who == null) return;
     final api = _ref.read(apiClientProvider);
