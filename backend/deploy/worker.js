@@ -256,6 +256,33 @@ async function auditLog(env, userEmail, action, resourceType, resourceId, detail
   ).bind(userEmail, action, resourceType, resourceId || '', details || '', ip || '').run();
 }
 
+// ── Newsletter unsubscribe links ──
+// Each email carries a link signed for its recipient (HMAC of the address), so
+// only someone holding that email can use it. The key is the UNSUB_SECRET
+// Worker secret if set, otherwise a random key made once and kept in KV.
+async function unsubKey(env) {
+  let raw = env.UNSUB_SECRET;
+  if (!raw && env.UTV_DATA) {
+    raw = await env.UTV_DATA.get('unsub_key');
+    if (!raw) { raw = bytesToHex(crypto.getRandomValues(new Uint8Array(32))); await env.UTV_DATA.put('unsub_key', raw); }
+  }
+  if (!raw) throw new Error('No unsubscribe key');
+  return crypto.subtle.importKey('raw', new TextEncoder().encode(raw), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+}
+async function unsubToken(env, email) {
+  const sig = await crypto.subtle.sign('HMAC', await unsubKey(env), new TextEncoder().encode(String(email).toLowerCase().trim()));
+  return b64url(sig);
+}
+async function unsubLinks(env, email) {
+  const q = 'e=' + encodeURIComponent(email) + '&t=' + (await unsubToken(env, email));
+  const site = env.SITE_URL || 'https://theutahview.com';
+  const api = env.R2_PUBLIC_URL || 'https://api.theutahview.com';
+  return { page: `${site}/unsubscribe.html?${q}`, oneClick: `${api}/api/unsubscribe?${q}` };
+}
+function unsubHeaders(links) {
+  return { 'List-Unsubscribe': `<${links.oneClick}>`, 'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click' };
+}
+
 // ── Main Router ──
 
 export default {
@@ -320,6 +347,7 @@ export default {
       if (env.RESEND_API_KEY) {
         const siteUrl = env.SITE_URL || 'https://theutahview.com';
         try {
+          const links = await unsubLinks(env, clean);
           await fetch('https://api.resend.com/emails', {
             method: 'POST',
             headers: { 'Authorization': `Bearer ${env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
@@ -327,6 +355,7 @@ export default {
               from: env.FROM_EMAIL || 'The Utah View <newsletter@theutahview.com>',
               to: [clean],
               subject: 'Welcome to The Utah View',
+              headers: unsubHeaders(links),
               html: `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#f5f5f5;font-family:Georgia,serif">
 <table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f5f5;padding:24px 0"><tr><td align="center">
 <table width="600" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:4px;max-width:600px">
@@ -343,6 +372,7 @@ export default {
 </td></tr>
 <tr><td style="padding:20px 32px;border-top:1px solid #e5e5e5;text-align:center">
 <p style="font-family:Helvetica,sans-serif;font-size:12px;color:#999;margin:0">© ${new Date().getFullYear()} The Utah View. Salt Lake City, Utah.</p>
+<p style="font-family:Helvetica,sans-serif;font-size:12px;color:#999;margin:8px 0 0"><a href="${links.page}" style="color:#999">Unsubscribe</a></p>
 </td></tr>
 </table></td></tr></table></body></html>`,
             }),
@@ -354,9 +384,21 @@ export default {
     }
 
     // POST /api/unsubscribe
+    // With a signed link (?e=&t= from an email, one-click from mail apps, or
+    // {email, token} from unsubscribe.html) the token must match the address.
+    // The plain {email} form is kept as before for the apps.
     if (path === '/api/unsubscribe' && method === 'POST') {
-      const { email } = await request.json();
-      const clean = email.toLowerCase().trim();
+      let email = url.searchParams.get('e'), token = url.searchParams.get('t');
+      if (!email) {
+        let data = {};
+        try { data = await request.json(); } catch (e) {}
+        email = data.email; token = data.token || null;
+      }
+      if (!email || !String(email).includes('@')) return new Response(JSON.stringify({ error: 'Invalid email' }), { status: 400, headers: corsHeaders() });
+      const clean = String(email).toLowerCase().trim();
+      if (token !== null && token !== undefined && !timingSafeEqual(String(token), await unsubToken(env, clean))) {
+        return new Response(JSON.stringify({ error: 'This unsubscribe link is not valid' }), { status: 403, headers: corsHeaders() });
+      }
       await env.DB.prepare('DELETE FROM subscribers WHERE email = ?').bind(clean).run();
       await auditLog(env, clean, 'unsubscribe', 'subscriber', clean, null, ip);
       return new Response(JSON.stringify({ message: 'Unsubscribed' }), { headers: corsHeaders() });
@@ -776,11 +818,12 @@ export default {
       <tr><td style="padding:28px 32px 16px"><p style="font-family:Helvetica,sans-serif;font-size:13px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#C4352A;margin:0 0 8px">${monthYear} Briefing</p></td></tr>
       <tr><td style="padding:0 32px"><table width="100%">${storyRows}</table></td></tr>
       <tr><td style="padding:28px 32px;text-align:center"><a href="${siteUrl}" style="display:inline-block;padding:12px 32px;background:#C4352A;color:#fff;font-family:Helvetica,sans-serif;font-size:14px;font-weight:700;text-decoration:none;border-radius:4px">Read Full Issue</a></td></tr>
-      <tr><td style="padding:20px 32px;border-top:1px solid #e5e5e5;text-align:center"><p style="font-family:Helvetica,sans-serif;font-size:12px;color:#999;margin:0">© ${now.getFullYear()} The Utah View</p></td></tr>
+      <tr><td style="padding:20px 32px;border-top:1px solid #e5e5e5;text-align:center"><p style="font-family:Helvetica,sans-serif;font-size:12px;color:#999;margin:0">© ${now.getFullYear()} The Utah View</p><p style="font-family:Helvetica,sans-serif;font-size:12px;color:#999;margin:8px 0 0"><a href="{{UNSUB_URL}}" style="color:#999">Unsubscribe</a></p></td></tr>
       </table></td></tr></table></body></html>`;
 
     for (const sub of subscribers.results) {
       try {
+        const links = await unsubLinks(env, sub.email);
         await fetch('https://api.resend.com/emails', {
           method: 'POST',
           headers: { 'Authorization': `Bearer ${env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
@@ -788,7 +831,8 @@ export default {
             from: env.FROM_EMAIL || 'The Utah View <newsletter@theutahview.com>',
             to: [sub.email],
             subject: `The Utah View — ${monthYear} Briefing`,
-            html: emailHtml,
+            headers: unsubHeaders(links),
+            html: emailHtml.replace('{{UNSUB_URL}}', links.page),
           }),
         });
       } catch (e) { console.error('Email failed:', sub.email, e); }
