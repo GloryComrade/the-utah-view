@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -54,17 +56,21 @@ class AuthController extends AsyncNotifier<AuthUser?> {
   void _onEvent(GoogleSignInAuthenticationEvent event) {
     switch (event) {
       case GoogleSignInAuthenticationEventSignIn(:final user):
-        _current = AuthUser(
-          email: user.email,
-          name: user.displayName ?? user.email,
-          idToken: user.authentication.idToken ?? '',
-          photoUrl: user.photoUrl,
-        );
-        state = AsyncData(_current);
+        _setUser(user);
       case GoogleSignInAuthenticationEventSignOut():
         _current = null;
         state = const AsyncData(null);
     }
+  }
+
+  void _setUser(GoogleSignInAccount user) {
+    _current = AuthUser(
+      email: user.email,
+      name: user.displayName ?? user.email,
+      idToken: user.authentication.idToken ?? '',
+      photoUrl: user.photoUrl,
+    );
+    state = AsyncData(_current);
   }
 
   /// Interactive sign-in on platforms that support it (mobile/desktop).
@@ -82,6 +88,21 @@ class AuthController extends AsyncNotifier<AuthUser?> {
     } catch (e) {
       debugPrint('Google sign-in: $e');
       return googleSignInErrorMessage(e);
+    }
+  }
+
+  /// Makes sure the Google ID token is good for at least a few more minutes,
+  /// silently signing in again when it isn't. Google ID tokens last about an
+  /// hour, and the Worker rejects expired ones.
+  Future<void> ensureFreshToken({DateTime? now}) async {
+    final user = _current;
+    if (user == null || !idTokenNeedsRefresh(user.idToken, now: now)) return;
+    try {
+      final account = await GoogleSignIn.instance
+          .attemptLightweightAuthentication();
+      if (account != null) _setUser(account);
+    } catch (e) {
+      debugPrint('Google token refresh: $e');
     }
   }
 
@@ -125,4 +146,31 @@ String? googleSignInErrorMessage(Object error) {
         'Please use email instead for now. (${error.message})';
   }
   return 'Google sign-in failed. Please try again. ($error)';
+}
+
+/// When a JWT's `exp` claim says it expires, or null if it can't be read.
+DateTime? idTokenExpiry(String token) {
+  final parts = token.split('.');
+  if (parts.length != 3) return null;
+  try {
+    final payload = jsonDecode(
+      utf8.decode(base64Url.decode(base64Url.normalize(parts[1]))),
+    );
+    final exp = payload is Map ? payload['exp'] : null;
+    return exp is int
+        ? DateTime.fromMillisecondsSinceEpoch(exp * 1000, isUtc: true)
+        : null;
+  } on Object {
+    return null;
+  }
+}
+
+/// Whether [token] is expired or will be within five minutes. A token whose
+/// expiry can't be read is left alone.
+bool idTokenNeedsRefresh(String token, {DateTime? now}) {
+  final exp = idTokenExpiry(token);
+  if (exp == null) return false;
+  return !exp.isAfter(
+    (now ?? DateTime.now()).toUtc().add(const Duration(minutes: 5)),
+  );
 }
