@@ -34,7 +34,12 @@ class AuthController extends AsyncNotifier<AuthUser?> {
       );
       if (!_listening) {
         _listening = true;
-        signIn.authenticationEvents.listen(_onEvent);
+        signIn.authenticationEvents.listen(
+          _onEvent,
+          // Failures are already reported by signIn(); don't log them twice
+          // as unhandled.
+          onError: (Object e) => debugPrint('Google sign-in event: $e'),
+        );
       }
       await signIn.attemptLightweightAuthentication();
     } catch (e) {
