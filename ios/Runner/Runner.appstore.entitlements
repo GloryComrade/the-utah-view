@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- App Store entitlements. Copy over Runner.entitlements before an App
+	     Store archive (docs/RELEASE.md §4); needs a paid Apple Developer team.
+	     Push: new-story notifications via Firebase Cloud Messaging, which
+	     needs the Push Notifications capability on the App ID and an APNs
+	     key uploaded to Firebase.
+	     Sign in with Apple: needs the capability on the App ID.
+	     Universal links: theutahview.com/article.html?id=X opens the app.
+	     Requires apple-app-site-association on the website and the
+	     Associated Domains capability on the App ID. -->
+	<key>aps-environment</key>
+	<string>production</string>
+	<key>com.apple.developer.applesignin</key>
+	<array>
+		<string>Default</string>
+	</array>
+	<key>com.apple.developer.associated-domains</key>
+	<array>
+		<string>applinks:theutahview.com</string>
+		<string>applinks:www.theutahview.com</string>
+	</array>
+</dict>
+</plist>

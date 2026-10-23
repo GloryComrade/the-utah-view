@@ -49,6 +49,91 @@ async function verifyGoogleToken(token) {
   return { email: payload.email.toLowerCase(), name: payload.name || '', picture: payload.picture || '' };
 }
 
+// ── Sign in with Apple ──
+// The app sends Apple's identity token (a JWT signed with Apple's keys) and a
+// one-time authorization code. The code is exchanged for a refresh token so it
+// can be revoked when the reader deletes their account. That exchange needs
+// the secrets APPLE_TEAM_ID, APPLE_KEY_ID and APPLE_PRIVATE_KEY (a Sign in
+// with Apple .p8 key); without them sign-in still works but nothing is revoked.
+
+const APPLE_KEYS_URL = 'https://appleid.apple.com/auth/keys';
+const APPLE_ISSUER = 'https://appleid.apple.com';
+const APPLE_CLIENT_ID = 'com.theutahview.ios';
+
+function b64urlDecode(s) {
+  return atob(s.replace(/-/g, '+').replace(/_/g, '/'));
+}
+
+async function verifyAppleToken(token) {
+  const parts = (token || '').split('.');
+  if (parts.length !== 3) throw new Error('Invalid token format');
+  const header = JSON.parse(b64urlDecode(parts[0]));
+  const payload = JSON.parse(b64urlDecode(parts[1]));
+  if (!payload.exp || payload.exp < Date.now() / 1000) throw new Error('Token expired');
+  if (payload.aud !== APPLE_CLIENT_ID) throw new Error('Invalid audience');
+  if (payload.iss !== APPLE_ISSUER) throw new Error('Invalid issuer');
+  if (!payload.sub) throw new Error('Missing subject');
+
+  const keys = await (await fetch(APPLE_KEYS_URL)).json();
+  const key = keys.keys.find(k => k.kid === header.kid);
+  if (!key) throw new Error('Unknown signing key');
+  const cryptoKey = await crypto.subtle.importKey(
+    'jwk', key, { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' }, false, ['verify']
+  );
+  const sig = Uint8Array.from(b64urlDecode(parts[2]), c => c.charCodeAt(0));
+  const data = new TextEncoder().encode(parts[0] + '.' + parts[1]);
+  if (!await crypto.subtle.verify('RSASSA-PKCS1-v1_5', cryptoKey, sig, data)) {
+    throw new Error('Invalid signature');
+  }
+  return { sub: payload.sub, email: (payload.email || '').toLowerCase() };
+}
+
+function appleConfigured(env) {
+  return !!(env.APPLE_TEAM_ID && env.APPLE_KEY_ID && env.APPLE_PRIVATE_KEY);
+}
+
+// ES256 client secret for Apple's token/revoke endpoints.
+async function appleClientSecret(env) {
+  const b64 = env.APPLE_PRIVATE_KEY.replace(/-----(BEGIN|END) PRIVATE KEY-----/g, '').replace(/\s+/g, '');
+  const der = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+  const key = await crypto.subtle.importKey('pkcs8', der, { name: 'ECDSA', namedCurve: 'P-256' }, false, ['sign']);
+  const now = Math.floor(Date.now() / 1000);
+  const head = b64url(JSON.stringify({ alg: 'ES256', kid: env.APPLE_KEY_ID }));
+  const body = b64url(JSON.stringify({ iss: env.APPLE_TEAM_ID, iat: now, exp: now + 300, aud: APPLE_ISSUER, sub: APPLE_CLIENT_ID }));
+  const sig = await crypto.subtle.sign({ name: 'ECDSA', hash: 'SHA-256' }, key, new TextEncoder().encode(head + '.' + body));
+  return head + '.' + body + '.' + b64url(sig);
+}
+
+async function appleRefreshToken(env, code) {
+  if (!code || !appleConfigured(env)) return null;
+  try {
+    const res = await fetch(APPLE_ISSUER + '/auth/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        client_id: APPLE_CLIENT_ID, client_secret: await appleClientSecret(env),
+        code, grant_type: 'authorization_code',
+      }),
+    });
+    if (!res.ok) return null;
+    return (await res.json()).refresh_token || null;
+  } catch (e) { return null; }
+}
+
+async function appleRevoke(env, refreshToken) {
+  if (!refreshToken || !appleConfigured(env)) return;
+  try {
+    await fetch(APPLE_ISSUER + '/auth/revoke', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        client_id: APPLE_CLIENT_ID, client_secret: await appleClientSecret(env),
+        token: refreshToken, token_type_hint: 'refresh_token',
+      }),
+    });
+  } catch (e) { /* best effort; the account is deleted either way */ }
+}
+
 async function authenticate(request, env) {
   const authHeader = request.headers.get('Authorization');
   if (!authHeader) return null;
@@ -522,6 +607,37 @@ export default {
       return json({ token, email: acct.email, name: acct.name || '' });
     }
 
+    // Sign in with Apple: verify Apple's identity token, then find or create
+    // the reader account (matched by Apple's user id, else by email) and
+    // return an ordinary session, like /api/account/login.
+    if (path === '/api/account/apple' && method === 'POST') {
+      const { identityToken, authorizationCode, name } = await request.json();
+      let apple;
+      try { apple = await verifyAppleToken(identityToken); } catch (e) {
+        return json({ error: 'Sign in with Apple failed' }, 401);
+      }
+      let acct = await env.DB.prepare('SELECT id, email, name FROM accounts WHERE apple_sub = ?').bind(apple.sub).first();
+      if (!acct && apple.email) {
+        acct = await env.DB.prepare('SELECT id, email, name FROM accounts WHERE email = ?').bind(apple.email).first();
+      }
+      if (!acct && !apple.email) return json({ error: 'Sign in with Apple did not share an email' }, 401);
+      const refresh = await appleRefreshToken(env, authorizationCode);
+      if (acct) {
+        await env.DB.prepare(
+          'UPDATE accounts SET apple_sub = ?, apple_refresh_token = COALESCE(?, apple_refresh_token), name = CASE WHEN name = \'\' OR name IS NULL THEN ? ELSE name END WHERE id = ?'
+        ).bind(apple.sub, refresh, name || '', acct.id).run();
+        acct.name = acct.name || name || '';
+      } else {
+        acct = { id: crypto.randomUUID(), email: apple.email, name: name || '' };
+        await env.DB.prepare(
+          'INSERT INTO accounts (id, email, name, provider, apple_sub, apple_refresh_token) VALUES (?, ?, ?, ?, ?, ?)'
+        ).bind(acct.id, acct.email, acct.name, 'apple', apple.sub, refresh).run();
+        await auditLog(env, acct.email, 'signup', 'account', acct.id, 'apple', ip);
+      }
+      const token = await createSession(env, acct.id);
+      return json({ token, email: acct.email, name: acct.name });
+    }
+
     if (path === '/api/account/logout' && method === 'POST') {
       const authHeader = request.headers.get('Authorization') || '';
       if (authHeader.startsWith('Bearer ')) await env.DB.prepare('DELETE FROM sessions WHERE token = ?').bind(authHeader.slice(7)).run();
@@ -547,7 +663,8 @@ export default {
         if (!timingSafeEqual(hashHex, acct.password_hash)) return json({ error: 'Invalid email or password' }, 401);
         email = clean;
       }
-      const acctRow = await env.DB.prepare('SELECT id FROM accounts WHERE email = ?').bind(email).first();
+      const acctRow = await env.DB.prepare('SELECT id, apple_refresh_token FROM accounts WHERE email = ?').bind(email).first();
+      if (acctRow && acctRow.apple_refresh_token) await appleRevoke(env, acctRow.apple_refresh_token);
       const stmts = [
         env.DB.prepare('DELETE FROM saved_stories WHERE email = ?').bind(email),
         env.DB.prepare('DELETE FROM subscribers WHERE email = ?').bind(email),

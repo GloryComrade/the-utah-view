@@ -8,7 +8,7 @@ features.
 | | |
 |---|---|
 | App name | The Utah View |
-| Bundle / application id | `com.theutahview.app` |
+| Bundle / application id | iOS `com.theutahview.ios`, Android `com.theutahview.app` |
 | Backend | `https://api.theutahview.com` (Cloudflare Worker + D1, unchanged) |
 | Flutter / Dart | 3.47 stable / 3.13 |
 
