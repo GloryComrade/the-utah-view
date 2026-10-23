@@ -209,6 +209,7 @@ a{color:var(--red)}
     <button class="nav" data-v="dashboard" onclick="go('dashboard')"><span class="ic">&#9632;</span> Dashboard</button>
     <div class="side-hd">Content</div>
     <button class="nav" data-v="stories" onclick="go('stories')"><span class="ic">&#128240;</span> Stories</button>
+    <button class="nav" data-v="images" onclick="go('images')"><span class="ic">&#128444;</span> Images</button>
     <button class="nav" data-v="pages" onclick="go('pages')"><span class="ic">&#128196;</span> Pages</button>
     <div class="side-hd" data-admin>Front page</div>
     <button class="nav" data-v="homepage" data-admin onclick="go('homepage')"><span class="ic">&#127968;</span> Homepage</button>
@@ -329,6 +330,7 @@ function render(){
   if(v==='footer')return vFooter();
   if(v==='access')return vAccess();
   if(v==='subs')return vSubs();
+  if(v==='images')return vImages();
 }
 function head(title,actionsHtml){return '<div class="page-head"><h1>'+title+'</h1><div class="sp"></div>'+(actionsHtml||'')+'</div>'}
 
@@ -680,6 +682,38 @@ function aRm(e){if(!confirm('Remove access for '+e+'?'))return;
 }
 
 /* ---------- SUBSCRIBERS ---------- */
+/* ---------- IMAGE LIBRARY ---------- */
+// Every upload in storage. "In use" is worked out from the stories, pages and
+// homepage this editor has loaded, so a photo that's still shown can't be
+// deleted by accident.
+var IMGS=[];
+function imgUses(url){var u=[],S=stories(),P=pages(),L=layout();
+  Object.keys(S).forEach(function(id){var x=S[id];if(x.image_url===url||(x.body||'').indexOf(url)>=0)u.push('story “'+(x.title||id)+'”')});
+  Object.keys(P).forEach(function(sl){if((P[sl].body||'').indexOf(url)>=0)u.push('page “'+(P[sl].title||sl)+'”')});
+  if(L.hero_image===url)u.push('the homepage photo');return u}
+function vImages(){
+  var h=head('Images','<button class="bt bp" onclick="uploadToLibrary()">&#8679; Upload image</button>');
+  h+='<div class="card"><p class="desc" style="margin:0">Everything uploaded through the editor. Click <b>Copy link</b> to use a photo in a story, page or the homepage.</p></div><div id="imgGrid"><p class="empty"><span class="spin"></span> Loading…</p></div>';
+  $('view').innerHTML=h;
+  api('GET','/api/admin/images').then(function(r){if(!r.ok)throw r.status;return r.json()}).then(function(d){IMGS=(d.images||[]).sort(function(a,b){return String(b.uploaded||'').localeCompare(String(a.uploaded||''))});renderImgs()}).catch(function(){if($('imgGrid'))$('imgGrid').innerHTML='<p class="empty">Couldn’t load images (offline?).</p>'});
+}
+function renderImgs(){var el=$('imgGrid');if(!el)return;
+  if(!IMGS.length){el.innerHTML='<p class="empty">No uploads yet.</p>';return;}
+  el.innerHTML='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:14px">'+IMGS.map(function(x,i){var used=imgUses(x.url);
+    return '<div class="card" style="padding:10px;margin:0"><a href="'+esc(x.url)+'" target="_blank" rel="noopener"><img src="'+esc(x.url)+'" alt="" loading="lazy" style="width:100%;height:130px;object-fit:cover;border-radius:4px;display:block;background:var(--g1,#eee)"></a>'+
+      '<div class="su" style="margin:8px 0 6px;font-size:12px">'+esc(String(x.uploaded||'').slice(0,10))+' · '+Math.max(1,Math.round((x.size||0)/1024))+' KB'+(used.length?' · <b title="'+esc(used.join(', '))+'">in use</b>':'')+'</div>'+
+      '<div style="display:flex;gap:6px"><button class="bt bs bsm" onclick="copyImg('+i+')">Copy link</button>'+(isAdmin()?'<button class="bt bd bsm" style="margin-left:auto" onclick="delImg('+i+')">Delete</button>':'')+'</div></div>'}).join('')+'</div>';
+}
+function copyImg(i){var u=IMGS[i].url;(navigator.clipboard?navigator.clipboard.writeText(u):Promise.reject()).then(function(){toast('Link copied')}).catch(function(){prompt('Copy this link:',u)})}
+function delImg(i){var x=IMGS[i],used=imgUses(x.url);
+  if(!confirm(used.length?'This image is still used in '+used.join(', ')+'. Deleting it leaves a broken picture there. Delete anyway?':'Delete this image? This cannot be undone.'))return;
+  api('DELETE','/api/admin/images?key='+encodeURIComponent(x.key)).then(function(r){if(r.ok){IMGS.splice(i,1);renderImgs();toast('Deleted')}else toast(r.status===401||r.status===403?'⚠️ Only admins can delete images':'⚠️ Delete failed')}).catch(function(){toast('⚠️ Network error')});
+}
+function uploadToLibrary(){var t=document.createElement('input');t.id='libTmp';t.type='hidden';document.body.appendChild(t);
+  var iv=setInterval(function(){if(t.value){clearInterval(iv);t.remove();vImages()}},400);setTimeout(function(){clearInterval(iv);if(t.parentNode)t.remove()},120000);
+  uploadImage('libTmp');
+}
+
 function vSubs(){
   $('view').innerHTML=head('Subscribers')+'<div class="card"><p class="empty"><span class="spin"></span> Loading…</p></div>';
   if(!apiOk){$('view').innerHTML=head('Subscribers')+'<div class="card"><p class="empty">API not connected.</p></div>';return;}
