@@ -53,18 +53,19 @@ class HomeFeed {
 
     List<Story> resolve(Iterable<String> ids) => index.resolve(ids);
 
+    // Prefer the lead story's own photo. Fall back to the homepage hero
+    // image only for the configured lead (never a promoted stand-in). The
+    // caption and credit always belong to the photo shown.
+    final ownPhoto = lead != null && lead.imageUrl.isNotEmpty;
+    final heroPhoto = configuredLead == null ? null : layout.heroImageUrl;
     return HomeFeed(
       ticker: layout.ticker,
       lead: lead,
-      // Prefer the lead story's own photo. Fall back to the homepage hero
-      // image only for the configured lead (never a promoted stand-in).
-      leadImageUrl: lead != null && lead.imageUrl.isNotEmpty
-          ? lead.imageUrlOrNull
-          : (configuredLead == null ? null : layout.heroImageUrl),
-      leadImageCaption: lead != null && lead.imageCaption.isNotEmpty
+      leadImageUrl: ownPhoto ? lead.imageUrlOrNull : heroPhoto,
+      leadImageCaption: ownPhoto
           ? lead.imageCaption
-          : layout.heroCenterCaption,
-      leadImageCredit: lead?.imageCredit ?? '',
+          : (heroPhoto == null ? '' : layout.heroCenterCaption),
+      leadImageCredit: ownPhoto ? lead.imageCredit : '',
       topStories: resolve([layout.heroSecondary, layout.heroCenter])
           .where((s) => s.id != lead?.id)
           .toList(),

@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../core/api/providers.dart';
 import '../../core/router/navigation.dart';
 import '../../core/settings/app_settings.dart';
 import '../../core/theme/theme.dart';
@@ -46,17 +47,6 @@ const _destinations = <(int, String, IconData, IconData)>[
   (2, 'Saved', Icons.bookmark_border_rounded, Icons.bookmark_rounded),
   (3, 'More', Icons.menu_rounded, Icons.menu_open_rounded),
 ];
-
-/// Regions and topics offered in the desktop menu; they deep-link to the
-/// Sections category view (same filter the footer and app use).
-const _regions = <String>[
-  'The Americas',
-  'Europe',
-  'Asia-Pacific',
-  'Middle East',
-  'Africa',
-];
-const _topics = <String>['Analysis', 'Opinion', 'Data'];
 
 /// The app frame. On phones it's the four-tab bottom bar; on tablet/desktop
 /// the bottom bar is dropped and navigation moves to a slim top strip — a
@@ -191,7 +181,7 @@ class _DesktopTopNav extends StatelessWidget {
 
 /// The single dropdown for the desktop top strip: the four destinations, then
 /// regions and topics that open the Sections category view. Text only.
-class _NavMenu extends StatelessWidget {
+class _NavMenu extends ConsumerWidget {
   const _NavMenu({required this.currentIndex, required this.onSelect});
 
   final int currentIndex;
@@ -206,8 +196,19 @@ class _NavMenu extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final news = context.news;
+    // Regions and topics come from the editor's navigation, like the
+    // Sections tab, and open the same category view.
+    final categories = ref.watch(navCategoriesProvider);
+    final regions = [
+      for (final c in categories)
+        if (!c.section) c.text,
+    ];
+    final topics = [
+      for (final c in categories)
+        if (c.section) c.text,
+    ];
     return PopupMenuButton<VoidCallback>(
       tooltip: 'Menu',
       position: PopupMenuPosition.under,
@@ -225,20 +226,24 @@ class _NavMenu extends StatelessWidget {
               ),
             ),
           ),
-        const PopupMenuDivider(),
-        _header(context, 'Regions'),
-        for (final name in _regions)
-          PopupMenuItem<VoidCallback>(
-            value: () => context.openCategory(name),
-            child: Text(name),
-          ),
-        const PopupMenuDivider(),
-        _header(context, 'Topics'),
-        for (final name in _topics)
-          PopupMenuItem<VoidCallback>(
-            value: () => context.openCategory(name),
-            child: Text(name),
-          ),
+        if (regions.isNotEmpty) ...[
+          const PopupMenuDivider(),
+          _header(context, 'Regions'),
+          for (final name in regions)
+            PopupMenuItem<VoidCallback>(
+              value: () => context.openCategory(name),
+              child: Text(name),
+            ),
+        ],
+        if (topics.isNotEmpty) ...[
+          const PopupMenuDivider(),
+          _header(context, 'Topics'),
+          for (final name in topics)
+            PopupMenuItem<VoidCallback>(
+              value: () => context.openCategory(name),
+              child: Text(name),
+            ),
+        ],
         const PopupMenuDivider(),
         PopupMenuItem<VoidCallback>(
           value: () => context.goToArchive(),

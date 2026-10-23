@@ -480,9 +480,14 @@ class _SignInSectionState extends ConsumerState<_SignInSection> {
             subtitle: reader?.email ?? google!.email,
             serif: false,
             icon: Icons.logout_rounded,
-            onTap: () => reader != null
-                ? ref.read(readerAccountProvider.notifier).logOut()
-                : ref.read(authControllerProvider.notifier).signOut(),
+            onTap: () async {
+              if (reader != null) {
+                await ref.read(readerAccountProvider.notifier).logOut();
+              }
+              if (google != null) {
+                await ref.read(authControllerProvider.notifier).signOut();
+              }
+            },
           ),
           NavRow(
             title: 'Delete account',

@@ -86,11 +86,19 @@ abstract final class DeepLinks {
 
   /// [parse] for a link found in article HTML, where `article.html?id=X`
   /// may be relative to the website.
+  ///
+  /// The article renderer resolves relative links against the API host, so
+  /// `https://api.theutahview.com/article.html?id=X` counts as the website.
   static DeepLinkTarget? parseLink(String href) {
     final uri = Uri.tryParse(href.trim());
     if (uri == null) return null;
-    return parse(
-      uri.hasScheme ? uri : Uri.parse(ApiConfig.siteUrl).resolveUri(uri),
-    );
+    final site = Uri.parse(ApiConfig.siteUrl);
+    final api = Uri.parse(ApiConfig.baseUrl);
+    final absolute = !uri.hasScheme
+        ? site.resolveUri(uri)
+        : uri.host.toLowerCase() == api.host
+        ? uri.replace(host: site.host)
+        : uri;
+    return parse(absolute);
   }
 }
