@@ -67,4 +67,22 @@ void main() {
     expect(HomeFeed.build(StoryIndex(const []), layout).lead, isNull);
     expect(HomeFeed.build(StoryIndex(const []), null).lead, isNull);
   });
+
+  test('a lead with its own photo never borrows the homepage caption', () {
+    final stories = [
+      const Story(id: 'lead', title: 'Lead', imageUrl: '/images/a.jpg'),
+    ];
+    final feed = HomeFeed.build(
+      StoryIndex(stories),
+      layout.copyWith(heroLead: 'lead', heroCenterCaption: 'Batanes coast'),
+    );
+    expect(feed.leadImageCaption, isEmpty);
+
+    final noPhoto = HomeFeed.build(
+      StoryIndex([const Story(id: 'lead', title: 'Lead')]),
+      layout.copyWith(heroLead: 'lead', heroCenterCaption: 'Batanes coast'),
+    );
+    expect(noPhoto.leadImageUrl, layout.heroImageUrl);
+    expect(noPhoto.leadImageCaption, 'Batanes coast');
+  });
 }

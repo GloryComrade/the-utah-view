@@ -93,4 +93,19 @@ void main() {
       }
     });
   });
+
+  test('article links resolved against the API host count as the site', () {
+    expect(
+      DeepLinks.parseLink('https://api.theutahview.com/article.html?id=abc'),
+      isA<StoryTarget>().having((t) => t.id, 'id', 'abc'),
+    );
+    expect(
+      DeepLinks.parseLink('page.html?p=contact'),
+      isA<PageTarget>().having((t) => t.slug, 'slug', 'contact'),
+    );
+    expect(
+      DeepLinks.parseLink('https://example.com/article.html?id=x'),
+      isNull,
+    );
+  });
 }

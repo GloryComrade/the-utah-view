@@ -136,8 +136,19 @@ void main() {
 
     test('unsubscribe posts the email', () async {
       adapter.routes['POST /api/unsubscribe'] = (200, '{"message":"ok"}');
-      await repo.unsubscribe('a@b.co');
+      expect(await repo.unsubscribe('a@b.co'), UnsubscribeResult.unsubscribed);
       expect(adapter.requests.last.uri.path, '/api/unsubscribe');
+    });
+
+    test('unsubscribe reports when a confirmation email was sent', () async {
+      adapter.routes['POST /api/unsubscribe'] = (
+        200,
+        '{"message":"Check your email","confirm":true}',
+      );
+      expect(
+        await repo.unsubscribe('a@b.co'),
+        UnsubscribeResult.confirmEmailSent,
+      );
     });
   });
 }

@@ -52,10 +52,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     final results = stories == null
         ? const <Story>[]
         : searchStories(stories, _query);
-    final terms = {
-      for (final word in _query.toLowerCase().split(RegExp(r'\s+')))
-        if (word.isNotEmpty) word,
-    };
+    final terms = searchTerms(_query).toSet();
     final p = context.palette;
     final gutter = context.gutter;
 
