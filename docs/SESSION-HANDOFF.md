@@ -195,7 +195,7 @@ Git carries everything except a few machine-local items. In order:
    `A9:17:9A:3F:CD:11:72:97:5F:85:E2:F2:8C:DD:E7:B9:9E:2C:7E:28`
    (check with `keytool -printcert -jarfile <aab>`).
 5. **iOS builds need a Mac** with Xcode, signed in to the Apple ID for team
-   `WJV7UGJ2AS` (on Windows only web/Android are possible). Build and install
+   `2Y9KNT8528` (paid; the old free team `WJV7UGJ2AS` is retired) (on Windows only web/Android are possible). Build and install
    to a plugged-in, unlocked iPhone (`xcrun devicectl list devices` shows
    whether it's "available"):
    ```bash
