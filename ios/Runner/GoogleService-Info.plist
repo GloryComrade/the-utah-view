@@ -9,7 +9,7 @@
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
-	<string>com.theutahview.app</string>
+	<string>com.theutahview.ios</string>
 	<key>PROJECT_ID</key>
 	<string>theutahview</string>
 	<key>STORAGE_BUCKET</key>
@@ -25,6 +25,6 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:43158710642:ios:a5ca7de799b410658d95eb</string>
+	<string>1:43158710642:ios:34af02c9f26981c98d95eb</string>
 </dict>
 </plist>

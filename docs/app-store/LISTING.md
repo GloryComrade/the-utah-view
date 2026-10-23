@@ -6,7 +6,7 @@ App Store Connect's; character counts are in brackets.
 ## App information
 - **Name** (max 30): `The Utah View` [13]
 - **Subtitle** (max 30): `Global politics, from Utah` [26]
-- **Bundle ID:** `com.theutahview.app` · **SKU:** `utahview-ios`
+- **Bundle ID:** `com.theutahview.ios` (Android is `com.theutahview.app`) · **SKU:** `utahview-ios`
 - **Primary language:** English (U.S.)
 - **Primary category:** News · **Secondary:** Magazines & Newspapers
 - **Content rights:** "Does not contain, show, or access third-party content"

@@ -74,8 +74,15 @@ number for every upload to either store.
 organization if the seller should read "The Utah View" (that requires a
 D-U-N-S number); an individual enrollment shows your personal name.
 
+   **Team:** paid Individual team `2Y9KNT8528` (seller name "Sau Ling Cheng").
+   **iOS bundle ID is `com.theutahview.ios`** (Android stays
+   `com.theutahview.app`): the old free Personal Team `WJV7UGJ2AS` still holds
+   `com.theutahview.app` on Apple's side, so it can't be registered to the paid
+   team. Firebase has a matching iOS app and Google Cloud project 562818410025
+   has the iOS OAuth client "The Utah View iOS (App Store)".
+
 1. **App ID.** developer.apple.com → Certificates, IDs & Profiles →
-   Identifiers → `com.theutahview.app`. Enable **Associated Domains** and
+   Identifiers → `com.theutahview.ios`. Enable **Associated Domains** and
    **Push Notifications**.
    - **Push:** Keys → create an APNs key (.p8), then Firebase console
      (project `theutahview`) → Project settings → Cloud Messaging → Apple app
@@ -94,7 +101,7 @@ D-U-N-S number); an individual enrollment shows your personal name.
    The app supports iOS 15 and later (the Runner target used to say 27.0,
    which would have hidden it from anyone not on iOS 27).
 3. **App Store Connect → New App:** name "The Utah View", bundle id
-   `com.theutahview.app`, SKU (e.g. `utahview-ios`), primary language English
+   `com.theutahview.ios`, SKU (e.g. `utahview-ios`), primary language English
    (U.S.), category **News**.
 4. **Listing:** copy-paste from `docs/app-store/LISTING.md` (subtitle,
    description, keywords, URLs, age rating, review notes).
@@ -137,7 +144,7 @@ D-U-N-S number); an individual enrollment shows your personal name.
      "applinks": {
        "details": [
          {
-           "appIDs": ["<TEAM_ID>.com.theutahview.app"],
+           "appIDs": ["2Y9KNT8528.com.theutahview.ios"],
            "components": [{ "/": "/article*" }, { "/": "/page*" }]
          }
        ]

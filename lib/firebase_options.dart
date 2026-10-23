@@ -59,10 +59,10 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyA2k-R-h-aMrqRKXvEYdJPT9-6qPebiJQ0',
-    appId: '1:43158710642:ios:a5ca7de799b410658d95eb',
+    appId: '1:43158710642:ios:34af02c9f26981c98d95eb',
     messagingSenderId: '43158710642',
     projectId: 'theutahview',
     storageBucket: 'theutahview.firebasestorage.app',
-    iosBundleId: 'com.theutahview.app',
+    iosBundleId: 'com.theutahview.ios',
   );
 }
