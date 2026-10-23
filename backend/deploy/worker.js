@@ -58,7 +58,7 @@ async function verifyGoogleToken(token) {
 
 const APPLE_KEYS_URL = 'https://appleid.apple.com/auth/keys';
 const APPLE_ISSUER = 'https://appleid.apple.com';
-const APPLE_CLIENT_ID = 'com.theutahview.app';
+const APPLE_CLIENT_ID = 'com.theutahview.ios';
 
 function b64urlDecode(s) {
   return atob(s.replace(/-/g, '+').replace(/_/g, '/'));
