@@ -667,7 +667,9 @@ export default {
 
     // GET /api/pages/:slug
     if (path.startsWith('/api/pages/') && method === 'GET') {
-      const slug = path.split('/')[3];
+      // Decode, so a slug saved with a space ("About Us") still resolves.
+      let slug = path.split('/')[3];
+      try { slug = decodeURIComponent(slug); } catch (e) {}
       const page = await env.DB.prepare('SELECT * FROM pages WHERE slug = ?').bind(slug).first();
       if (!page) return new Response(JSON.stringify({ error: 'Not found' }), { status: 404, headers: corsHeaders() });
       return new Response(JSON.stringify(page), { headers: corsHeaders() });
@@ -688,7 +690,8 @@ export default {
     if (path.startsWith('/api/admin/pages/') && method === 'DELETE') {
       const deny = requireRole(user, ['admin']);
       if (deny) return deny;
-      const slug = path.split('/')[4];
+      let slug = path.split('/')[4];
+      try { slug = decodeURIComponent(slug); } catch (e) {}
       await env.DB.prepare('DELETE FROM pages WHERE slug = ?').bind(slug).run();
       await auditLog(env, user.email, 'delete', 'page', slug, null, ip);
       return new Response(JSON.stringify({ message: 'Deleted' }), { headers: corsHeaders() });

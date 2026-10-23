@@ -528,13 +528,16 @@ function vPageEdit(){
 function rc2(c){document.execCommand(c,false,null);$('pbody').focus()}
 function rb2(t){document.execCommand('formatBlock',false,'<'+t+'>');$('pbody').focus()}
 function pPv(){var el=$('ppv');if(!el)return;el.innerHTML='<div class="pt">'+esc($('pt').value)+'</div><div class="ps">'+esc($('psub')?$('psub').value:'')+'</div><div class="pc">'+$('pbody').innerHTML+'</div>'}
-function savePage(){var t=$('pt').value.trim();if(!t){toast('Title required');return;}var slug=editSlug||($('pslug')?$('pslug').value.trim():'')||t.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').substring(0,40);
+// A typed slug gets the same cleanup as an auto one (lowercase, no spaces), so
+// a slug like "About Us" can't produce a link that 404s.
+function slugify(x){return String(x||'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').substring(0,40)}
+function savePage(){var t=$('pt').value.trim();if(!t){toast('Title required');return;}var slug=editSlug||slugify($('pslug')?$('pslug').value:'')||slugify(t);
   var P=pages();P[slug]={slug:slug,title:t,subtitle:$('psub').value.trim(),body:$('pbody').innerHTML};s('utv_pages',P);editSlug=slug;
   if(apiOk)api('POST','/api/admin/pages',{slug:slug,title:t,subtitle:P[slug].subtitle,body:P[slug].body}).then(function(r){toast(r.ok?'💾 Saved':(r.status===403?'⚠️ Admin only':'⚠️ Error'))}).catch(function(){toast('⚠️ Network error')});
   else toast('⚠️ API offline');
   go('pages');
 }
-function delPage(sl){if(!confirm('Delete this page?'))return;var P=pages();delete P[sl];s('utv_pages',P);if(apiOk)api('DELETE','/api/admin/pages/'+sl);toast('Deleted');go('pages')}
+function delPage(sl){if(!confirm('Delete this page?'))return;var P=pages();delete P[sl];s('utv_pages',P);if(apiOk)api('DELETE','/api/admin/pages/'+encodeURIComponent(sl));toast('Deleted');go('pages')}
 
 /* ---------- HOMEPAGE builder ---------- */
 var SEC_IDS=['hero','editorial','regions','featured','utahLens','dataBrief'];

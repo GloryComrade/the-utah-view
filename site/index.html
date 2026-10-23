@@ -350,7 +350,13 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')closeBriefin
 })();
 function renderHome(){
   var L=LC,S=SC,tk=document.getElementById('tickerText');if(tk)tk.textContent=L.ticker||'';setBriefing(L.ticker||'',L);var h='';
+  // Editor → Homepage → Sections: hidden sections are skipped and custom red
+  // headers replace the defaults (the web grid order itself stays fixed).
+  var HID=L.hidden_sections||[],LBL=L.section_labels||{};
+  function hid(id){return HID.indexOf(id)>=0}
+  function lbl(id,def){var v=String(LBL[id]||'').trim();return v?v.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'):def}
   var lead=S[L.hero_lead],sec=S[L.hero_secondary],ctr=S[L.hero_center];
+  if(!hid('hero')){
   h+='<div class="container"><div class="hero-section"><hr class="rule-thick"><div style="height:18px"></div><div class="hero-grid"><div class="hero-left"><p class="section-tag">Lead Analysis</p>';
   if(lead){h+='<h1 class="hero-headline"><a href="article.html?id='+L.hero_lead+'">'+lead.title+'</a></h1><p class="hero-summary">'+lead.summary+'</p><p class="hero-byline">By <span>'+lead.author+'</span>'+(lead.read_time?' · '+lead.read_time+' read':'')+'</p>'}
   if(sec){h+='<hr class="rule" style="margin-bottom:18px">'+rt(L.hero_secondary,sec)}
@@ -360,10 +366,11 @@ function renderHome(){
   h+='</div><div class="hero-right"><p class="section-tag-gray">From This Issue</p>';
   if(L.hero_right){L.hero_right.forEach(function(id,i){if(i>0)h+='<hr class="rule" style="margin:14px 0">';h+=rt(id,S[id])})}
   h+='</div></div></div></div>';
+  }
   // EDITORIAL
   var ed=L.editorial||[];
-  if(ed.length){
-    h+='<div class="container"><div class="editorial-section"><hr class="rule-thick"><div style="height:18px"></div><div class="editorial-grid"><div class="editorial-main"><div class="editorial-tag">Editorial & Opinion</div>';
+  if(ed.length&&!hid('editorial')){
+    h+='<div class="container"><div class="editorial-section"><hr class="rule-thick"><div style="height:18px"></div><div class="editorial-grid"><div class="editorial-main"><div class="editorial-tag">'+lbl('editorial','Editorial &amp; Opinion')+'</div>';
     var edMain=S[ed[0]];
     if(edMain){h+='<div class="editorial-hl"><a href="article.html?id='+ed[0]+'">'+edMain.title+'</a></div><p class="editorial-sum">'+edMain.summary+'</p><p class="editorial-by">By <span>'+edMain.author+'</span>'+(edMain.read_time||edMain.readTime?' · '+(edMain.read_time||edMain.readTime)+' read':'')+'</p>'}
     h+='</div><div class="editorial-side"><div class="editorial-tag">More Opinion</div>';
@@ -371,16 +378,20 @@ function renderHome(){
     h+='</div></div></div></div>';
   }
   var rg=L.regions||{},ro=['The Americas','Europe','Asia-Pacific','Middle East','Africa'];
-  h+='<div class="container"><div class="regions-section"><hr class="rule-thick"><div style="height:18px"></div><div class="regions-grid">';
+  if(!hid('regions')){
+  h+='<div class="container"><div class="regions-section"><hr class="rule-thick"><div style="height:18px"></div>'+(LBL.regions&&String(LBL.regions).trim()?'<p class="section-tag">'+lbl('regions','')+'</p>':'')+'<div class="regions-grid">';
   ro.forEach(function(r){var sid=rg[r],s=S[sid];h+='<div class="region-col"><div class="region-name">'+r+'</div>';if(s){h+='<div class="region-hl"><a href="article.html?id='+sid+'">'+s.title+'</a></div><p class="region-desc">'+s.summary+'</p>'}h+='</div>'});
   h+='</div></div></div>';
-  var ft=L.featured||[],ul=L.sidebar_utah||[],db=L.sidebar_data||[];
-  h+='<div class="container"><div class="latest-section"><hr class="rule-thick"><div class="latest-header"><span class="latest-title">In This Issue</span><a class="latest-link" href="?view=archive">View full issue →</a></div><div class="latest-grid"><div class="latest-main">';
+  }
+  var ft=hid('featured')?[]:(L.featured||[]),ul=hid('utahLens')?[]:(L.sidebar_utah||[]),db=hid('dataBrief')?[]:(L.sidebar_data||[]);
+  if(ft.length||ul.length||db.length){
+  h+='<div class="container"><div class="latest-section"><hr class="rule-thick"><div class="latest-header"><span class="latest-title">'+(ft.length?lbl('featured','In This Issue'):'')+'</span><a class="latest-link" href="?view=archive">View full issue →</a></div><div class="latest-grid"><div class="latest-main">';
   ft.forEach(function(id,i){var s=S[id];if(!s)return;h+='<div class="l-article"><span class="l-num">'+String(i+1).padStart(2,'0')+'</span><div><h3 class="l-hl"><a href="article.html?id='+id+'">'+s.title+'</a></h3><p class="l-desc">'+s.summary+'</p><p class="l-meta">By <span>'+s.author+'</span> · '+(s.region||'Analysis')+'</p></div></div>'});
   h+='</div><div class="latest-sidebar">';
-  if(ul.length){h+='<div class="sb-block"><div class="sb-title">The Utah Lens</div>';ul.forEach(function(id){var s=S[id];if(s)h+='<div class="sb-item"><h4 class="sb-hl"><a href="article.html?id='+id+'">'+s.title+'</a></h4><p class="sb-desc">'+s.summary+'</p></div>'});h+='</div>'}
-  if(db.length){h+='<div class="sb-block"><div class="sb-title">Data Brief</div>';db.forEach(function(id){var s=S[id];if(s)h+='<div class="sb-item"><h4 class="sb-hl"><a href="article.html?id='+id+'">'+s.title+'</a></h4><p class="sb-desc">'+s.summary+'</p></div>'});h+='</div>'}
+  if(ul.length){h+='<div class="sb-block"><div class="sb-title">'+lbl('utahLens','The Utah Lens')+'</div>';ul.forEach(function(id){var s=S[id];if(s)h+='<div class="sb-item"><h4 class="sb-hl"><a href="article.html?id='+id+'">'+s.title+'</a></h4><p class="sb-desc">'+s.summary+'</p></div>'});h+='</div>'}
+  if(db.length){h+='<div class="sb-block"><div class="sb-title">'+lbl('dataBrief','Data Brief')+'</div>';db.forEach(function(id){var s=S[id];if(s)h+='<div class="sb-item"><h4 class="sb-hl"><a href="article.html?id='+id+'">'+s.title+'</a></h4><p class="sb-desc">'+s.summary+'</p></div>'});h+='</div>'}
   h+='</div></div></div></div>';
+  }
   document.getElementById('dynamicContent').innerHTML=h;
 }
 function renderFoot(){

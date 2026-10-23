@@ -69,3 +69,5 @@ app.*.map.json
 **/*.jks
 **/*.keystore
 upload-keystore.jks
+
+.wrangler/
