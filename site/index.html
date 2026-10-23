@@ -146,6 +146,8 @@ body { font-family:var(--serif); color:var(--black); background:var(--white); -w
 .sub-btn:hover { background:var(--red-dark); }
 .sub-success { display:none; font-family:var(--sans); font-size:14px; color:var(--red); margin-top:12px; font-weight:600; }
 .sub-success.show { display:block; }
+.sub-success.err { color:var(--gray-900); font-weight:400; }
+.sub-btn:disabled { opacity:0.6; cursor:default; }
 .footer { border-top:3px double var(--black); padding:28px 0 72px; }
 .footer-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:28px; }
 .footer-col-title { font-family:var(--sans); font-size:11px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; margin-bottom:10px; color:var(--gray-700); }
@@ -153,6 +155,8 @@ body { font-family:var(--serif); color:var(--black); background:var(--white); -w
 .footer-col a:hover { color:var(--red); }
 .footer-bottom { margin-top:24px; padding-top:14px; border-top:1px solid var(--gray-200); display:flex; justify-content:space-between; align-items:center; }
 .footer-copyright { font-family:var(--sans); font-size:12px; color:var(--gray-400); }
+.footer-legal a { font-family:var(--sans); font-size:12px; color:var(--gray-400); text-decoration:none; margin-left:14px; }
+.footer-legal a:hover { color:var(--red); }
 .footer-logo-sm { display:flex; align-items:center; gap:8px; }
 .footer-logo-text { font-family:var(--wordmark); font-size:19px; font-style:italic; font-weight:900; color:var(--black); }
 .toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(80px); font-family:var(--sans); font-size:14px; background:var(--black); color:var(--white); padding:12px 24px; border-radius:4px; z-index:999; opacity:0; transition:all 0.3s ease; pointer-events:none; }
@@ -199,6 +203,8 @@ body { font-family:var(--serif); color:var(--black); background:var(--white); -w
   .latest-main { padding-right:0; border-right:none; margin-bottom:28px; }
   .latest-sidebar { padding-left:0; }
   .footer-grid { grid-template-columns:1fr 1fr; }
+  .footer-legal { display:block; margin-top:6px; }
+  .footer-legal a:first-child { margin-left:0; }
 }
 @media (max-width:600px) {
   .regions-grid { grid-template-columns:1fr; }
@@ -300,7 +306,9 @@ var GCID = '562818410025-d6n1627aucueem1npk03mg5n7gs8i5t7.apps.googleusercontent
 function getUser() { try { return JSON.parse(localStorage.getItem('utv_user')); } catch(e) { return null; } }
 function getToken() { return localStorage.getItem('utv_token') || ''; }
 function signIn() {
+  if (!window.google || !google.accounts) { toast('Sign-in is still loading. Try again in a moment.'); return; }
   google.accounts.id.initialize({ client_id: GCID, callback: function(r) {
+    utvCloseSignIn();
     localStorage.setItem('utv_token', r.credential);
     var p = JSON.parse(atob(r.credential.split('.')[1]));
     var u = { email: p.email.toLowerCase(), name: p.name, initial: p.name.charAt(0).toUpperCase() };
@@ -308,7 +316,7 @@ function signIn() {
     fetch(API+'/api/me',{headers:{'Authorization':'Bearer '+r.credential}}).then(function(x){return x.json()}).then(function(d){if(d.role){u.role=d.role;localStorage.setItem('utv_user',JSON.stringify(u))}updateAuth()}).catch(function(){updateAuth()});
     toast('Signed in as '+p.email);
   }});
-  google.accounts.id.prompt();
+  utvShowSignIn();
 }
 function signOut() { localStorage.removeItem('utv_user'); localStorage.removeItem('utv_token'); updateAuth(); toast('Signed out'); }
 function toggleDrop() { event.stopPropagation(); document.getElementById('uDrop').classList.toggle('open'); }
@@ -321,9 +329,14 @@ function updateAuth() {
 }
 document.addEventListener('click',function(e){if(!e.target.closest('.user-pill')){var d=document.getElementById('uDrop');if(d)d.classList.remove('open')}});
 function handleSubscribe(e) {
-  e.preventDefault(); var em=document.getElementById('subEmail').value.trim(); if(!em) return false;
-  fetch(API+'/api/subscribe',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:em})}).then(function(r){return r.json()}).then(function(d){document.getElementById('subSuccess').textContent=d.message==='Already subscribed'?"You're already subscribed!":'Welcome aboard. Your first briefing arrives next month.';document.getElementById('subSuccess').classList.add('show')}).catch(function(){document.getElementById('subSuccess').textContent='Welcome aboard. Your first briefing arrives next month.';document.getElementById('subSuccess').classList.add('show')});
-  document.getElementById('subEmail').value=''; return false;
+  e.preventDefault(); var inp=document.getElementById('subEmail'),btn=document.querySelector('.sub-btn'),msg=document.getElementById('subSuccess'),em=inp.value.trim(); if(!em) return false;
+  function say(t,err){msg.textContent=t;msg.classList.toggle('err',!!err);msg.classList.add('show')}
+  btn.disabled=true;btn.textContent='Subscribing…';msg.classList.remove('show');
+  fetch(API+'/api/subscribe',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:em})}).then(function(r){return r.json().catch(function(){return {}}).then(function(d){return {ok:r.ok,d:d}})}).then(function(x){
+    if(x.ok){say(x.d.message==='Already subscribed'?"You're already subscribed!":'Welcome aboard. Your first briefing arrives next month.');inp.value='';}
+    else say(x.d.error==='Invalid email'?'That email address doesn\u2019t look right. Please check it and try again.':'Sorry, we couldn\u2019t sign you up just now. Please try again in a moment.',true);
+  }).catch(function(){say(navigator.onLine===false?'You seem to be offline. Check your connection and try again.':'Sorry, we couldn\u2019t sign you up just now. Please try again in a moment.',true)}).then(function(){btn.disabled=false;btn.textContent='Subscribe'});
+  return false;
 }
 function toast(m){var t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(function(){t.classList.remove('show')},2500)}
 document.getElementById('todayDate').textContent=new Date().toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
@@ -362,8 +375,9 @@ function renderHome(){
   if(lead){h+='<h1 class="hero-headline"><a href="article.html?id='+L.hero_lead+'">'+lead.title+'</a></h1><p class="hero-summary">'+lead.summary+'</p><p class="hero-byline">By <span>'+lead.author+'</span>'+(lead.read_time?' · '+lead.read_time+' read':'')+'</p>'}
   if(sec){h+='<hr class="rule" style="margin-bottom:18px">'+rt(L.hero_secondary,sec)}
   h+='</div><div class="hero-center">';
-  if(L.hero_image){h+='<img class="hero-img-real" src="'+L.hero_image+'" alt="">'}else{h+='<div class="hero-img"></div>'}
-  if(L.hero_center_caption)h+='<p class="hero-caption">'+L.hero_center_caption+'</p>';if(ctr)h+=rt(L.hero_center,ctr);
+  var ea=function(x){return String(x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')};
+  if(L.hero_image){h+='<img class="hero-img-real" src="'+L.hero_image+'" alt="'+ea(L.hero_image_alt||'')+'">'}else{h+='<div class="hero-img"></div>'}
+  if(L.hero_center_caption)h+='<p class="hero-caption">'+ea(L.hero_center_caption)+'</p>';if(ctr)h+=rt(L.hero_center,ctr);
   h+='</div><div class="hero-right"><p class="section-tag-gray">From This Issue</p>';
   if(L.hero_right){L.hero_right.forEach(function(id,i){if(i>0)h+='<hr class="rule" style="margin:14px 0">';h+=rt(id,S[id])})}
   h+='</div></div></div></div>';
@@ -400,7 +414,7 @@ function renderFoot(){
   h+='<div class="container"><div class="footer"><div class="footer-grid">';
   var cols=(ss.footer_cols&&ss.footer_cols.length)?ss.footer_cols:(D.footer_cols||[]);
   cols.forEach(function(c){h+='<div class="footer-col"><div class="footer-col-title">'+c.title+'</div>';(c.links||[]).forEach(function(l){h+='<a href="'+(l.url||'')+'">'+l.text+'</a>'});h+='</div>'});
-  h+='</div><div class="footer-bottom"><span class="footer-copyright">'+(ss.copyright||D.copyright||'')+'</span><div class="footer-logo-sm"><svg width="20" height="20" viewBox="0 0 100 100" fill="none"><path fill="#FFFFFF" d="M4 4.36 L4 85.34 L38.34 85.34 L38.34 95.59 L95.95 95.59 L95.95 38.39 L85.6 38.39 L85.6 4.36 Z"/><path fill="#B53816" fill-rule="evenodd" d="M62.58 51.41 L62.58 53.56 L65.09 53.56 L65.09 72.37 L67.71 72.37 L67.71 53.56 L70.22 53.56 L70.22 51.41 Z M53.66 51.41 L53.66 70.73 L55.3 72.37 L59.76 72.37 L61.4 70.73 L61.4 51.41 L58.79 51.41 L58.79 69.6 L58.23 70.17 L56.84 70.17 L56.28 69.6 L56.28 51.41 Z M27.37 27.58 L27.37 85.34 L38.34 85.34 L38.34 95.59 L95.95 95.59 L95.95 38.39 L85.6 38.39 L85.6 27.58 Z M38.34 38.39 L85.6 38.39 L85.6 85.34 L38.34 85.34 Z M4 85.34 L16.1 85.34 L16.1 16.35 L85.6 16.35 L85.6 4.36 L4 4.36 Z"/></svg><span class="footer-logo-text">The Utah View</span></div></div></div></div>';
+  h+='</div><div class="footer-bottom"><div><span class="footer-copyright">'+(ss.copyright||D.copyright||'')+'</span><span class="footer-legal"><a href="/privacy.html">Privacy Policy</a><a href="/delete-account.html">Delete my account</a></span></div><div class="footer-logo-sm"><svg width="20" height="20" viewBox="0 0 100 100" fill="none"><path fill="#FFFFFF" d="M4 4.36 L4 85.34 L38.34 85.34 L38.34 95.59 L95.95 95.59 L95.95 38.39 L85.6 38.39 L85.6 4.36 Z"/><path fill="#B53816" fill-rule="evenodd" d="M62.58 51.41 L62.58 53.56 L65.09 53.56 L65.09 72.37 L67.71 72.37 L67.71 53.56 L70.22 53.56 L70.22 51.41 Z M53.66 51.41 L53.66 70.73 L55.3 72.37 L59.76 72.37 L61.4 70.73 L61.4 51.41 L58.79 51.41 L58.79 69.6 L58.23 70.17 L56.84 70.17 L56.28 69.6 L56.28 51.41 Z M27.37 27.58 L27.37 85.34 L38.34 85.34 L38.34 95.59 L95.95 95.59 L95.95 38.39 L85.6 38.39 L85.6 27.58 Z M38.34 38.39 L85.6 38.39 L85.6 85.34 L38.34 85.34 Z M4 85.34 L16.1 85.34 L16.1 16.35 L85.6 16.35 L85.6 4.36 L4 4.36 Z"/></svg><span class="footer-logo-text">The Utah View</span></div></div></div></div>';
   document.getElementById('subscribeFooter').innerHTML=h;
   var abl=document.getElementById('aboutLink');if(abl&&ss.about_url)abl.href=ss.about_url;if(abl&&ss.about_text)abl.textContent=ss.about_text;
 }
@@ -421,8 +435,10 @@ function go(){
   var p3=fetch(API+'/api/config/site').then(function(r){return r.json()}).then(function(d){FC=d.value||{}}).catch(function(){try{FC=JSON.parse(localStorage.getItem('utv_site'))||{}}catch(e){}});
   Promise.all([p1,p2,p3]).then(function(){
     renderFoot();
+    // links from other pages to /#subscribe-section arrive before the footer exists
+    if(location.hash==='#subscribe-section')setTimeout(function(){var t=document.getElementById('subscribe-section');if(t)t.scrollIntoView()},50);
     if(va){var a=Object.entries(SC).sort(function(a,b){return(b[1].date||'').localeCompare(a[1].date||'')});renderList(a,'Archive','No published articles yet.')}
-    else if(vs){var si=[];try{si=JSON.parse(localStorage.getItem('utv_saved'))||[]}catch(e){}var sv=si.map(function(id){return SC[id]?[id,SC[id]]:null}).filter(Boolean);renderList(sv,'Saved Stories','No saved stories yet. Click <strong>Save</strong> on any article to bookmark it.')}
+    else if(vs){if(!go.synced&&window.utvSyncSaved){go.synced=1;utvSyncSaved(function(ch){if(ch)go()})}var si=[];try{si=JSON.parse(localStorage.getItem('utv_saved'))||[]}catch(e){}var sv=si.map(function(id){return SC[id]?[id,SC[id]]:null}).filter(Boolean);renderList(sv,'Saved Stories','No saved stories yet. Click <strong>Save</strong> on any article to bookmark it.')}
     else if(cat){document.querySelectorAll('#mainNav a').forEach(function(a){if(a.textContent===cat)a.classList.add('active')});var m=Object.entries(SC).filter(function(e){var s=e[1];if(cat==='Analysis'||cat==='Opinion'||cat==='Data')return s.region===cat||s.region==='Global'||s.region==='The Utah Lens';return s.region===cat});renderList(m,cat,'No stories in this category yet.')}
     else{renderHome()}
   });
@@ -431,5 +447,7 @@ go();
 </script>
 <script src="/search.js" defer></script>
 <script src="/theme.js" defer></script>
+<script src="/signin.js" defer></script>
+<script src="/saved-sync.js"></script>
 </body>
 </html>
