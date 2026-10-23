@@ -32,9 +32,19 @@
 					<string>theutahview</string>
 				</array>
 			</dict>
+			<dict>
+				<key>CFBundleTypeRole</key>
+				<string>Editor</string>
+				<key>CFBundleURLSchemes</key>
+				<array>
+					<string>com.googleusercontent.apps.562818410025-ct7u71pbhqsc24djoq254b6m04kpv2up</string>
+				</array>
+			</dict>
 		</array>
 		<key>CFBundleVersion</key>
 		<string>$(FLUTTER_BUILD_NUMBER)</string>
+		<key>GIDClientID</key>
+		<string>562818410025-ct7u71pbhqsc24djoq254b6m04kpv2up.apps.googleusercontent.com</string>
 		<key>FlutterDeepLinkingEnabled</key>
 		<true/>
 		<key>ITSAppUsesNonExemptEncryption</key>
