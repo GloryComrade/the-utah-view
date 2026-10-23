@@ -1,3 +1,4 @@
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:utah_view/core/auth/google_auth.dart';
@@ -23,5 +24,14 @@ void main() {
     expect(googleSignInErrorMessage(ex(GoogleSignInExceptionCode.unknownError)),
         startsWith('Google sign-in failed'));
     expect(googleSignInErrorMessage(StateError('boom')), contains('boom'));
+  });
+
+  test('iOS missing client ID counts as a setup problem', () {
+    final msg = googleSignInErrorMessage(PlatformException(
+        code: 'google_sign_in',
+        message: 'No active configuration. Make sure GIDClientID is set in '
+            'Info.plist.',
+        details: 'NSInvalidArgumentException'));
+    expect(msg, contains("isn't set up"));
   });
 }

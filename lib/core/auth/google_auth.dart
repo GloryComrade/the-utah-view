@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
@@ -116,6 +117,12 @@ String? googleSignInErrorMessage(Object error) {
       default:
         return 'Google sign-in failed. Please try again.$suffix';
     }
+  }
+  // iOS reports a missing GIDClientID as a plain PlatformException.
+  if (error is PlatformException &&
+      '${error.message}'.contains('No active configuration')) {
+    return "Google sign-in isn't set up for this version of the app yet. "
+        'Please use email instead for now. (${error.message})';
   }
   return 'Google sign-in failed. Please try again. ($error)';
 }
