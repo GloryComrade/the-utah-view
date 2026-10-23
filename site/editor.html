@@ -223,6 +223,7 @@ a{color:var(--red)}
 
 <div class="toast" id="toast"></div>
 
+<script src="/site-defaults.js"></script>
 <script>
 var API='https://api.theutahview.com',GC='562818410025-d6n1627aucueem1npk03mg5n7gs8i5t7.apps.googleusercontent.com';
 if(!localStorage.getItem('utv_acl'))localStorage.setItem('utv_acl',JSON.stringify({'theutahview@gmail.com':'admin'}));
@@ -616,15 +617,17 @@ function saveHome(){
 
 /* ---------- FOOTER ---------- */
 function vFooter(){
-  var ss=site();
+  // Empty fields show what the website shows today (site-defaults.js), so a
+  // Save without changes can't blank the live footer.
+  var ss=site(),D=window.UTV_SITE_DEFAULTS||{};
   var h=head('Footer & Subscribe','<button class="bt bp" onclick="saveFooter()">💾 Save</button>');
   h+='<div class="card"><h2>📧 Subscribe banner</h2>'+
-    '<div class="fl"><label>Overline</label><input id="sol" value="'+esc(ss.sub_overline||'Stay briefed')+'"></div>'+
-    '<div class="fl"><label>Heading</label><input id="shd" value="'+esc(ss.sub_heading||'Independent analysis, delivered monthly')+'"></div>'+
-    '<div class="fl"><label>Description</label><input id="sds" value="'+esc(ss.sub_desc||'')+'"></div></div>';
-  h+='<div class="card"><h2>🔝 Top bar</h2><div class="row2"><div class="fl"><label>About text</label><input id="sabt" value="'+esc(ss.about_text||'About')+'"></div><div class="fl"><label>About URL</label><input id="sabu" value="'+esc(ss.about_url||'page.html?p=our-mission')+'"></div></div></div>';
-  h+='<div class="card"><h2>🔗 Footer</h2><div class="fl"><label>Copyright</label><input id="scp" value="'+esc(ss.copyright||'© 2026 The Utah View.')+'"></div>';
-  var cols=(ss.footer_cols||[]).slice();while(cols.length<4)cols.push({title:'',links:[]});
+    '<div class="fl"><label>Overline</label><input id="sol" value="'+esc(ss.sub_overline||D.sub_overline||'')+'"></div>'+
+    '<div class="fl"><label>Heading</label><input id="shd" value="'+esc(ss.sub_heading||D.sub_heading||'')+'"></div>'+
+    '<div class="fl"><label>Description</label><input id="sds" value="'+esc(ss.sub_desc||D.sub_desc||'')+'"></div></div>';
+  h+='<div class="card"><h2>🔝 Top bar</h2><div class="row2"><div class="fl"><label>About text</label><input id="sabt" value="'+esc(ss.about_text||D.about_text||'About')+'"></div><div class="fl"><label>About URL</label><input id="sabu" value="'+esc(ss.about_url||D.about_url||'page.html?p=our-mission')+'"></div></div></div>';
+  h+='<div class="card"><h2>🔗 Footer</h2><div class="fl"><label>Copyright</label><input id="scp" value="'+esc(ss.copyright||D.copyright||'')+'"></div>';
+  var cols=((ss.footer_cols&&ss.footer_cols.length)?ss.footer_cols:(D.footer_cols||[])).slice();while(cols.length<4)cols.push({title:'',links:[]});
   for(var c=0;c<4;c++){var col=cols[c];h+='<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--g1)"><div class="fl"><label>Column '+(c+1)+' title</label><input id="sc'+c+'t" value="'+esc(col.title||'')+'"></div>';
     var lk=(col.links||[]).slice();while(lk.length<5)lk.push({text:'',url:''});
     for(var i=0;i<5;i++)h+='<div class="row2" style="margin-bottom:4px"><input id="sc'+c+'l'+i+'t" value="'+esc(lk[i].text||'')+'" placeholder="Link text"><input id="sc'+c+'l'+i+'u" value="'+esc(lk[i].url||'')+'" placeholder="URL"></div>';h+='</div>'}
