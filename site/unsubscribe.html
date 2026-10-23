@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Unsubscribe | The Utah View</title>
+<meta name="robots" content="noindex">
+<script>(function(){var t;try{t=localStorage.getItem('utv_theme')}catch(e){}if(t!=='light'&&t!=='dark')t=window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';document.documentElement.setAttribute('data-theme',t)})()</script>
+<link rel="stylesheet" href="/theme.css">
+<style>
+:root{--red:#B53816;--ink:#141414;--g6:#555;--g2:#e3e3e3;--bg:#f7f6f4;--w:#fff}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:Georgia,'Times New Roman',serif;color:var(--ink);background:var(--bg);line-height:1.7}
+.wrap{max-width:720px;margin:0 auto;padding:40px 22px 80px}
+.top{font-family:'Helvetica Neue',Arial,sans-serif;font-size:13px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--red)}
+h1{font-size:34px;font-weight:700;margin:6px 0 4px;letter-spacing:.3px}
+.eff{font-family:'Helvetica Neue',Arial,sans-serif;font-size:13px;color:var(--g6);margin-bottom:28px}
+h2{font-family:'Helvetica Neue',Arial,sans-serif;font-size:17px;font-weight:700;margin:28px 0 8px}
+p{margin:0 0 14px;font-size:17px}
+ul{margin:0 0 14px 22px}li{margin:0 0 7px;font-size:17px}
+a{color:var(--red)}
+.rule{height:3px;width:60px;background:var(--red);margin:14px 0 24px}
+.foot{font-family:'Helvetica Neue',Arial,sans-serif;font-size:13px;color:var(--g6);margin-top:40px;border-top:1px solid var(--g2);padding-top:18px}
+.card{background:var(--w);border:1px solid var(--g2);padding:22px;margin:8px 0 18px}
+label{display:block;font-family:'Helvetica Neue',Arial,sans-serif;font-size:13px;font-weight:700;margin:12px 0 5px}
+input{width:100%;font-size:16px;padding:10px 12px;border:1px solid #bbb;background:var(--w);color:var(--ink)}
+button{margin-top:18px;font-family:'Helvetica Neue',Arial,sans-serif;font-size:15px;font-weight:700;padding:12px 18px;border:0;background:var(--red);color:#fff;cursor:pointer}
+button:disabled{opacity:.5;cursor:default}
+.msg{font-family:'Helvetica Neue',Arial,sans-serif;font-size:15px;margin-top:14px}
+.err{color:var(--red)}.ok{color:#1d6b35}
+/* Smooth page changes: a quick cross-fade between pages of this site (browsers
+   without cross-document view transitions just load normally). */
+@view-transition { navigation: auto; }
+::view-transition-old(root), ::view-transition-new(root) { animation-duration: .25s; animation-timing-function: ease; }
+@media (prefers-reduced-motion: reduce) { @view-transition { navigation: none; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top"><a href="/" style="text-decoration:none">The Utah View</a></div>
+  <h1>Unsubscribe</h1>
+  <div class="rule"></div>
+  <div class="card" id="box">
+    <p id="lead">Stop getting the monthly briefing at <b id="em"></b>?</p>
+    <button id="go" type="button">Unsubscribe</button>
+    <p class="msg" id="msg" role="status"></p>
+  </div>
+  <p id="alt">Changed your mind? Just close this page and you stay subscribed.</p>
+  <div class="foot">See our <a href="/privacy.html">Privacy Policy</a>. © 2026 The Utah View, Salt Lake City, Utah.</div>
+</div>
+<script>
+// Opened from the "Unsubscribe" link in a newsletter email (?e=address&t=signature).
+// It asks first, so mail scanners that open links can't unsubscribe anyone.
+(function(){
+  var q=new URLSearchParams(location.search),e=q.get('e')||'',t=q.get('t')||'';
+  var btn=document.getElementById('go'),msg=document.getElementById('msg');
+  function say(x,cls){msg.textContent=x;msg.className='msg '+(cls||'')}
+  if(!e||!t){document.getElementById('lead').textContent='This page needs the unsubscribe link from one of our emails. Open the link at the bottom of any briefing.';btn.style.display='none';document.getElementById('alt').style.display='none';return}
+  document.getElementById('em').textContent=e;
+  btn.onclick=function(){btn.disabled=true;say('Unsubscribing…');
+    fetch('https://api.theutahview.com/api/unsubscribe',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:e,token:t})})
+      .then(function(r){return r.json().catch(function(){return{}}).then(function(d){return{ok:r.ok,status:r.status,d:d}})})
+      .then(function(x){
+        if(x.ok){btn.style.display='none';document.getElementById('lead').textContent='You\u2019re unsubscribed.';document.getElementById('alt').style.display='none';say('Done. '+e+' won\u2019t get any more briefings. You can subscribe again any time on theutahview.com.','ok')}
+        else{btn.disabled=false;say(x.status===403?'This link doesn\u2019t match that address. Use the link from your most recent email, or write to us and we\u2019ll remove you.':'Sorry, that didn\u2019t work. Please try again in a moment.','err')}
+      }).catch(function(){btn.disabled=false;say('You seem to be offline. Please try again.','err')});
+  };
+})();
+</script>
+<script src="/theme.js" defer></script>
+</body>
+</html>
