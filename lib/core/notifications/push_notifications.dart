@@ -125,20 +125,41 @@ class FirebasePushNotifications implements PushNotifications {
 
   @override
   Future<void> initialize() async {
+    // Each step stands alone: if one fails (no APNs on a free iOS team,
+    // offline at launch, Firebase not set up), the others still run. Tap
+    // handling comes first so a tapped notification always opens its story.
+    final FirebaseMessaging messaging;
     try {
-      final messaging = FirebaseMessaging.instance;
-      await requestPermission();
-      await messaging.subscribeToTopic(newStoryTopic);
-      _emit(await messaging.getInitialMessage());
-      FirebaseMessaging.onMessageOpenedApp.listen(_emit);
+      messaging = FirebaseMessaging.instance;
     } on Object {
-      // Push unavailable (e.g. no APNs on a free iOS account); app still works.
+      return; // Firebase isn't available; the app works without push.
+    }
+    try {
+      FirebaseMessaging.onMessageOpenedApp.listen(_emit);
+      _emit(await messaging.getInitialMessage());
+    } on Object {
+      // No tap handling on this platform.
+    }
+    await requestPermission();
+    try {
+      await messaging.subscribeToTopic(newStoryTopic);
+    } on Object {
+      // Not subscribed this launch; the next launch tries again.
     }
   }
 
+  /// A tap that arrived before the app was listening (the notification that
+  /// launched it), handed to the first listener.
+  String? _unclaimed;
+
   void _emit(RemoteMessage? message) {
     final id = message?.data['storyId'];
-    if (id is String && id.isNotEmpty) _opened.add(id);
+    if (id is! String || id.isEmpty) return;
+    if (_opened.hasListener) {
+      _opened.add(id);
+    } else {
+      _unclaimed = id;
+    }
   }
 
   @override
@@ -153,5 +174,11 @@ class FirebasePushNotifications implements PushNotifications {
   }
 
   @override
-  Stream<String> get openedStoryIds => _opened.stream;
+  Stream<String> get openedStoryIds async* {
+    if (_unclaimed case final id?) {
+      _unclaimed = null;
+      yield id;
+    }
+    yield* _opened.stream;
+  }
 }

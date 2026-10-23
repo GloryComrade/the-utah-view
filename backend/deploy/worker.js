@@ -367,6 +367,41 @@ async function unsubLinks(env, email) {
 function unsubHeaders(links) {
   return { 'List-Unsubscribe': `<${links.oneClick}>`, 'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click' };
 }
+// Emails a signed unsubscribe link to an address that asked to leave without
+// one (the apps' Unsubscribe form). Only for addresses on the list, and at most
+// once an hour per address, so it can't be used to spam anyone.
+async function sendUnsubConfirm(env, email) {
+  try {
+    if (!env.RESEND_API_KEY) return;
+    const sub = await env.DB.prepare('SELECT email FROM subscribers WHERE email = ?').bind(email).first();
+    if (!sub) return;
+    const throttle = 'unsub_req:' + email;
+    if (env.UTV_DATA) {
+      if (await env.UTV_DATA.get(throttle)) return;
+      await env.UTV_DATA.put(throttle, '1', { expirationTtl: 3600 });
+    }
+    const links = await unsubLinks(env, email);
+    await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        from: env.FROM_EMAIL || 'The Utah View <newsletter@theutahview.com>',
+        to: [email],
+        subject: 'Confirm: unsubscribe from The Utah View',
+        headers: unsubHeaders(links),
+        html: `<!DOCTYPE html><html><body style="margin:0;padding:24px;background:#f5f5f5;font-family:Georgia,serif">
+<table width="100%" cellpadding="0" cellspacing="0"><tr><td align="center">
+<table width="600" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:4px;max-width:600px">
+<tr><td style="background:#C4352A;padding:20px 32px;text-align:center"><p style="font-family:Helvetica,sans-serif;font-size:20px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:#fff;margin:0">THE UTAH VIEW</p></td></tr>
+<tr><td style="padding:28px 32px">
+<p style="font-size:16px;line-height:1.6;color:#333;margin:0 0 16px">Someone asked to stop sending The Utah View's monthly briefing to this address. To confirm, open this link:</p>
+<a href="${links.page}" style="display:inline-block;padding:12px 28px;background:#C4352A;color:#fff;font-family:Helvetica,sans-serif;font-size:14px;font-weight:700;text-decoration:none;border-radius:4px">Unsubscribe</a>
+<p style="font-size:14px;line-height:1.6;color:#777;margin:20px 0 0">If this wasn't you, ignore this email and you'll keep getting the briefing.</p>
+</td></tr></table></td></tr></table></body></html>`,
+      }),
+    });
+  } catch (e) { console.error('Unsubscribe confirm failed:', e); }
+}
 
 // ── Main Router ──
 
@@ -469,9 +504,11 @@ export default {
     }
 
     // POST /api/unsubscribe
-    // With a signed link (?e=&t= from an email, one-click from mail apps, or
-    // {email, token} from unsubscribe.html) the token must match the address.
-    // The plain {email} form is kept as before for the apps.
+    // Only a signed link removes an address: ?e=&t= from an email (also the
+    // mail apps' one-click), or {email, token} from unsubscribe.html. A plain
+    // {email} (the apps' form) can't prove the sender owns the address, so it
+    // emails that address a signed link instead and answers
+    // { message: 'Check your email', confirm: true }.
     if (path === '/api/unsubscribe' && method === 'POST') {
       let email = url.searchParams.get('e'), token = url.searchParams.get('t');
       if (!email) {
@@ -481,12 +518,64 @@ export default {
       }
       if (!email || !String(email).includes('@')) return new Response(JSON.stringify({ error: 'Invalid email' }), { status: 400, headers: corsHeaders() });
       const clean = String(email).toLowerCase().trim();
-      if (token !== null && token !== undefined && !timingSafeEqual(String(token), await unsubToken(env, clean))) {
+      if (!token) {
+        // Sent in the background so the reply (and its timing) is the same
+        // whether or not the address is on the list.
+        ctx.waitUntil(sendUnsubConfirm(env, clean));
+        return new Response(JSON.stringify({ message: 'Check your email', confirm: true }), { headers: corsHeaders() });
+      }
+      if (!timingSafeEqual(String(token), await unsubToken(env, clean))) {
         return new Response(JSON.stringify({ error: 'This unsubscribe link is not valid' }), { status: 403, headers: corsHeaders() });
       }
       await env.DB.prepare('DELETE FROM subscribers WHERE email = ?').bind(clean).run();
       await auditLog(env, clean, 'unsubscribe', 'subscriber', clean, null, ip);
       return new Response(JSON.stringify({ message: 'Unsubscribed' }), { headers: corsHeaders() });
+    }
+
+    // POST /api/reports — a reader reports an error in a story (public).
+    // Body: { story_id, page_url, kind, message, email, website }. "website" is
+    // a hidden honeypot field: bots fill it, people don't. At most 5 reports an
+    // hour per IP. New reports show in the editor's Reader reports panel, and
+    // are emailed to REPORTS_EMAIL if that Worker variable is set.
+    if (path === '/api/reports' && method === 'POST') {
+      let data = {};
+      try { data = await request.json(); } catch (e) {}
+      const message = String(data.message || '').trim();
+      if (data.website) return json({ message: 'Thanks' });
+      if (message.length < 10) return json({ error: 'Please describe the error (at least a sentence).' }, 400);
+      if (env.UTV_DATA && ip) {
+        const k = 'report_rl:' + ip, n = parseInt((await env.UTV_DATA.get(k)) || '0', 10);
+        if (n >= 5) return json({ error: 'Too many reports from this connection. Please try again later.' }, 429);
+        await env.UTV_DATA.put(k, String(n + 1), { expirationTtl: 3600 });
+      }
+      const kinds = ['error', 'typo', 'broken', 'other'];
+      const kind = kinds.includes(data.kind) ? data.kind : 'error';
+      const email = String(data.email || '').trim().toLowerCase();
+      const row = {
+        story_id: String(data.story_id || '').slice(0, 120),
+        page_url: String(data.page_url || '').slice(0, 500),
+        message: message.slice(0, 4000),
+        email: email.includes('@') ? email.slice(0, 200) : '',
+      };
+      const res = await env.DB.prepare('INSERT INTO reader_reports (story_id, page_url, kind, message, reporter_email) VALUES (?, ?, ?, ?, ?)')
+        .bind(row.story_id, row.page_url, kind, row.message, row.email).run();
+      const id = res.meta && res.meta.last_row_id;
+      await auditLog(env, 'reader', 'report', 'story', row.story_id, JSON.stringify({ report: id, kind }), ip);
+      if (env.REPORTS_EMAIL && env.RESEND_API_KEY) {
+        const esc = (x) => String(x).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        ctx.waitUntil(fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            from: env.FROM_EMAIL || 'The Utah View <newsletter@theutahview.com>',
+            to: [env.REPORTS_EMAIL],
+            reply_to: row.email || undefined,
+            subject: `Reader report (${kind}): ${row.story_id || 'site'}`,
+            html: `<p><b>Story:</b> ${esc(row.story_id || '(none)')}<br><b>Page:</b> ${esc(row.page_url)}<br><b>From:</b> ${esc(row.email || 'anonymous')}</p><p style="white-space:pre-wrap">${esc(row.message)}</p><p>Review it in the editor: ${env.SITE_URL || 'https://theutahview.com'}/editor.html (Reader reports)</p>`,
+          }),
+        }).catch((e) => console.error('Report email failed:', e)));
+      }
+      return json({ message: 'Thanks', id });
     }
 
     // ── Reader accounts + saved stories (added) ──
@@ -770,6 +859,32 @@ export default {
       const res = await env.DB.prepare('DELETE FROM subscribers WHERE email = ?').bind(clean).run();
       await auditLog(env, user.email, 'remove_subscriber', 'subscriber', clean, null, ip);
       return new Response(JSON.stringify({ message: 'Removed', removed: (res.meta && res.meta.changes) || 0 }), { headers: corsHeaders() });
+    }
+
+    // ── READER REPORTS (editor/admin) ──
+
+    // GET /api/admin/reports?status=new|resolved|all
+    if (path === '/api/admin/reports' && method === 'GET') {
+      const deny = requireRole(user, ['admin', 'editor']);
+      if (deny) return deny;
+      const st = url.searchParams.get('status') || 'all';
+      const q = st === 'all' ? 'SELECT * FROM reader_reports ORDER BY id DESC LIMIT 500'
+        : 'SELECT * FROM reader_reports WHERE status = ? ORDER BY id DESC LIMIT 500';
+      const results = st === 'all' ? await env.DB.prepare(q).all() : await env.DB.prepare(q).bind(st).all();
+      return json({ reports: results.results });
+    }
+
+    // PUT /api/admin/reports/:id — { status: 'new'|'resolved'|'dismissed', note }
+    if (path.startsWith('/api/admin/reports/') && method === 'PUT') {
+      const deny = requireRole(user, ['admin', 'editor']);
+      if (deny) return deny;
+      const id = parseInt(path.split('/')[4], 10);
+      const data = await request.json();
+      const status = ['new', 'resolved', 'dismissed'].includes(data.status) ? data.status : 'resolved';
+      await env.DB.prepare("UPDATE reader_reports SET status = ?, note = ?, resolved_by = ?, resolved_at = CASE WHEN ? = 'new' THEN '' ELSE datetime('now') END WHERE id = ?")
+        .bind(status, String(data.note || '').slice(0, 1000), status === 'new' ? '' : user.email, status, id).run();
+      await auditLog(env, user.email, 'report_' + status, 'report', String(id), null, ip);
+      return json({ message: 'Updated' });
     }
 
     // ── IMAGE UPLOAD (editor/admin) ──

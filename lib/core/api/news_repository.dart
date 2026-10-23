@@ -21,6 +21,8 @@ class Endpoint<T> {
 
 enum SubscribeResult { subscribed, alreadySubscribed }
 
+enum UnsubscribeResult { unsubscribed, confirmEmailSent }
+
 /// Single entry point for all data. Reads are cache-first: callers show
 /// [cached] immediately, then call [fetch] to refresh in the background.
 class NewsRepository {
@@ -88,8 +90,15 @@ class NewsRepository {
         : SubscribeResult.subscribed;
   }
 
-  Future<void> unsubscribe(String email) async {
-    await _api.postJson('/api/unsubscribe', {'email': email});
+  /// Asks to stop the newsletter. The server only removes an address from a
+  /// signed email link, so for the app it emails that address a confirmation
+  /// link ([UnsubscribeResult.confirmEmailSent]). Older servers removed it
+  /// straight away ([UnsubscribeResult.unsubscribed]).
+  Future<UnsubscribeResult> unsubscribe(String email) async {
+    final json = await _api.postJson('/api/unsubscribe', {'email': email});
+    return asJsonMap(json)?['confirm'] == true
+        ? UnsubscribeResult.confirmEmailSent
+        : UnsubscribeResult.unsubscribed;
   }
 
   _CacheEntry? _readEntry(String key) {

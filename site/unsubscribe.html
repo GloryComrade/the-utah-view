@@ -55,7 +55,18 @@ button:disabled{opacity:.5;cursor:default}
   var q=new URLSearchParams(location.search),e=q.get('e')||'',t=q.get('t')||'';
   var btn=document.getElementById('go'),msg=document.getElementById('msg');
   function say(x,cls){msg.textContent=x;msg.className='msg '+(cls||'')}
-  if(!e||!t){document.getElementById('lead').textContent='This page needs the unsubscribe link from one of our emails. Open the link at the bottom of any briefing.';btn.style.display='none';document.getElementById('alt').style.display='none';return}
+  // Without a link: ask for the address and email it a signed link instead.
+  if(!e||!t){
+    document.getElementById('lead').innerHTML='Enter the email you subscribed with. We\u2019ll send a link to confirm.<label for="ue">Email</label><input id="ue" type="email" autocomplete="email" placeholder="your@email.com">';
+    btn.textContent='Email me a link';
+    btn.onclick=function(){var v=(document.getElementById('ue').value||'').trim();
+      if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)){say('Enter a valid email address.','err');return}
+      btn.disabled=true;say('Sending\u2026');
+      fetch('https://api.theutahview.com/api/unsubscribe',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:v})})
+        .then(function(r){if(!r.ok)throw 0;btn.style.display='none';say('Check your inbox. If '+v+' is subscribed, we\u2019ve sent it a link to confirm.','ok')})
+        .catch(function(){btn.disabled=false;say('Sorry, that didn\u2019t work. Please try again in a moment.','err')});
+    };
+    return}
   document.getElementById('em').textContent=e;
   btn.onclick=function(){btn.disabled=true;say('Unsubscribing…');
     fetch('https://api.theutahview.com/api/unsubscribe',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:e,token:t})})

@@ -1,6 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 
 import '../../core/api/models/models.dart';
+import '../../core/domain/story_search.dart';
 import '../../core/theme/theme.dart';
 import '../../core/utils/formatters.dart';
 import 'headline_hero.dart';
@@ -346,14 +347,37 @@ class HighlightedText extends StatelessWidget {
 }
 
 /// Splits [text] into spans, applying [mark] to every match of [terms].
+///
+/// Matching uses [foldForSearch], like search itself, so "turkiye" marks
+/// "Türkiye".
 List<TextSpan> highlightSpans(String text, Set<String> terms, TextStyle mark) {
-  final lower = text.toLowerCase();
+  // The folded text, and for each of its code units the original offset.
+  final folded = StringBuffer();
+  final origin = <int>[];
+  var offset = 0;
+  for (final rune in text.runes) {
+    final char = String.fromCharCode(rune);
+    final f = foldForSearch(char);
+    for (var i = 0; i < f.length; i++) {
+      origin.add(offset);
+    }
+    folded.write(f);
+    offset += char.length;
+  }
+  origin.add(text.length);
+  final haystack = folded.toString();
   final ranges = <(int, int)>[];
-  for (final term in terms.where((t) => t.isNotEmpty)) {
-    var start = lower.indexOf(term);
+  for (final term in terms.map(foldForSearch).where((t) => t.isNotEmpty)) {
+    var start = haystack.indexOf(term);
     while (start != -1) {
-      ranges.add((start, start + term.length));
-      start = lower.indexOf(term, start + term.length);
+      final end = start + term.length;
+      // A match that ends inside a folded letter (ß → ss) covers all of it.
+      var origEnd = origin[end];
+      if (end < origin.length - 1 && origin[end] == origin[end - 1]) {
+        origEnd = origin.skip(end).firstWhere((o) => o > origin[end - 1]);
+      }
+      ranges.add((origin[start], origEnd));
+      start = haystack.indexOf(term, end);
     }
   }
   if (ranges.isEmpty) return [TextSpan(text: text)];

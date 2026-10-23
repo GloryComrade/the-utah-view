@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'dart:convert';
 
+import 'package:collection/collection.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
@@ -105,14 +107,6 @@ class ReaderAccountController extends Notifier<ReaderAccount?> {
       await _settings.write(_kEmail, email);
       await _settings.write(_kName, name);
       state = ReaderAccount(email: email, name: name, token: token);
-      unawaited(
-        mergeSavedStories(
-          _api,
-          ref.read(savedStoriesProvider.notifier),
-          ref.read(savedStoriesProvider),
-          token,
-        ),
-      );
       return null;
     } on ApiException catch (e) {
       return switch (e.statusCode) {
@@ -149,6 +143,7 @@ final readerAccountProvider =
 /// data tied to it (saved stories, newsletter subscription), then signs out
 /// locally. Returns null on success, or a reader-facing error message.
 Future<String?> deleteReaderAccount(WidgetRef ref) async {
+  await ref.read(authControllerProvider.notifier).ensureFreshToken();
   final token = ref.read(savedAuthTokenProvider);
   if (token == null) return 'You’re not signed in.';
   try {
@@ -169,66 +164,212 @@ Future<String?> deleteReaderAccount(WidgetRef ref) async {
   return null;
 }
 
-/// Token used for saved-story sync: a reader session, else a Google ID token.
-final savedAuthTokenProvider = Provider<String?>((ref) {
+/// Who saved-story sync acts for: a reader session, else a Google ID token.
+@immutable
+class SyncIdentity {
+  const SyncIdentity(this.token, this.email);
+
+  final String token;
+  final String email;
+
+  @override
+  bool operator ==(Object other) =>
+      other is SyncIdentity && other.token == token && other.email == email;
+
+  @override
+  int get hashCode => Object.hash(token, email);
+}
+
+final savedSyncIdentityProvider = Provider<SyncIdentity?>((ref) {
   final acct = ref.watch(readerAccountProvider);
-  if (acct != null && acct.token.isNotEmpty) return acct.token;
+  if (acct != null && acct.token.isNotEmpty) {
+    return SyncIdentity(acct.token, acct.email);
+  }
   final g = ref.watch(authControllerProvider).value;
-  if (g != null && g.idToken.isNotEmpty) return g.idToken;
+  if (g != null && g.idToken.isNotEmpty) {
+    return SyncIdentity(g.idToken, g.email);
+  }
   return null;
 });
 
-/// Pushes local bookmarks to the server whenever they change and the reader is
-/// signed in. Keep it alive by watching it from a long-lived widget.
-final savedSyncProvider = Provider<void>((ref) {
-  ref.listen<List<SavedStory>>(savedStoriesProvider, (_, next) {
-    final token = ref.read(savedAuthTokenProvider);
-    if (token == null) return;
-    unawaited(
-      pushSavedIds(ref.read(apiClientProvider), token, [
-        for (final s in next) s.story.id,
-      ]),
-    );
+/// Token used for saved-story sync and account deletion.
+final savedAuthTokenProvider = Provider<String?>(
+  (ref) => ref.watch(savedSyncIdentityProvider)?.token,
+);
+
+/// The result of a three-way merge of bookmark ids.
+@immutable
+class SavedIdsMerge {
+  const SavedIdsMerge({
+    required this.ids,
+    required this.toDownload,
+    required this.toRemove,
   });
-});
 
-/// Union local + server bookmarks, download any missing stories, push the set.
-Future<void> mergeSavedStories(
-  ApiClient api,
-  SavedStoriesNotifier saved,
-  List<SavedStory> current,
-  String token,
-) async {
-  try {
-    final res = asJsonMap(await api.getAuthed('/api/me/saved', token));
-    final serverIds = <String>[
-      for (final x in (res?['ids'] as List? ?? const <Object?>[]))
-        coerceJsonString(x),
-    ].where((e) => e.isNotEmpty).toList();
-    final localIds = {for (final s in current) s.story.id};
-    for (final id in serverIds) {
-      if (localIds.contains(id)) continue;
-      try {
-        final story = asJsonMap(await api.getJson('/api/stories/$id'));
-        if (story != null) {
-          final detail = StoryDetail.fromJson(story);
-          if (detail.id.isNotEmpty) await saved.save(detail);
-        }
-      } on Object {
-        // skip stories that won't load
-      }
+  /// The set both sides should end up with, local order first.
+  final List<String> ids;
+
+  /// Saved on another device; fetch and save here.
+  final List<String> toDownload;
+
+  /// Removed on another device; remove here too.
+  final List<String> toRemove;
+}
+
+/// Merges [local] and [remote] against [base], the set both sides agreed on
+/// at the last sync (null before the first sync on this device).
+///
+/// A story saved on either side is kept, and a story removed on either side
+/// since [base] is dropped. Without a [base] nothing is dropped: the result is
+/// the union, so signing in never loses a bookmark.
+SavedIdsMerge mergeSavedIds({
+  required List<String> local,
+  required List<String> remote,
+  Set<String>? base,
+}) {
+  final localSet = local.toSet();
+  final remoteSet = remote.toSet();
+  final removedHere = base == null ? <String>{} : base.difference(localSet);
+  final removedThere = base == null
+      ? <String>{}
+      : base.intersection(localSet).difference(remoteSet);
+  final ids = <String>{
+    for (final id in local)
+      if (!removedThere.contains(id)) id,
+    for (final id in remote)
+      if (!removedHere.contains(id)) id,
+  }.toList();
+  return SavedIdsMerge(
+    ids: ids,
+    toDownload: [
+      for (final id in ids)
+        if (!localSet.contains(id)) id,
+    ],
+    toRemove: removedThere.toList(),
+  );
+}
+
+/// Keeps this device's bookmarks and the reader's account in step.
+///
+/// Every sync reads the server's list first and merges it with the local one
+/// (see [mergeSavedIds]), so a save on this phone never wipes what another
+/// device saved. Syncs run one at a time.
+class SavedSync {
+  SavedSync(this._ref);
+
+  final Ref _ref;
+  Future<void> _queue = Future.value();
+  bool _applyingRemote = false;
+  bool _again = false;
+  bool _running = false;
+
+  static String baseKey(String email) => 'saved_sync_base:$email';
+
+  /// Runs a sync now, or once more after the one in progress.
+  Future<void> schedule() {
+    if (_applyingRemote) return _queue;
+    if (_running) {
+      _again = true;
+      return _queue;
     }
-    final union = {...localIds, ...serverIds}.toList();
-    await api.putAuthed('/api/me/saved', {'ids': union}, token);
-  } on Object {
-    // best effort; local bookmarks are unaffected
+    _running = true;
+    return _queue = _run();
+  }
+
+  Future<void> _run() async {
+    try {
+      do {
+        _again = false;
+        await _syncOnce();
+      } while (_again);
+    } finally {
+      _running = false;
+    }
+  }
+
+  Future<void> _syncOnce() async {
+    if (_ref.read(readerAccountProvider) == null) {
+      await _ref.read(authControllerProvider.notifier).ensureFreshToken();
+    }
+    final who = _ref.read(savedSyncIdentityProvider);
+    if (who == null) return;
+    final api = _ref.read(apiClientProvider);
+    final settings = _ref.read(appStoresProvider).settings;
+    final saved = _ref.read(savedStoriesProvider.notifier);
+    try {
+      final res = asJsonMap(await api.getAuthed('/api/me/saved', who.token));
+      final remote = <String>[
+        for (final x in (res?['ids'] as List? ?? const <Object?>[]))
+          if (coerceJsonString(x) case final id when id.isNotEmpty) id,
+      ];
+      final rawBase = settings.read(baseKey(who.email));
+      final base = rawBase == null
+          ? null
+          : {
+              for (final x in (jsonDecode(rawBase) as List? ?? const []))
+                coerceJsonString(x),
+            };
+      final local = [
+        for (final s in _ref.read(savedStoriesProvider)) s.story.id,
+      ];
+      final merge = mergeSavedIds(local: local, remote: remote, base: base);
+
+      _applyingRemote = true;
+      try {
+        for (final id in merge.toRemove) {
+          await saved.remove(id);
+        }
+        for (final id in merge.toDownload) {
+          try {
+            final story = asJsonMap(
+              await api.getJson('/api/stories/${Uri.encodeComponent(id)}'),
+            );
+            final detail = story == null ? null : StoryDetail.fromJson(story);
+            if (detail != null && detail.id.isNotEmpty) {
+              await saved.save(detail);
+            }
+          } on Object {
+            // Keep the id on the server even if the story won't load now.
+          }
+        }
+      } finally {
+        _applyingRemote = false;
+      }
+
+      if (!const ListEquality<String>().equals(merge.ids, remote)) {
+        await api.putAuthed('/api/me/saved', {'ids': merge.ids}, who.token);
+      }
+      await settings.write(baseKey(who.email), jsonEncode(merge.ids));
+    } on Object {
+      // Best effort: offline or signed out mid-sync. Local bookmarks are
+      // untouched and the next change or launch tries again.
+    }
   }
 }
 
-Future<void> pushSavedIds(ApiClient api, String token, List<String> ids) async {
-  try {
-    await api.putAuthed('/api/me/saved', {'ids': ids}, token);
-  } on Object {
-    // best effort
-  }
-}
+/// Syncs bookmarks whenever the reader signs in (or the app opens signed in)
+/// and whenever they change. Keep it alive by watching it from a long-lived
+/// widget.
+final savedSyncProvider = Provider<SavedSync>((ref) {
+  final sync = SavedSync(ref);
+  ref.listen<SyncIdentity?>(savedSyncIdentityProvider, (previous, next) {
+    if (next == null) {
+      // Signed out: the next sign-in starts from a plain union again, so
+      // stories removed while signed out are never deleted from the account.
+      if (previous != null) {
+        unawaited(
+          ref
+              .read(appStoresProvider)
+              .settings
+              .delete(SavedSync.baseKey(previous.email)),
+        );
+      }
+    } else if (next.email != previous?.email) {
+      unawaited(sync.schedule());
+    }
+  }, fireImmediately: true);
+  ref.listen<List<SavedStory>>(savedStoriesProvider, (_, _) {
+    unawaited(sync.schedule());
+  });
+  return sync;
+});

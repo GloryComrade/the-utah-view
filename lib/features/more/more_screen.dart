@@ -8,6 +8,7 @@ import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import '../../core/api/api_client.dart';
 import '../../core/api/api_config.dart';
 import '../../core/api/models/models.dart';
+import '../../core/api/news_repository.dart';
 import '../../core/api/providers.dart';
 import '../../core/auth/google_auth.dart';
 import '../../core/auth/google_signin_button.dart';
@@ -330,9 +331,15 @@ Future<void> _showUnsubscribe(BuildContext context, WidgetRef ref) async {
   if (email == null || !context.mounted) return;
   final messenger = ScaffoldMessenger.of(context);
   try {
-    await ref.read(newsRepositoryProvider).unsubscribe(email);
+    final result = await ref.read(newsRepositoryProvider).unsubscribe(email);
     messenger.showSnackBar(
-      const SnackBar(content: Text('You’ve been unsubscribed.')),
+      SnackBar(
+        content: Text(
+          result == UnsubscribeResult.confirmEmailSent
+              ? 'Check your inbox: if $email is subscribed, we’ve sent it a link to confirm.'
+              : 'You’ve been unsubscribed.',
+        ),
+      ),
     );
   } on ApiException catch (e) {
     messenger.showSnackBar(SnackBar(content: Text(e.userMessage)));
@@ -373,7 +380,10 @@ class _UnsubscribeDialogState extends State<_UnsubscribeDialog> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text('We’ll stop sending the monthly briefing to:'),
+          const Text(
+            'We’ll email this address a link to confirm, then stop sending '
+            'the monthly briefing:',
+          ),
           const SizedBox(height: 14),
           TextField(
             controller: _email,
@@ -491,9 +501,14 @@ class _SignInSectionState extends ConsumerState<_SignInSection> {
             subtitle: reader?.email ?? google!.email,
             serif: false,
             icon: Icons.logout_rounded,
-            onTap: () => reader != null
-                ? ref.read(readerAccountProvider.notifier).logOut()
-                : ref.read(authControllerProvider.notifier).signOut(),
+            onTap: () async {
+              if (reader != null) {
+                await ref.read(readerAccountProvider.notifier).logOut();
+              }
+              if (google != null) {
+                await ref.read(authControllerProvider.notifier).signOut();
+              }
+            },
           ),
           NavRow(
             title: 'Delete account',

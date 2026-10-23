@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_tts/flutter_tts.dart';
@@ -10,6 +12,11 @@ enum PlaybackState { idle, speaking }
 /// starting a new article stops the previous one.
 class ReadAloudController extends Notifier<PlaybackState> {
   FlutterTts? _tts;
+
+  /// The article split into pieces the speech engine accepts, and the next
+  /// one to speak.
+  List<String> _chunks = const [];
+  int _next = 0;
 
   @override
   PlaybackState build() {
@@ -29,37 +36,82 @@ class ReadAloudController extends Notifier<PlaybackState> {
       defaultTargetPlatform == TargetPlatform.iOS ? 0.5 : 0.52,
     );
     void markIdle() {
+      _chunks = const [];
       if (ref.mounted) state = PlaybackState.idle;
     }
 
     tts
-      ..setCompletionHandler(markIdle)
+      ..setCompletionHandler(_speakNext)
       ..setCancelHandler(markIdle)
       ..setErrorHandler((_) => markIdle());
     return _tts = tts;
   }
 
-  /// Starts reading [text], or stops if already speaking.
-  Future<void> toggle(String text) async {
-    final tts = await _engine();
-    if (state == PlaybackState.speaking) {
-      await tts.stop();
+  /// Speaks the next piece, or goes idle after the last one.
+  void _speakNext() {
+    final tts = _tts;
+    if (tts == null || !ref.mounted || state != PlaybackState.speaking) return;
+    if (_next >= _chunks.length) {
+      _chunks = const [];
       state = PlaybackState.idle;
       return;
     }
-    if (text.trim().isEmpty) return;
+    unawaited(tts.speak(_chunks[_next++]));
+  }
+
+  /// Starts reading [text], or stops if already speaking.
+  Future<void> toggle(String text) async {
+    await _engine();
+    if (state == PlaybackState.speaking) {
+      await stop();
+      return;
+    }
+    final chunks = splitForSpeech(text);
+    if (chunks.isEmpty) return;
+    _chunks = chunks;
+    _next = 0;
     state = PlaybackState.speaking;
-    await tts.speak(text);
+    _speakNext();
   }
 
   Future<void> stop() async {
+    _chunks = const [];
+    // Await first: an article's dispose() calls this, and state can't change
+    // while the tree is building.
     await _tts?.stop();
     if (ref.mounted) state = PlaybackState.idle;
   }
 }
 
-final readAloudProvider =
-    NotifierProvider<ReadAloudController, PlaybackState>(ReadAloudController.new);
+/// Android's speech engine rejects anything longer than
+/// `TextToSpeech.getMaxSpeechInputLength()` (4,000 characters), so long
+/// articles are spoken in pieces. Kept under that with room to spare.
+const maxSpeechChunk = 3500;
+
+/// Splits [text] into pieces of at most [max] characters, breaking after a
+/// sentence where possible, then at a space, and only mid-word as a last
+/// resort.
+List<String> splitForSpeech(String text, {int max = maxSpeechChunk}) {
+  final chunks = <String>[];
+  var rest = text.trim();
+  while (rest.length > max) {
+    final window = rest.substring(0, max);
+    var cut = -1;
+    for (final m in RegExp(r'[.!?…]["”’)]?\s').allMatches(window)) {
+      cut = m.end;
+    }
+    if (cut <= 0) cut = window.lastIndexOf(' ') + 1;
+    if (cut <= 0) cut = max;
+    chunks.add(rest.substring(0, cut).trim());
+    rest = rest.substring(cut).trim();
+  }
+  if (rest.isNotEmpty) chunks.add(rest);
+  return chunks;
+}
+
+final readAloudProvider = NotifierProvider<ReadAloudController, PlaybackState>(
+  ReadAloudController.new,
+);
 
 /// Turns article HTML into a sentence-flowing string for the speech engine:
 /// block tags become sentence breaks, remaining tags are dropped and the
