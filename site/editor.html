@@ -680,17 +680,36 @@ function aRm(e){if(!confirm('Remove access for '+e+'?'))return;
 }
 
 /* ---------- SUBSCRIBERS ---------- */
+var SUBS=[];
 function vSubs(){
   $('view').innerHTML=head('Subscribers')+'<div class="card"><p class="empty"><span class="spin"></span> Loading…</p></div>';
   if(!apiOk){$('view').innerHTML=head('Subscribers')+'<div class="card"><p class="empty">API not connected.</p></div>';return;}
   api('GET','/api/admin/subscribers').then(function(r){return r.json()}).then(function(d){
-    var h=head('Subscribers');
-    h+='<div class="grid stats" style="margin-bottom:14px"><div class="stat"><div class="n">'+(d.count||0)+'</div><div class="l red">Total subscribers</div></div></div>';
-    h+='<div class="list">';
-    if(!d.count)h+='<p class="empty">No subscribers yet.</p>';
-    else d.subscribers.forEach(function(x){var em=x.email||x;h+='<div class="row"><div class="meta"><div class="ti" style="font-weight:600;cursor:default">'+esc(em)+'</div>'+(x.subscribed_at?'<div class="su">Joined '+esc((x.subscribed_at||'').split(' ')[0])+'</div>':'')+'</div></div>'});
-    h+='</div>';$('view').innerHTML=h;
+    SUBS=d.subscribers||[];
+    var h=head('Subscribers',SUBS.length?'<button class="bt bs" onclick="exportSubs()">&#11015; Export CSV</button>':'');
+    h+='<div class="grid stats" style="margin-bottom:14px"><div class="stat"><div class="n" id="subN">'+SUBS.length+'</div><div class="l red">Total subscribers</div></div></div>';
+    if(SUBS.length)h+='<div class="fl"><input id="subQ" placeholder="Search by email" oninput="renderSubs()"></div>';
+    h+='<div class="list" id="subList"></div>';$('view').innerHTML=h;renderSubs();
   }).catch(function(){$('view').innerHTML=head('Subscribers')+'<div class="card"><p class="empty">Couldn’t load (admin only, or offline).</p></div>'});
+}
+function renderSubs(){var el=$('subList');if(!el)return;var q=($('subQ')?$('subQ').value:'').trim().toLowerCase();
+  var L=SUBS.filter(function(x){return !q||String(x.email||x).toLowerCase().indexOf(q)>=0});
+  if(!SUBS.length){el.innerHTML='<p class="empty">No subscribers yet.</p>';return;}
+  if(!L.length){el.innerHTML='<p class="empty">No match.</p>';return;}
+  el.innerHTML=L.map(function(x){var em=x.email||x;return '<div class="row"><div class="meta"><div class="ti" style="font-weight:600;cursor:default">'+esc(em)+'</div>'+(x.subscribed_at?'<div class="su">Joined '+esc((x.subscribed_at||'').split(' ')[0])+'</div>':'')+'</div>'+
+    '<div class="acts"><button class="btn-ghost" title="Remove from the newsletter" data-email="'+esc(em)+'" onclick="removeSub(this.dataset.email)">&#128465;</button></div></div>'}).join('');
+}
+// Remove on the server first; the row goes only once the server agrees.
+function removeSub(em){if(!confirm('Remove '+em+' from the newsletter? They stop getting the monthly email.'))return;
+  api('DELETE','/api/admin/subscribers?email='+encodeURIComponent(em)).then(function(r){
+    if(r.ok){SUBS=SUBS.filter(function(x){return (x.email||x)!==em});if($('subN'))$('subN').textContent=SUBS.length;renderSubs();toast('Removed '+em);}
+    else toast(r.status===401||r.status===403?'⚠️ Admin only':'⚠️ Couldn’t remove (the live site may need the latest backend)');
+  }).catch(function(){toast('⚠️ Network error')});
+}
+function exportSubs(){
+  var rows=[['email','subscribed_at']].concat(SUBS.map(function(x){return [x.email||x,x.subscribed_at||'']}));
+  var csv=rows.map(function(r){return r.map(function(c){c=String(c);return /[",\n]/.test(c)?'"'+c.replace(/"/g,'""')+'"':c}).join(',')}).join('\n');
+  var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='utah-view-subscribers-'+today()+'.csv';document.body.appendChild(a);a.click();a.remove();
 }
 
 check();

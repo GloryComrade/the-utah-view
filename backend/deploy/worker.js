@@ -602,6 +602,17 @@ export default {
       return new Response(JSON.stringify({ count: results.results.length, subscribers: results.results }), { headers: corsHeaders() });
     }
 
+    // DELETE /api/admin/subscribers?email=xxx — remove one subscriber (admin)
+    if (path === '/api/admin/subscribers' && method === 'DELETE') {
+      const deny = requireRole(user, ['admin']);
+      if (deny) return deny;
+      const clean = (url.searchParams.get('email') || '').toLowerCase().trim();
+      if (!clean) return new Response(JSON.stringify({ error: 'Email required' }), { status: 400, headers: corsHeaders() });
+      const res = await env.DB.prepare('DELETE FROM subscribers WHERE email = ?').bind(clean).run();
+      await auditLog(env, user.email, 'remove_subscriber', 'subscriber', clean, null, ip);
+      return new Response(JSON.stringify({ message: 'Removed', removed: (res.meta && res.meta.changes) || 0 }), { headers: corsHeaders() });
+    }
+
     // ── IMAGE UPLOAD (editor/admin) ──
 
     if (path === '/api/upload' && method === 'POST') {
