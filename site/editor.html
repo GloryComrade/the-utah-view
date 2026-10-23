@@ -574,6 +574,8 @@ function vHomepage(){
     '<div class="fl"><label>Website scroll speed</label>'+tkOpt('lts',L.ticker_speed||'normal',[['slow','Slow'],['normal','Normal'],['fast','Fast']])+'</div></div></div>';
   h+='<div class="card"><h2>🏠 Hero</h2>'+
     '<div class="fl"><label>Hero image</label><input id="li" value="'+esc(L.hero_image||'')+'" placeholder="Image URL"><button class="bt bs bsm" style="margin-top:8px" onclick="uploadImage(\'li\')">&#8679; Upload image</button></div>'+
+    '<div class="fl"><label>Photo caption &amp; credit</label><input id="lcap" value="'+esc(L.hero_center_caption||'')+'" placeholder="e.g. Batan Island, Batanes. Photo: Name / Wikimedia Commons, CC BY-SA 4.0"><div class="hint">Shown under the homepage photo. Free-licensed photos must credit the photographer here.</div></div>'+
+    '<div class="fl"><label>Photo description (for screen readers)</label><input id="lalt" value="'+esc(L.hero_image_alt||'')+'" placeholder="e.g. Batan Island seen from the sea under storm clouds"></div>'+
     '<div class="row3"><div class="fl"><label>⭐ Lead</label><select data-slot id="ll">'+storyOpts(L.hero_lead)+'</select></div>'+
     '<div class="fl"><label>Secondary</label><select data-slot id="ls">'+storyOpts(L.hero_secondary)+'</select></div>'+
     '<div class="fl"><label>Center</label><select data-slot id="lct">'+storyOpts(L.hero_center)+'</select></div></div>'+
@@ -609,7 +611,7 @@ function saveHome(){
   var L={ticker:$('lt').value.split('\n').map(function(x){return x.trim()}).filter(Boolean).join(' • '),ticker_height:$('lth').value,ticker_speed:$('lts').value,hero_image:$('li').value.trim(),hero_lead:$('ll').value,hero_secondary:$('ls').value,hero_center:$('lct').value,
     hero_right:collect('lr',6),editorial:collect('le',6),regions:rg,featured:collect('lf',10),sidebar_utah:collect('lu',4),sidebar_data:collect('ld',4),
     section_order:secOrder.slice(),hidden_sections:secHidden.slice(),section_labels:cleanLabels()};
-  var ex=layout();if(ex.hero_center_caption)L.hero_center_caption=ex.hero_center_caption;
+  var cap=$('lcap').value.trim(),alt=$('lalt').value.trim();if(cap)L.hero_center_caption=cap;if(alt)L.hero_image_alt=alt;
   s('utv_layout',L);
   if(apiOk)api('PUT','/api/admin/config/layout',{value:L}).then(function(r){toast(r.ok?'✅ Homepage saved — live now':(r.status===403?'⚠️ Admin only':'⚠️ Error'))}).catch(function(){toast('⚠️ Network error')});
   else toast('⚠️ API offline');

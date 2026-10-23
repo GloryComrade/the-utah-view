@@ -362,8 +362,9 @@ function renderHome(){
   if(lead){h+='<h1 class="hero-headline"><a href="article.html?id='+L.hero_lead+'">'+lead.title+'</a></h1><p class="hero-summary">'+lead.summary+'</p><p class="hero-byline">By <span>'+lead.author+'</span>'+(lead.read_time?' · '+lead.read_time+' read':'')+'</p>'}
   if(sec){h+='<hr class="rule" style="margin-bottom:18px">'+rt(L.hero_secondary,sec)}
   h+='</div><div class="hero-center">';
-  if(L.hero_image){h+='<img class="hero-img-real" src="'+L.hero_image+'" alt="">'}else{h+='<div class="hero-img"></div>'}
-  if(L.hero_center_caption)h+='<p class="hero-caption">'+L.hero_center_caption+'</p>';if(ctr)h+=rt(L.hero_center,ctr);
+  var ea=function(x){return String(x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')};
+  if(L.hero_image){h+='<img class="hero-img-real" src="'+L.hero_image+'" alt="'+ea(L.hero_image_alt||'')+'">'}else{h+='<div class="hero-img"></div>'}
+  if(L.hero_center_caption)h+='<p class="hero-caption">'+ea(L.hero_center_caption)+'</p>';if(ctr)h+=rt(L.hero_center,ctr);
   h+='</div><div class="hero-right"><p class="section-tag-gray">From This Issue</p>';
   if(L.hero_right){L.hero_right.forEach(function(id,i){if(i>0)h+='<hr class="rule" style="margin:14px 0">';h+=rt(id,S[id])})}
   h+='</div></div></div></div>';
