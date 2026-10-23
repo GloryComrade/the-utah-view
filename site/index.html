@@ -435,6 +435,8 @@ function go(){
   var p3=fetch(API+'/api/config/site').then(function(r){return r.json()}).then(function(d){FC=d.value||{}}).catch(function(){try{FC=JSON.parse(localStorage.getItem('utv_site'))||{}}catch(e){}});
   Promise.all([p1,p2,p3]).then(function(){
     renderFoot();
+    // links from other pages to /#subscribe-section arrive before the footer exists
+    if(location.hash==='#subscribe-section')setTimeout(function(){var t=document.getElementById('subscribe-section');if(t)t.scrollIntoView()},50);
     if(va){var a=Object.entries(SC).sort(function(a,b){return(b[1].date||'').localeCompare(a[1].date||'')});renderList(a,'Archive','No published articles yet.')}
     else if(vs){if(!go.synced&&window.utvSyncSaved){go.synced=1;utvSyncSaved(function(ch){if(ch)go()})}var si=[];try{si=JSON.parse(localStorage.getItem('utv_saved'))||[]}catch(e){}var sv=si.map(function(id){return SC[id]?[id,SC[id]]:null}).filter(Boolean);renderList(sv,'Saved Stories','No saved stories yet. Click <strong>Save</strong> on any article to bookmark it.')}
     else if(cat){document.querySelectorAll('#mainNav a').forEach(function(a){if(a.textContent===cat)a.classList.add('active')});var m=Object.entries(SC).filter(function(e){var s=e[1];if(cat==='Analysis'||cat==='Opinion'||cat==='Data')return s.region===cat||s.region==='Global'||s.region==='The Utah Lens';return s.region===cat});renderList(m,cat,'No stories in this category yet.')}
