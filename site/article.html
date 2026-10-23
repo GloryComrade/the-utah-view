@@ -137,7 +137,7 @@ var GCID='562818410025-d6n1627aucueem1npk03mg5n7gs8i5t7.apps.googleusercontent.c
 function getUser(){try{return JSON.parse(localStorage.getItem('utv_user'))}catch(e){return null}}
 function getToken(){return localStorage.getItem('utv_token')||''}
 function getSaved(){try{return JSON.parse(localStorage.getItem('utv_saved'))||[]}catch(e){return[]}}
-function signIn(){google.accounts.id.initialize({client_id:GCID,callback:function(r){localStorage.setItem('utv_token',r.credential);var p=JSON.parse(atob(r.credential.split('.')[1]));var u={email:p.email.toLowerCase(),name:p.name,initial:p.name.charAt(0).toUpperCase()};localStorage.setItem('utv_user',JSON.stringify(u));fetch(API+'/api/me',{headers:{'Authorization':'Bearer '+r.credential}}).then(function(x){return x.json()}).then(function(d){if(d.role){u.role=d.role;localStorage.setItem('utv_user',JSON.stringify(u))}updateAuth()}).catch(function(){updateAuth()});toast('Signed in as '+p.email)}});google.accounts.id.prompt()}
+function signIn(){if(!window.google||!google.accounts){toast('Sign-in is still loading. Try again in a moment.');return}google.accounts.id.initialize({client_id:GCID,callback:function(r){utvCloseSignIn();localStorage.setItem('utv_token',r.credential);var p=JSON.parse(atob(r.credential.split('.')[1]));var u={email:p.email.toLowerCase(),name:p.name,initial:p.name.charAt(0).toUpperCase()};localStorage.setItem('utv_user',JSON.stringify(u));fetch(API+'/api/me',{headers:{'Authorization':'Bearer '+r.credential}}).then(function(x){return x.json()}).then(function(d){if(d.role){u.role=d.role;localStorage.setItem('utv_user',JSON.stringify(u))}updateAuth()}).catch(function(){updateAuth()});toast('Signed in as '+p.email)}});utvShowSignIn()}
 function signOut(){localStorage.removeItem('utv_user');localStorage.removeItem('utv_token');updateAuth();toast('Signed out')}
 function toggleDrop(e){e.stopPropagation();document.getElementById('uDrop').classList.toggle('open')}
 function updateAuth(){var u=getUser();document.getElementById('signInBtn').style.display=u?'none':'inline-flex';var pill=document.getElementById('userPill');if(u){pill.classList.add('active');document.getElementById('uAvatar').textContent=u.initial;document.getElementById('uName').textContent=u.name;document.getElementById('uEmail').textContent=u.email;document.getElementById('editorLink').style.display=(u.role==='admin'||u.role==='editor')?'block':'none'}else{pill.classList.remove('active')}loadArticle()}
@@ -188,5 +188,6 @@ updateAuth();
 </script>
 <script src="/search.js" defer></script>
 <script src="/theme.js" defer></script>
+<script src="/signin.js" defer></script>
 </body>
 </html>
