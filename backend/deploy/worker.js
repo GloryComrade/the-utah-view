@@ -536,7 +536,7 @@ export default {
     // Body: { story_id, page_url, kind, message, email, website }. "website" is
     // a hidden honeypot field: bots fill it, people don't. At most 5 reports an
     // hour per IP. New reports show in the editor's Reader reports panel, and
-    // are emailed to REPORTS_EMAIL if that Worker variable is set.
+    // are emailed to REPORTS_EMAIL (a Worker secret; comma-separated for several).
     if (path === '/api/reports' && method === 'POST') {
       let data = {};
       try { data = await request.json(); } catch (e) {}
@@ -568,7 +568,7 @@ export default {
           headers: { 'Authorization': `Bearer ${env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
           body: JSON.stringify({
             from: env.FROM_EMAIL || 'The Utah View <newsletter@theutahview.com>',
-            to: [env.REPORTS_EMAIL],
+            to: String(env.REPORTS_EMAIL).split(',').map((x) => x.trim()).filter(Boolean),
             reply_to: row.email || undefined,
             subject: `Reader report (${kind}): ${row.story_id || 'site'}`,
             html: `<p><b>Story:</b> ${esc(row.story_id || '(none)')}<br><b>Page:</b> ${esc(row.page_url)}<br><b>From:</b> ${esc(row.email || 'anonymous')}</p><p style="white-space:pre-wrap">${esc(row.message)}</p><p>Review it in the editor: ${env.SITE_URL || 'https://theutahview.com'}/editor.html (Reader reports)</p>`,
