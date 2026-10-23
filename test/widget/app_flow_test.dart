@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:utah_view/core/api/models/models.dart';
@@ -260,5 +261,31 @@ void main() {
       await settle(tester, 3);
       expect(find.text('Largest'), findsOneWidget);
     });
+
+    // App Review (guideline 4.8) wants Sign in with Apple wherever Google
+    // sign-in is offered on iOS; Android has no native Apple sign-in.
+    for (final (platform, shown) in [
+      (TargetPlatform.iOS, true),
+      (TargetPlatform.android, false),
+    ]) {
+      testWidgets('Sign in with Apple on ${platform.name}: $shown', (
+        tester,
+      ) async {
+        debugDefaultTargetPlatformOverride = platform;
+        setScreenSize(tester, const Size(390, 844));
+        await tester.pumpWidget(routerTestApp(location: '/more'));
+        await settle(tester);
+        await tester.scrollUntilVisible(
+          find.text('Continue with Google'),
+          300,
+          scrollable: _feed,
+        );
+        expect(
+          find.text('Continue with Apple'),
+          shown ? findsOneWidget : findsNothing,
+        );
+        debugDefaultTargetPlatformOverride = null;
+      });
+    }
   });
 }

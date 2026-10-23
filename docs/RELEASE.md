@@ -101,10 +101,18 @@ D-U-N-S number); an individual enrollment shows your personal name.
 5. **App Privacy:** answers are in `docs/app-store/APP_PRIVACY.md` (email and
    name for optional accounts, saved stories when signed in, the push token).
    No tracking, no analytics, no ads.
-   **Sign in with Apple (guideline 4.8):** the app offers Google sign-in, so
-   App Review may require Sign in with Apple as an equal option (email/password
-   doesn't count, because it can't hide the reader's email). Either add Sign in
-   with Apple or hide the Google button on iOS before submitting.
+   **Sign in with Apple (guideline 4.8):** because the app offers Google
+   sign-in, iOS also shows "Continue with Apple". To switch it on:
+   1. Identifiers → `com.theutahview.app` → enable **Sign in with Apple**.
+   2. Keys → create a key with **Sign in with Apple** → download the .p8.
+   3. Apply the migration **before** deploying the Worker (the delete-account
+      query reads the new columns):
+      `npx --yes wrangler@4.151.1 d1 execute utv-db --remote --file=backend/migrations/0005_apple_signin.sql`
+   4. Worker secrets (`wrangler secret put` in `backend/deploy/`):
+      `APPLE_TEAM_ID`, `APPLE_KEY_ID`, `APPLE_PRIVATE_KEY` (the .p8 contents).
+      These let the Worker revoke Apple tokens when a reader deletes their
+      account, which Apple requires. Sign-in itself works without them.
+   5. Deploy the Worker, then test on a device built with the paid team.
 6. **Age rating:** answer the questionnaire for news content (war and
    political violence are covered as news).
 7. **Screenshots:** 6.9" iPhone (1320×2868). The app supports iPad (two-column

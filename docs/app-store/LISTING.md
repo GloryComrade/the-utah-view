@@ -33,7 +33,7 @@ READ YOUR WAY
 • Adjustable text size, high-contrast mode, reduced motion, and light and dark themes, all built into the app.
 • Listen to any article with read-aloud.
 • Save stories to read later. Your saved stories work offline.
-• Create a free account (optional), with email or Google, to keep your saved stories in sync across devices.
+• Create a free account (optional), with email, Apple or Google, to keep your saved stories in sync across devices.
 • Share any story as a link.
 
 STAY CURRENT
@@ -95,7 +95,7 @@ News content covering war and political violence, reported factually:
   `review@theutahview.com` (or similar) with a password and enter it here.
 - **Notes:**
   ```
-  Reader app for The Utah View, a monthly global-politics publication. No account is required to read. An optional account (email/password or Google) syncs saved stories across devices and can be deleted in the app under More > Delete account. Notifications announce new stories. The app has no ads, no tracking, and no in-app purchases.
+  Reader app for The Utah View, a monthly global-politics publication. No account is required to read. An optional account (email/password, Sign in with Apple, or Google) syncs saved stories across devices and can be deleted in the app under More > Delete account. Notifications announce new stories. The app has no ads, no tracking, and no in-app purchases.
   ```
 - **Contact:** Ryan Cheng, theutahview@gmail.com, plus a phone number.
 

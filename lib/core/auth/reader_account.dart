@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 import '../../features/saved/saved_stories.dart';
 import '../api/api_client.dart';
@@ -11,7 +12,7 @@ import '../api/providers.dart';
 import '../storage/key_value_store.dart';
 import 'google_auth.dart';
 
-/// A first-party (email/password) reader account session.
+/// A first-party reader account session (email/password or Sign in with Apple).
 @immutable
 class ReaderAccount {
   const ReaderAccount({
@@ -55,7 +56,42 @@ class ReaderAccountController extends Notifier<ReaderAccount?> {
   Future<String?> logIn(String email, String password) =>
       _auth('/api/account/login', {'email': email, 'password': password});
 
-  Future<String?> _auth(String path, Map<String, Object?> body) async {
+  /// Sign in with Apple (iOS). The Worker verifies Apple's identity token and
+  /// returns an ordinary reader session, so sync and account deletion work the
+  /// same as for email accounts. Returns null on success or when the reader
+  /// cancelled, else a reader-facing error message.
+  Future<String?> signInWithApple() async {
+    final AuthorizationCredentialAppleID cred;
+    try {
+      cred = await SignInWithApple.getAppleIDCredential(
+        scopes: const [
+          AppleIDAuthorizationScopes.email,
+          AppleIDAuthorizationScopes.fullName,
+        ],
+      );
+    } on SignInWithAppleAuthorizationException catch (e) {
+      if (e.code == AuthorizationErrorCode.canceled) return null;
+      return 'Couldn’t sign in with Apple. Please try again.';
+    } on Object {
+      return 'Sign in with Apple isn’t available on this device.';
+    }
+    // Apple sends the name only on the first sign-in.
+    final name = [
+      cred.givenName,
+      cred.familyName,
+    ].whereType<String>().where((s) => s.isNotEmpty).join(' ');
+    return _auth('/api/account/apple', {
+      'identityToken': cred.identityToken,
+      'authorizationCode': cred.authorizationCode,
+      'name': name,
+    }, unauthorized: 'Couldn’t sign in with Apple. Please try again.');
+  }
+
+  Future<String?> _auth(
+    String path,
+    Map<String, Object?> body, {
+    String unauthorized = 'Invalid email or password.',
+  }) async {
     try {
       final res = asJsonMap(await _api.postAuthed(path, body));
       final token = coerceJsonString(res?['token']);
@@ -69,12 +105,19 @@ class ReaderAccountController extends Notifier<ReaderAccount?> {
       await _settings.write(_kEmail, email);
       await _settings.write(_kName, name);
       state = ReaderAccount(email: email, name: name, token: token);
-      unawaited(mergeSavedStories(_api, ref.read(savedStoriesProvider.notifier), ref.read(savedStoriesProvider), token));
+      unawaited(
+        mergeSavedStories(
+          _api,
+          ref.read(savedStoriesProvider.notifier),
+          ref.read(savedStoriesProvider),
+          token,
+        ),
+      );
       return null;
     } on ApiException catch (e) {
       return switch (e.statusCode) {
         409 => 'An account with that email already exists.',
-        401 => 'Invalid email or password.',
+        401 => unauthorized,
         400 => 'Enter a valid email and a password of at least 8 characters.',
         _ => e.userMessage,
       };
@@ -142,11 +185,9 @@ final savedSyncProvider = Provider<void>((ref) {
     final token = ref.read(savedAuthTokenProvider);
     if (token == null) return;
     unawaited(
-      pushSavedIds(
-        ref.read(apiClientProvider),
-        token,
-        [for (final s in next) s.story.id],
-      ),
+      pushSavedIds(ref.read(apiClientProvider), token, [
+        for (final s in next) s.story.id,
+      ]),
     );
   });
 });

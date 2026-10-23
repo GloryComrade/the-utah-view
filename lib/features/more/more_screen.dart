@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 import '../../core/api/api_client.dart';
 import '../../core/api/api_config.dart';
@@ -399,7 +400,8 @@ class _UnsubscribeDialogState extends State<_UnsubscribeDialog> {
   }
 }
 
-/// Account section: email/password sign-up & login (first-party), plus Google
+/// Account section: email/password sign-up & login (first-party), Sign in
+/// with Apple (iOS, which App Review requires alongside Google), plus Google
 /// sign-in. Signed in -> shows who you are with a sign-out. Degrades cleanly if
 /// a path is unavailable.
 class _SignInSection extends ConsumerStatefulWidget {
@@ -433,8 +435,27 @@ class _SignInSectionState extends ConsumerState<_SignInSection> {
     });
     final ctl = ref.read(readerAccountProvider.notifier);
     final err = _signup
-        ? await ctl.signUp(_email.text.trim(), _password.text, _name.text.trim())
+        ? await ctl.signUp(
+            _email.text.trim(),
+            _password.text,
+            _name.text.trim(),
+          )
         : await ctl.logIn(_email.text.trim(), _password.text);
+    if (!mounted) return;
+    setState(() {
+      _busy = false;
+      _error = err;
+    });
+  }
+
+  Future<void> _appleSignIn() async {
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    final err = await ref
+        .read(readerAccountProvider.notifier)
+        .signInWithApple();
     if (!mounted) return;
     setState(() {
       _busy = false;
@@ -492,7 +513,12 @@ class _SignInSectionState extends ConsumerState<_SignInSection> {
         children: [
           if (_signup) _field(_name, 'Name', TextInputType.name),
           _field(_email, 'Email', TextInputType.emailAddress),
-          _field(_password, 'Password', TextInputType.visiblePassword, obscure: true),
+          _field(
+            _password,
+            'Password',
+            TextInputType.visiblePassword,
+            obscure: true,
+          ),
           if (_error != null)
             Padding(
               padding: const EdgeInsets.only(top: 8),
@@ -513,19 +539,37 @@ class _SignInSectionState extends ConsumerState<_SignInSection> {
                 : Text(_signup ? 'Create account' : 'Log in'),
           ),
           TextButton(
-            onPressed: _busy ? null : () => setState(() {
-              _signup = !_signup;
-              _error = null;
-            }),
-            child: Text(_signup
-                ? 'Have an account? Log in'
-                : 'New here? Create an account'),
+            onPressed: _busy
+                ? null
+                : () => setState(() {
+                    _signup = !_signup;
+                    _error = null;
+                  }),
+            child: Text(
+              _signup
+                  ? 'Have an account? Log in'
+                  : 'New here? Create an account',
+            ),
           ),
           const SizedBox(height: 4),
+          if (_offerApple) ...[
+            SignInWithAppleButton(
+              onPressed: _busy ? null : _appleSignIn,
+              text: 'Continue with Apple',
+              style: Theme.of(context).brightness == Brightness.dark
+                  ? SignInWithAppleButtonStyle.white
+                  : SignInWithAppleButtonStyle.black,
+            ),
+            const SizedBox(height: 8),
+          ],
           if (kIsWeb)
             Align(
               alignment: Alignment.centerLeft,
-              child: SizedBox(height: 44, width: 240, child: googleSignInButton()),
+              child: SizedBox(
+                height: 44,
+                width: 240,
+                child: googleSignInButton(),
+              ),
             )
           else
             OutlinedButton.icon(
@@ -538,8 +582,16 @@ class _SignInSectionState extends ConsumerState<_SignInSection> {
     );
   }
 
-  Widget _field(TextEditingController c, String label, TextInputType type,
-      {bool obscure = false}) {
+  /// Sign in with Apple is native on iPhone and iPad only.
+  bool get _offerApple =>
+      !kIsWeb && defaultTargetPlatform == TargetPlatform.iOS;
+
+  Widget _field(
+    TextEditingController c,
+    String label,
+    TextInputType type, {
+    bool obscure = false,
+  }) {
     return Padding(
       padding: const EdgeInsets.only(top: 8),
       child: TextField(
