@@ -120,6 +120,7 @@ a{color:var(--red)}
 }
 .badge{font-size:10px;font-weight:700;padding:3px 9px;border-radius:999px;text-transform:uppercase;letter-spacing:.4px;flex-shrink:0}
 .badge.live{background:var(--okbg);color:var(--ok)}
+.nav .badge{background:var(--red);color:#fff;margin-left:auto;padding:1px 7px}
 .badge.draft{background:var(--warnbg);color:var(--warn)}
 .empty{padding:38px 18px;text-align:center;color:var(--g4);font-size:14px}
 
@@ -251,6 +252,7 @@ body.has-dirty .main{padding-bottom:80px}
     <button class="nav" data-v="stories" onclick="go('stories')"><span class="ic">&#128240;</span> Stories</button>
     <button class="nav" data-v="images" onclick="go('images')"><span class="ic">&#128444;</span> Images</button>
     <button class="nav" data-v="pages" data-admin onclick="go('pages')"><span class="ic">&#128196;</span> Pages</button>
+    <button class="nav" data-v="reports" onclick="go('reports')"><span class="ic">&#9888;</span> Reader reports <span id="repN" class="badge" hidden></span></button>
     <div class="side-hd" data-admin>Front page</div>
     <button class="nav" data-v="homepage" data-admin onclick="go('homepage')"><span class="ic">&#127968;</span> Homepage</button>
     <button class="nav" data-v="footer" data-admin onclick="go('footer')"><span class="ic">&#128279;</span> Footer &amp; Subscribe</button>
@@ -398,7 +400,7 @@ document.addEventListener('input',function(e){if($('view')&&$('view').contains(e
 document.addEventListener('change',function(e){if($('view')&&$('view').contains(e.target)&&e.target.tagName==='SELECT')markDirty()});
 
 /* ---------- data refresh ---------- */
-function refreshAll(){
+function refreshAll(){repCount();
   api('GET','/api/admin/stories').then(function(r){return r.ok?r.json():null}).then(function(d){if(d&&d.stories){apiOk=true;var S=stories();var N={};d.stories.forEach(function(x){var old=S[x.id]||{};N[x.id]=x;if(!x.body&&old.body)N[x.id].body=old.body});s('utv_stories',N);if(curView==='dashboard')vDashboard();else if(curView==='stories')renderStoryList();}}).catch(function(){});
   fetch(API+'/api/pages').then(function(r){return r.json()}).then(function(d){var P={},ex=pages();(d.pages||[]).forEach(function(p){P[p.slug]=p;if(!p.body&&ex[p.slug]&&ex[p.slug].body)P[p.slug].body=ex[p.slug].body});s('utv_pages',P);if(curView==='pages')render();else if(curView==='dashboard')vDashboard();}).catch(function(){});
   fetch(API+'/api/config/layout').then(function(r){return r.json()}).then(function(d){if(d.value)s('utv_layout',d.value)}).catch(function(){});
@@ -431,6 +433,7 @@ function render(){
   if(v==='subs')return vSubs();
   if(v==='activity')return vActivity();
   if(v==='images')return vImages();
+  if(v==='reports')return vReports();
 }
 function head(title,actionsHtml){return '<div class="page-head"><h1>'+title+'</h1><div class="sp"></div>'+(actionsHtml||'')+'</div>'}
 
@@ -920,6 +923,28 @@ function downloadBackup(){toast('Preparing backup…');
     var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t],{type:'application/json'}));a.download='utah-view-backup-'+today()+'.json';document.body.appendChild(a);a.click();a.remove();toast('✅ Backup downloaded');
   }).catch(function(e){toast(e===403||e===401?'⚠️ Admin only':'⚠️ Backup failed')});
 }
+
+/* ---------- READER ERROR REPORTS (editors + admins) ---------- */
+var REPS=[],repFilter='new';
+function repCount(){api('GET','/api/admin/reports?status=new').then(function(r){return r.ok?r.json():null}).then(function(d){var b=$('repN');if(!b||!d)return;var n=(d.reports||[]).length;b.textContent=n;b.hidden=!n}).catch(function(){})}
+function vReports(){
+  $('view').innerHTML=head('Reader reports')+'<div class="card"><p class="desc" style="margin:0">Errors readers report with the “Spot an error?” link under each story. Fix the story, add a correction note at the end saying what changed, then mark the report resolved.</p></div>'+
+    '<div class="fl"><select id="repF" onchange="repFilter=this.value;loadReps()"><option value="new">Open</option><option value="resolved">Resolved</option><option value="all">All</option></select></div><div class="list" id="repList"><p class="empty"><span class="spin"></span> Loading…</p></div>';
+  $('repF').value=repFilter;loadReps();
+}
+function loadReps(){api('GET','/api/admin/reports?status='+repFilter).then(function(r){if(!r.ok)throw r.status;return r.json()}).then(function(d){REPS=d.reports||[];renderReps()}).catch(function(){if($('repList'))$('repList').innerHTML='<p class="empty">Couldn’t load reports (the live site may need the latest backend, or you’re offline).</p>'})}
+function renderReps(){var el=$('repList');if(!el)return;var S=stories();
+  if(!REPS.length){el.innerHTML='<p class="empty">'+(repFilter==='new'?'No open reports. 🎉':'No reports.')+'</p>';return;}
+  el.innerHTML=REPS.map(function(x){var st=x.story_id&&S[x.story_id];var title=st?st.title:(x.story_id||x.page_url||'Website');
+    return '<div class="row" style="align-items:flex-start"><div class="meta"><div class="ti" style="cursor:default">'+esc(title)+'</div>'+
+      '<div style="white-space:pre-wrap;margin:6px 0">'+esc(x.message)+'</div>'+
+      '<div class="su">'+esc(String(x.created_at||'').slice(0,16))+' UTC'+(x.email?' · <a href="mailto:'+esc(x.email)+'">'+esc(x.email)+'</a>':' · no email')+(x.status==='resolved'?' · resolved':'')+'</div></div>'+
+      '<div class="acts">'+(st?'<button class="btn-ghost" title="Edit this story" data-id="'+esc(x.story_id)+'" onclick="editStory(this.dataset.id)">&#9998;</button>':'')+
+      '<button class="btn-ghost" title="'+(x.status==='resolved'?'Reopen':'Mark resolved')+'" data-id="'+x.id+'" data-st="'+(x.status==='resolved'?'new':'resolved')+'" onclick="setRep(this.dataset.id,this.dataset.st)">'+(x.status==='resolved'?'&#8634;':'&#10003;')+'</button>'+
+      (isAdmin()?'<button class="btn-ghost" title="Delete report" data-id="'+x.id+'" onclick="delRep(this.dataset.id)">&#128465;</button>':'')+'</div></div>'}).join('');
+}
+function setRep(id,st){api('PUT','/api/admin/reports?id='+id,{status:st}).then(function(r){if(!r.ok)throw r.status;toast(st==='resolved'?'✅ Marked resolved':'Reopened');loadReps();repCount()}).catch(function(){toast('⚠️ Couldn’t update')})}
+function delRep(id){if(!confirm('Delete this report? This can’t be undone.'))return;api('DELETE','/api/admin/reports?id='+id).then(function(r){if(!r.ok)throw r.status;toast('Deleted');loadReps();repCount()}).catch(function(e){toast(e===403?'⚠️ Admin only':'⚠️ Couldn’t delete')})}
 
 var SUBS=[];
 function vSubs(){

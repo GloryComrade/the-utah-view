@@ -11,7 +11,7 @@ window.UTV_SITE_DEFAULTS = {
   footer_cols: [
     { title: 'Regions', links: [{ text: 'The Americas', url: '?cat=The Americas' }, { text: 'Europe', url: '?cat=Europe' }, { text: 'Asia-Pacific', url: '?cat=Asia-Pacific' }, { text: 'Middle East', url: '?cat=Middle East' }, { text: 'Africa', url: '?cat=Africa' }] },
     { title: 'Sections', links: [{ text: 'Lead Analysis', url: '?cat=Analysis' }, { text: 'Opinion', url: '?cat=Opinion' }, { text: 'Data Briefs', url: '?cat=Data' }] },
-    { title: 'About', links: [{ text: 'Our Mission', url: 'page.html?p=our-mission' }, { text: 'Methodology', url: 'article.html?id=methodology' }, { text: 'Editorial Team', url: 'page.html?p=editorial-team' }, { text: 'Contact', url: 'page.html?p=contact' }] },
+    { title: 'About', links: [{ text: 'Our Mission', url: 'page.html?p=our-mission' }, { text: 'Methodology', url: 'page.html?p=methodology' }, { text: 'Report an error', url: 'report.html' }, { text: 'Contact', url: 'page.html?p=contact' }] },
     { title: 'Follow', links: [{ text: 'Newsletter', url: '#subscribe-section' }] }
   ]
 };

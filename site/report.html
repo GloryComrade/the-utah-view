@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Report an error | The Utah View</title>
+<meta name="robots" content="noindex">
+<script>(function(){var t;try{t=localStorage.getItem('utv_theme')}catch(e){}if(t!=='light'&&t!=='dark')t=window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';document.documentElement.setAttribute('data-theme',t)})()</script>
+<link rel="stylesheet" href="/theme.css">
+<style>
+:root{--red:#B53816;--ink:#141414;--g6:#555;--g2:#e3e3e3;--bg:#f7f6f4;--w:#fff}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:Georgia,'Times New Roman',serif;color:var(--ink);background:var(--bg);line-height:1.7}
+.wrap{max-width:720px;margin:0 auto;padding:40px 22px 80px}
+.top{font-family:'Helvetica Neue',Arial,sans-serif;font-size:13px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--red)}
+h1{font-size:34px;font-weight:700;margin:6px 0 4px;letter-spacing:.3px}
+.eff{font-family:'Helvetica Neue',Arial,sans-serif;font-size:13px;color:var(--g6);margin-bottom:28px}
+h2{font-family:'Helvetica Neue',Arial,sans-serif;font-size:17px;font-weight:700;margin:28px 0 8px}
+p{margin:0 0 14px;font-size:17px}
+ul{margin:0 0 14px 22px}li{margin:0 0 7px;font-size:17px}
+a{color:var(--red)}
+.rule{height:3px;width:60px;background:var(--red);margin:14px 0 24px}
+.foot{font-family:'Helvetica Neue',Arial,sans-serif;font-size:13px;color:var(--g6);margin-top:40px;border-top:1px solid var(--g2);padding-top:18px}
+.card{background:var(--w);border:1px solid var(--g2);padding:22px;margin:8px 0 18px}
+label{display:block;font-family:'Helvetica Neue',Arial,sans-serif;font-size:13px;font-weight:700;margin:12px 0 5px}
+input,textarea{width:100%;font-size:16px;padding:10px 12px;border:1px solid #bbb;background:var(--w);color:var(--ink)}
+button{margin-top:18px;font-family:'Helvetica Neue',Arial,sans-serif;font-size:15px;font-weight:700;padding:12px 18px;border:0;background:var(--red);color:#fff;cursor:pointer}
+button:disabled{opacity:.5;cursor:default}
+.msg{font-family:'Helvetica Neue',Arial,sans-serif;font-size:15px;margin-top:14px}
+.err{color:var(--red)}.ok{color:#1d6b35}
+/* Smooth page changes: a quick cross-fade between pages of this site (browsers
+   without cross-document view transitions just load normally). */
+@view-transition { navigation: auto; }
+::view-transition-old(root), ::view-transition-new(root) { animation-duration: .25s; animation-timing-function: ease; }
+@media (prefers-reduced-motion: reduce) { @view-transition { navigation: none; } }
+textarea{min-height:140px;font-family:inherit;resize:vertical}
+.hp{position:absolute;left:-9999px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top"><a href="/" style="text-decoration:none">The Utah View</a></div>
+  <h1>Report an error</h1>
+  <div class="rule"></div>
+  <p>Spotted a mistake in one of our stories? Tell us what's wrong. Our editors read every report and correct errors as described on our <a href="/page.html?p=methodology">Methodology</a> page.</p>
+  <div class="card" id="box">
+    <p id="about" style="display:none">About: <b id="storyT"></b></p>
+    <label for="msg-in">What's wrong?</label>
+    <textarea id="msg-in" maxlength="4000" placeholder="Quote the sentence if you can, and tell us what the correct information is and where it comes from."></textarea>
+    <label for="em-in">Your email (optional)</label>
+    <input id="em-in" type="email" autocomplete="email" placeholder="So we can follow up with you">
+    <input class="hp" id="website" tabindex="-1" autocomplete="off" aria-hidden="true">
+    <button id="go" type="button">Send report</button>
+    <p class="msg" id="msg" role="status"></p>
+  </div>
+  <div class="foot">See our <a href="/privacy.html">Privacy Policy</a>. We only use your email to reply about this report. © 2026 The Utah View, Salt Lake City, Utah.</div>
+</div>
+<script>
+// Opened from "Report an error" under an article (?id=story) or from the Methodology page.
+(function(){
+  var API='https://api.theutahview.com';
+  var id=new URLSearchParams(location.search).get('id')||'';
+  var btn=document.getElementById('go'),msg=document.getElementById('msg');
+  function say(x,cls){msg.textContent=x;msg.className='msg '+(cls||'')}
+  if(id){fetch(API+'/api/stories/'+encodeURIComponent(id)).then(function(r){return r.ok?r.json():null}).then(function(s){if(s&&s.title){document.getElementById('storyT').textContent=s.title;document.getElementById('about').style.display=''}}).catch(function(){})}
+  btn.onclick=function(){
+    var m=document.getElementById('msg-in').value.trim(),e=document.getElementById('em-in').value.trim();
+    if(m.length<5){say('Please tell us what\u2019s wrong.','err');return}
+    if(e&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)){say('That email address doesn\u2019t look right.','err');return}
+    btn.disabled=true;say('Sending\u2026');
+    fetch(API+'/api/report',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({story_id:id,url:document.referrer||location.href,message:m,email:e,website:document.getElementById('website').value})})
+      .then(function(r){return r.json().catch(function(){return{}}).then(function(d){return{ok:r.ok,d:d}})})
+      .then(function(x){if(x.ok){btn.style.display='none';document.getElementById('msg-in').disabled=true;document.getElementById('em-in').disabled=true;say('Thank you. Your report has gone to our editors.','ok')}else{btn.disabled=false;say(x.d.error||'Sorry, that didn\u2019t work. Please try again in a moment.','err')}})
+      .catch(function(){btn.disabled=false;say('You seem to be offline. Please try again.','err')});
+  };
+})();
+</script>
+<script src="/theme.js" defer></script>
+</body>
+</html>

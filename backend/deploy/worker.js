@@ -283,6 +283,38 @@ function unsubHeaders(links) {
   return { 'List-Unsubscribe': `<${links.oneClick}>`, 'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click' };
 }
 
+// Emails the admins about a new reader error report (REPORTS_EMAIL, if set,
+// gets it instead). The report is already saved; this is only a heads-up.
+async function notifyReport(env, r) {
+  if (!env.RESEND_API_KEY) return;
+  let to = env.REPORTS_EMAIL ? [env.REPORTS_EMAIL] : [];
+  if (!to.length) {
+    const a = await env.DB.prepare("SELECT email FROM users WHERE role = 'admin'").all();
+    to = (a.results || []).map((x) => x.email).filter(Boolean);
+  }
+  if (!to.length) return;
+  const esc = (t) => String(t || '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const site = env.SITE_URL || 'https://theutahview.com';
+  const where = r.storyId ? `<a href="${site}/article.html?id=${encodeURIComponent(r.storyId)}">${esc(r.storyId)}</a>` : esc(r.pageUrl || 'the website');
+  try {
+    await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        from: env.FROM_EMAIL || 'The Utah View <newsletter@theutahview.com>',
+        to,
+        reply_to: r.email || undefined,
+        subject: 'Reader error report' + (r.storyId ? ': ' + r.storyId : ''),
+        html: `<div style="font-family:Georgia,serif;font-size:16px;line-height:1.6;color:#222">
+<p>A reader reported an error on ${where}.</p>
+<blockquote style="border-left:3px solid #C4352A;margin:0;padding:4px 14px;white-space:pre-wrap">${esc(r.message)}</blockquote>
+<p>${r.email ? 'From: ' + esc(r.email) + ' (reply to this email to answer them)' : 'No email given.'}</p>
+<p><a href="${site}/editor">Open Reader reports in the editor</a></p></div>`,
+      }),
+    });
+  } catch (e) { console.error('Report email failed:', e); }
+}
+
 // ── Main Router ──
 
 export default {
@@ -402,6 +434,30 @@ export default {
       await env.DB.prepare('DELETE FROM subscribers WHERE email = ?').bind(clean).run();
       await auditLog(env, clean, 'unsubscribe', 'subscriber', clean, null, ip);
       return new Response(JSON.stringify({ message: 'Unsubscribed' }), { headers: corsHeaders() });
+    }
+
+    // POST /api/report — a reader reports an error (public). Stored for the
+    // editor's Reader reports panel; admins get an email if Resend is set up.
+    // At most 5 reports per IP per hour; the "website" field is a bot trap.
+    if (path === '/api/report' && method === 'POST') {
+      let data = {};
+      try { data = await request.json(); } catch (e) {}
+      if (data.website) return json({ message: 'Thanks' });
+      const message = String(data.message || '').trim().slice(0, 4000);
+      if (message.length < 5) return json({ error: 'Please describe the error' }, 400);
+      const email = String(data.email || '').trim().toLowerCase().slice(0, 200);
+      if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return json({ error: 'That email address doesn\u2019t look right' }, 400);
+      const storyId = String(data.story_id || '').slice(0, 120);
+      const pageUrl = String(data.url || '').slice(0, 500);
+      if (env.UTV_DATA && ip) {
+        const k = 'report_rl:' + ip, n = parseInt((await env.UTV_DATA.get(k)) || '0', 10);
+        if (n >= 5) return json({ error: 'Too many reports. Please try again later.' }, 429);
+        await env.UTV_DATA.put(k, String(n + 1), { expirationTtl: 3600 });
+      }
+      const res = await env.DB.prepare('INSERT INTO error_reports (story_id, page_url, message, email) VALUES (?, ?, ?, ?)').bind(storyId, pageUrl, message, email).run();
+      await auditLog(env, email || 'reader', 'report_error', 'story', storyId, null, ip);
+      ctx.waitUntil(notifyReport(env, { id: res.meta && res.meta.last_row_id, storyId, pageUrl, message, email }));
+      return json({ message: 'Thanks' });
     }
 
     // ── Reader accounts + saved stories (added) ──
@@ -653,6 +709,43 @@ export default {
       const res = await env.DB.prepare('DELETE FROM subscribers WHERE email = ?').bind(clean).run();
       await auditLog(env, user.email, 'remove_subscriber', 'subscriber', clean, null, ip);
       return new Response(JSON.stringify({ message: 'Removed', removed: (res.meta && res.meta.changes) || 0 }), { headers: corsHeaders() });
+    }
+
+    // ── READER ERROR REPORTS (editor/admin) ──
+
+    // GET /api/admin/reports?status=new|resolved|all
+    if (path === '/api/admin/reports' && method === 'GET') {
+      const deny = requireRole(user, ['admin', 'editor']);
+      if (deny) return deny;
+      const st = url.searchParams.get('status') || 'all';
+      const q = st === 'all' ? 'SELECT * FROM error_reports ORDER BY id DESC LIMIT 500' : 'SELECT * FROM error_reports WHERE status = ? ORDER BY id DESC LIMIT 500';
+      const r = st === 'all' ? await env.DB.prepare(q).all() : await env.DB.prepare(q).bind(st).all();
+      return json({ reports: r.results });
+    }
+
+    // PUT /api/admin/reports?id=N  {status: 'new'|'resolved'}
+    if (path === '/api/admin/reports' && method === 'PUT') {
+      const deny = requireRole(user, ['admin', 'editor']);
+      if (deny) return deny;
+      const id = parseInt(url.searchParams.get('id') || '', 10);
+      let data = {};
+      try { data = await request.json(); } catch (e) {}
+      const st = data.status === 'resolved' ? 'resolved' : 'new';
+      if (!id) return json({ error: 'id required' }, 400);
+      await env.DB.prepare('UPDATE error_reports SET status = ? WHERE id = ?').bind(st, id).run();
+      await auditLog(env, user.email, st === 'resolved' ? 'resolve_report' : 'reopen_report', 'report', String(id), null, ip);
+      return json({ message: 'Updated' });
+    }
+
+    // DELETE /api/admin/reports?id=N (admin)
+    if (path === '/api/admin/reports' && method === 'DELETE') {
+      const deny = requireRole(user, ['admin']);
+      if (deny) return deny;
+      const id = parseInt(url.searchParams.get('id') || '', 10);
+      if (!id) return json({ error: 'id required' }, 400);
+      await env.DB.prepare('DELETE FROM error_reports WHERE id = ?').bind(id).run();
+      await auditLog(env, user.email, 'delete_report', 'report', String(id), null, ip);
+      return json({ message: 'Deleted' });
     }
 
     // ── IMAGE UPLOAD (editor/admin) ──
