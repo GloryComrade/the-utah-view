@@ -209,7 +209,7 @@ a{color:var(--red)}
     <button class="nav" data-v="dashboard" onclick="go('dashboard')"><span class="ic">&#9632;</span> Dashboard</button>
     <div class="side-hd">Content</div>
     <button class="nav" data-v="stories" onclick="go('stories')"><span class="ic">&#128240;</span> Stories</button>
-    <button class="nav" data-v="pages" onclick="go('pages')"><span class="ic">&#128196;</span> Pages</button>
+    <button class="nav" data-v="pages" data-admin onclick="go('pages')"><span class="ic">&#128196;</span> Pages</button>
     <div class="side-hd" data-admin>Front page</div>
     <button class="nav" data-v="homepage" data-admin onclick="go('homepage')"><span class="ic">&#127968;</span> Homepage</button>
     <button class="nav" data-v="footer" data-admin onclick="go('footer')"><span class="ic">&#128279;</span> Footer &amp; Subscribe</button>
@@ -312,13 +312,17 @@ function refreshAll(){
 }
 
 /* ---------- router ---------- */
-function go(v){curView=v;editId=null;editSlug=null;
+// Admin-only screens: editors are sent to the dashboard instead of a panel
+// whose saves the server would refuse.
+var ADMIN_VIEWS=['pages','page','homepage','footer','access','subs'];
+function go(v){if(!isAdmin()&&ADMIN_VIEWS.indexOf(v)>=0)v='dashboard';curView=v;editId=null;editSlug=null;
   document.querySelectorAll('.nav').forEach(function(n){n.classList.toggle('on',n.getAttribute('data-v')===v)});
   if(window.innerWidth<=820)toggleNav(false);
   if($('main'))$('main').scrollTop=0;
   render();
 }
 function render(){
+  if(!isAdmin()&&ADMIN_VIEWS.indexOf(curView)>=0)curView='dashboard';
   var v=curView;
   if(v==='dashboard')return vDashboard();
   if(v==='stories')return vStories();
@@ -348,7 +352,7 @@ function vDashboard(){
   h+='<div class="grid quick" style="margin-bottom:18px">'+
      '<button class="qbtn" onclick="newStory()"><span class="qic">+</span><span><b>New story</b><small>Write &amp; publish</small></span></button>'+
      (isAdmin()?'<button class="qbtn" onclick="go(\'homepage\')"><span class="qic">&#127968;</span><span><b>Edit homepage</b><small>Arrange the front page</small></span></button>':'')+
-     '<button class="qbtn" onclick="go(\'pages\')"><span class="qic">&#128196;</span><span><b>Pages</b><small>About, Contact…</small></span></button>'+
+     (isAdmin()?'<button class="qbtn" onclick="go(\'pages\')"><span class="qic">&#128196;</span><span><b>Pages</b><small>About, Contact…</small></span></button>':'')+
      (isAdmin()?'<button class="qbtn" onclick="go(\'access\')"><span class="qic">&#128273;</span><span><b>Access</b><small>Who can edit</small></span></button>':'')+'</div>';
   h+='<div class="card"><h2>Recent stories</h2>';
   if(!recent.length)h+='<p class="empty">No stories yet. Click <b>New story</b> to begin.</p>';
@@ -371,7 +375,7 @@ function storyRow(x){
       '<button class="bt bs bsm" onclick="togglePub(\''+x.id+'\')">'+(live?'Unpublish':'Publish')+'</button>'+
       '<button class="btn-ghost" title="Edit" onclick="editStory(\''+x.id+'\')">&#9998;</button>'+
       '<button class="btn-ghost" title="Duplicate" onclick="dupStory(\''+x.id+'\')">&#10697;</button>'+
-      '<button class="btn-ghost" title="Delete" onclick="delStory(\''+x.id+'\')">&#128465;</button>'+
+      (isAdmin()?'<button class="btn-ghost" title="Delete" onclick="delStory(\''+x.id+'\')">&#128465;</button>':'')+
     '</div></div>';
 }
 function vStories(){
@@ -405,8 +409,12 @@ function togglePub(id){var S=stories();var x=S[id];if(!x)return;var ns=x.status=
 }
 function dupStory(id){var S=stories();var x=S[id];if(!x)return;dupSeed={title:(x.title||'Untitled')+' (copy)',author:x.author||'',region:x.region||'Global',summary:x.summary||'',body:x.body||'',read_time:x.read_time||x.readTime||'',status:'draft',date:today()};editId=null;curView='story';render();}
 var dupSeed=null;
-function delStory(id){if(!confirm('Delete this story? This cannot be undone.'))return;var S=stories();delete S[id];s('utv_stories',S);if(curView==='story')go('stories');else render();
-  if(apiOk)api('DELETE','/api/admin/stories/'+id).then(function(r){toast(r.ok?'Deleted':'⚠️ Not authorized to delete')}).catch(function(){toast('⚠️ Network error')});
+// Delete on the server first; only drop the story here once the server agrees,
+// so a refused delete doesn't make it vanish from the list.
+function delStory(id){if(!confirm('Delete this story? This cannot be undone.'))return;
+  function drop(){var S=stories();delete S[id];s('utv_stories',S);if(curView==='story')go('stories');else render();}
+  if(!apiOk){toast('⚠️ Not connected — nothing deleted. Try again in a moment.');return;}
+  api('DELETE','/api/admin/stories/'+id).then(function(r){if(r.ok){drop();toast('Deleted');}else toast(r.status===401||r.status===403?'⚠️ Only admins can delete stories':'⚠️ Delete failed')}).catch(function(){toast('⚠️ Network error — nothing deleted')});
 }
 function vStoryEdit(){
   var x=editId?stories()[editId]:(dupSeed||null);dupSeed=null;
@@ -433,7 +441,7 @@ function vStoryEdit(){
     '<div class="toolbar" style="margin:14px 0 0">'+
       '<button class="bt bp" onclick="saveFromForm(\'published\')">✅ Publish</button>'+
       '<button class="bt bs" onclick="saveFromForm(\'draft\')">Save draft</button>'+
-      (editId?'<button class="bt bd bsm" style="margin-left:auto" onclick="delStory(\''+editId+'\')">Delete</button>':'')+
+      (editId&&isAdmin()?'<button class="bt bd bsm" style="margin-left:auto" onclick="delStory(\''+editId+'\')">Delete</button>':'')+
     '</div></div>'+
     '<div class="pv"><div class="pvh">Live preview</div><div class="pvb" id="spv"></div></div>';
   $('view').innerHTML=h;sPv();
@@ -538,7 +546,10 @@ function savePage(){var t=$('pt').value.trim();if(!t){toast('Title required');re
   else toast('⚠️ API offline');
   go('pages');
 }
-function delPage(sl){if(!confirm('Delete this page?'))return;var P=pages();delete P[sl];s('utv_pages',P);if(apiOk)api('DELETE','/api/admin/pages/'+encodeURIComponent(sl));toast('Deleted');go('pages')}
+function delPage(sl){if(!confirm('Delete this page?'))return;
+  if(!apiOk){toast('⚠️ Not connected — nothing deleted. Try again in a moment.');return;}
+  api('DELETE','/api/admin/pages/'+encodeURIComponent(sl)).then(function(r){if(r.ok){var P=pages();delete P[sl];s('utv_pages',P);toast('Deleted');go('pages');}else toast(r.status===401||r.status===403?'⚠️ Only admins can delete pages':'⚠️ Delete failed')}).catch(function(){toast('⚠️ Network error — nothing deleted')});
+}
 
 /* ---------- HOMEPAGE builder ---------- */
 var SEC_IDS=['hero','editorial','regions','featured','utahLens','dataBrief'];
@@ -648,7 +659,7 @@ function vAccess(){
   var a=acl();
   var h=head('Access');
   var me=user()||{};
-  h+='<div class="card"><h2>Grant access</h2><p class="desc">Add a Google email and choose a role. Editors manage stories &amp; pages; admins manage everything. Only <b>admins</b> can grant access &mdash; you’re signed in as <b>'+esc(me.email||'')+'</b> ('+esc(me.role||'?')+').</p>'+
+  h+='<div class="card"><h2>Grant access</h2><p class="desc">Add a Google email and choose a role. <b>Editors</b> write, edit and publish stories and upload images. <b>Admins</b> can also delete stories and manage pages, the homepage, the footer, subscribers and access. Only <b>admins</b> can grant access &mdash; you’re signed in as <b>'+esc(me.email||'')+'</b> ('+esc(me.role||'?')+').</p>'+
     '<div class="toolbar"><div class="searchbox" style="max-width:320px">&#9993;<input id="ae" type="email" placeholder="email@gmail.com"></div>'+
     '<select id="ar" style="padding:9px 12px;border:1px solid var(--g2);border-radius:9px;max-width:140px"><option value="editor">Editor</option><option value="admin">Admin</option></select>'+
     '<button class="bt bp" onclick="aAdd()">Grant</button></div></div>';
