@@ -250,6 +250,7 @@ body.has-dirty .main{padding-bottom:80px}
     <div class="side-hd">Content</div>
     <button class="nav" data-v="stories" onclick="go('stories')"><span class="ic">&#128240;</span> Stories</button>
     <button class="nav" data-v="images" onclick="go('images')"><span class="ic">&#128444;</span> Images</button>
+    <button class="nav" data-v="reports" onclick="go('reports')"><span class="ic">&#9873;</span> Reader reports <span class="badge draft" id="repCount" style="display:none;margin-left:auto"></span></button>
     <button class="nav" data-v="pages" data-admin onclick="go('pages')"><span class="ic">&#128196;</span> Pages</button>
     <div class="side-hd" data-admin>Front page</div>
     <button class="nav" data-v="homepage" data-admin onclick="go('homepage')"><span class="ic">&#127968;</span> Homepage</button>
@@ -361,6 +362,7 @@ function enter(){
   var admin=u.role==='admin';
   document.querySelectorAll('[data-admin]').forEach(function(el){el.style.display=admin?'':'none'});
   refreshAll();
+  loadReports();
   go('dashboard');
 }
 function toggleNav(force){var sd=$('side'),sc=$('scrim');var open=force===undefined?!sd.classList.contains('open'):force;sd.classList.toggle('open',open);sc.classList.toggle('show',open)}
@@ -431,6 +433,7 @@ function render(){
   if(v==='subs')return vSubs();
   if(v==='activity')return vActivity();
   if(v==='images')return vImages();
+  if(v==='reports')return vReports();
 }
 function head(title,actionsHtml){return '<div class="page-head"><h1>'+title+'</h1><div class="sp"></div>'+(actionsHtml||'')+'</div>'}
 
@@ -900,6 +903,32 @@ function uploadToLibrary(){var t=document.createElement('input');t.id='libTmp';t
 }
 
 /* ---------- ACTIVITY LOG + BACKUP (admin) ---------- */
+/* ---------- READER REPORTS ---------- */
+// Errors readers report from the "Spot an error?" line under each article.
+var REPORTS=[],repFilter='new';
+function loadReports(){return api('GET','/api/admin/reports?status=all').then(function(r){if(!r.ok)throw r.status;return r.json()}).then(function(d){REPORTS=d.reports||[];var n=REPORTS.filter(function(x){return x.status==='new'}).length;var b=$('repCount');if(b){b.textContent=n;b.style.display=n?'':'none'}if(curView==='reports')renderReports();}).catch(function(){if(curView==='reports'&&$('repList'))$('repList').innerHTML='<p class="empty">Couldn’t load reader reports (offline, or not set up yet).</p>'})}
+function vReports(){
+  var h=head('Reader reports','<button class="bt bs" onclick="loadReports()">&#8635; Refresh</button>');
+  h+='<div class="card"><p class="desc" style="margin:0">Readers send these from the “Spot an error?” line under every article. Check each one against the story. If it’s right, fix the story, add a correction note at the end, then mark it <b>Fixed</b>. If not, mark it <b>Dismissed</b>.</p></div>';
+  h+='<div class="toolbar"><div class="segment">'+[['new','New'],['resolved','Fixed'],['dismissed','Dismissed'],['all','All']].map(function(f){return '<button class="'+(repFilter===f[0]?'on':'')+'" onclick="repFilter=\''+f[0]+'\';vReports()">'+f[1]+'</button>'}).join('')+'</div></div>';
+  h+='<div class="list" id="repList"><p class="empty"><span class="spin"></span> Loading…</p></div>';
+  $('view').innerHTML=h;renderReports();loadReports();
+}
+function renderReports(){var el=$('repList');if(!el)return;var S=stories();
+  var L=REPORTS.filter(function(x){return repFilter==='all'||x.status===repFilter});
+  if(!L.length){el.innerHTML='<p class="empty">'+(repFilter==='new'?'No new reports. 🎉':'Nothing here.')+'</p>';return;}
+  var KIND={error:'Factual error',typo:'Typo / wording',broken:'Broken link or image',other:'Other'};
+  el.innerHTML=L.map(function(x){var st=S[x.story_id];var title=st?st.title:(x.story_id||'(no story)');
+    var acts=x.status==='new'?'<button class="bt bp bsm" onclick="setReport('+x.id+',\'resolved\')">Fixed</button><button class="bt bs bsm" onclick="setReport('+x.id+',\'dismissed\')">Dismiss</button>':'<button class="bt bs bsm" onclick="setReport('+x.id+',\'new\')">Reopen</button>';
+    return '<div class="row" style="align-items:flex-start"><div class="meta">'+
+      '<div class="su" style="margin:0 0 4px"><span class="badge '+(x.status==='new'?'draft':'live')+'">'+esc(x.status==='resolved'?'fixed':x.status)+'</span> '+esc(KIND[x.kind]||x.kind)+' · '+esc(String(x.created_at||'').slice(0,16))+' UTC'+(x.reporter_email?' · from <a href="mailto:'+esc(x.reporter_email)+'">'+esc(x.reporter_email)+'</a>':' · anonymous')+'</div>'+
+      '<div class="ti" style="cursor:default;white-space:normal">'+(x.story_id?'<a href="article.html?id='+encodeURIComponent(x.story_id)+'" target="_blank">'+esc(title)+'</a>':esc(title))+'</div>'+
+      '<div style="font-size:14px;color:var(--g7);white-space:pre-wrap;margin-top:6px">'+esc(x.message)+'</div>'+
+      (x.resolved_by?'<div class="su" style="margin-top:6px">'+esc(x.status==='resolved'?'Fixed':'Dismissed')+' by '+esc(x.resolved_by)+' · '+esc(String(x.resolved_at||'').slice(0,16))+'</div>':'')+
+      '</div><div class="acts">'+(x.story_id&&st?'<button class="btn-ghost" title="Edit story" onclick="editStory(\''+esc(x.story_id)+'\')">&#9998;</button>':'')+acts+'</div></div>'}).join('');
+}
+function setReport(id,status){api('PUT','/api/admin/reports/'+id,{status:status}).then(function(r){if(!r.ok)throw r.status;toast(status==='new'?'Reopened':status==='resolved'?'✅ Marked fixed':'Dismissed');return loadReports()}).catch(function(){toast('⚠️ Couldn’t update the report')})}
+
 var ACT=[];
 var ACT_WORDS={create:'created',update:'updated',delete:'deleted',publish:'published',upload:'uploaded',grant_access:'gave access to',revoke_access:'removed access for',subscribe:'subscribed',unsubscribe:'unsubscribed',send_newsletter:'sent the newsletter',remove_subscriber:'removed subscriber'};
 function vActivity(){
