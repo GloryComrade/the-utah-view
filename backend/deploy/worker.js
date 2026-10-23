@@ -282,6 +282,41 @@ async function unsubLinks(env, email) {
 function unsubHeaders(links) {
   return { 'List-Unsubscribe': `<${links.oneClick}>`, 'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click' };
 }
+// Emails a signed unsubscribe link to an address that asked to leave without
+// one (the apps' Unsubscribe form). Only for addresses on the list, and at most
+// once an hour per address, so it can't be used to spam anyone.
+async function sendUnsubConfirm(env, email) {
+  try {
+    if (!env.RESEND_API_KEY) return;
+    const sub = await env.DB.prepare('SELECT email FROM subscribers WHERE email = ?').bind(email).first();
+    if (!sub) return;
+    const throttle = 'unsub_req:' + email;
+    if (env.UTV_DATA) {
+      if (await env.UTV_DATA.get(throttle)) return;
+      await env.UTV_DATA.put(throttle, '1', { expirationTtl: 3600 });
+    }
+    const links = await unsubLinks(env, email);
+    await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        from: env.FROM_EMAIL || 'The Utah View <newsletter@theutahview.com>',
+        to: [email],
+        subject: 'Confirm: unsubscribe from The Utah View',
+        headers: unsubHeaders(links),
+        html: `<!DOCTYPE html><html><body style="margin:0;padding:24px;background:#f5f5f5;font-family:Georgia,serif">
+<table width="100%" cellpadding="0" cellspacing="0"><tr><td align="center">
+<table width="600" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:4px;max-width:600px">
+<tr><td style="background:#C4352A;padding:20px 32px;text-align:center"><p style="font-family:Helvetica,sans-serif;font-size:20px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:#fff;margin:0">THE UTAH VIEW</p></td></tr>
+<tr><td style="padding:28px 32px">
+<p style="font-size:16px;line-height:1.6;color:#333;margin:0 0 16px">Someone asked to stop sending The Utah View's monthly briefing to this address. To confirm, open this link:</p>
+<a href="${links.page}" style="display:inline-block;padding:12px 28px;background:#C4352A;color:#fff;font-family:Helvetica,sans-serif;font-size:14px;font-weight:700;text-decoration:none;border-radius:4px">Unsubscribe</a>
+<p style="font-size:14px;line-height:1.6;color:#777;margin:20px 0 0">If this wasn't you, ignore this email and you'll keep getting the briefing.</p>
+</td></tr></table></td></tr></table></body></html>`,
+      }),
+    });
+  } catch (e) { console.error('Unsubscribe confirm failed:', e); }
+}
 
 // ── Main Router ──
 
@@ -384,9 +419,11 @@ export default {
     }
 
     // POST /api/unsubscribe
-    // With a signed link (?e=&t= from an email, one-click from mail apps, or
-    // {email, token} from unsubscribe.html) the token must match the address.
-    // The plain {email} form is kept as before for the apps.
+    // Only a signed link removes an address: ?e=&t= from an email (also the
+    // mail apps' one-click), or {email, token} from unsubscribe.html. A plain
+    // {email} (the apps' form) can't prove the sender owns the address, so it
+    // emails that address a signed link instead and answers
+    // { message: 'Check your email', confirm: true }.
     if (path === '/api/unsubscribe' && method === 'POST') {
       let email = url.searchParams.get('e'), token = url.searchParams.get('t');
       if (!email) {
@@ -396,7 +433,13 @@ export default {
       }
       if (!email || !String(email).includes('@')) return new Response(JSON.stringify({ error: 'Invalid email' }), { status: 400, headers: corsHeaders() });
       const clean = String(email).toLowerCase().trim();
-      if (token !== null && token !== undefined && !timingSafeEqual(String(token), await unsubToken(env, clean))) {
+      if (!token) {
+        // Sent in the background so the reply (and its timing) is the same
+        // whether or not the address is on the list.
+        ctx.waitUntil(sendUnsubConfirm(env, clean));
+        return new Response(JSON.stringify({ message: 'Check your email', confirm: true }), { headers: corsHeaders() });
+      }
+      if (!timingSafeEqual(String(token), await unsubToken(env, clean))) {
         return new Response(JSON.stringify({ error: 'This unsubscribe link is not valid' }), { status: 403, headers: corsHeaders() });
       }
       await env.DB.prepare('DELETE FROM subscribers WHERE email = ?').bind(clean).run();
