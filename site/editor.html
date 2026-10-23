@@ -435,7 +435,7 @@ function vStoryEdit(){
       '<div class="rtb">'+
         '<button class="rb" onclick="rc(\'bold\')"><b>B</b></button><button class="rb" onclick="rc(\'italic\')"><i>I</i></button>'+
         '<button class="rb" onclick="rb(\'H3\')">H3</button><button class="rb" onclick="rb(\'P\')">¶</button><button class="rb" onclick="rb(\'BLOCKQUOTE\')">“Quote</button>'+
-        '<button class="rb" onclick="rc(\'insertUnorderedList\')">• List</button><button class="rb" onclick="iImg()">&#128247; Image</button>'+
+        '<button class="rb" onclick="rc(\'insertUnorderedList\')">• List</button><button class="rb" onclick="iLink(\'fbody\')">&#128279; Link</button><button class="rb" onclick="iImg()">&#128247; Image</button>'+
       '</div>'+
       '<div class="re" id="fbody" contenteditable="true" oninput="sPv()">'+(x.body||'<p>Start writing…</p>')+'</div></div>'+
     '<div class="toolbar" style="margin:14px 0 0">'+
@@ -450,15 +450,31 @@ function rc(c){document.execCommand(c,false,null);$('fbody').focus()}
 function rb(t){document.execCommand('formatBlock',false,'<'+t+'>');$('fbody').focus()}
 // Insert an in-body image WITH its own caption + credit, wrapped in a
 // <figure>/<figcaption> so both show under the photo (every image is credited).
-function iImg(){
+function iImg(bodyId){bodyId=bodyId||'fbody';
+  // keep the cursor position: the upload/prompt steps take focus away
+  var sel=window.getSelection(),rng=sel.rangeCount&&$(bodyId).contains(sel.anchorNode)?sel.getRangeAt(0):null;
   getImgUrl(function(url){
     var cap=(prompt('Caption for this image (what it shows) — optional:','')||'').trim();
     var cred=(prompt('Credit — e.g. "Photo: Jane Doe / Source" — optional:','')||'').trim();
     var fc=(cap||cred)?'<figcaption>'+esc(cap)+((cap&&cred)?' — ':'')+esc(cred)+'</figcaption>':'';
-    $('fbody').focus();
+    $(bodyId).focus();if(rng){sel.removeAllRanges();sel.addRange(rng)}
     document.execCommand('insertHTML',false,'<figure><img src="'+esc(url)+'" alt="'+esc(cap)+'">'+fc+'</figure><p><br></p>');
-    sPv();
+    if(bodyId==='fbody')sPv();else pPv();
   });
+}
+// Link the selected words (or insert the address itself when nothing is
+// selected). Only web, mail and site-relative links are allowed.
+function iLink(bodyId){
+  var el=$(bodyId),sel=window.getSelection();
+  var rng=sel.rangeCount&&el.contains(sel.anchorNode)?sel.getRangeAt(0).cloneRange():null;
+  var url=(prompt('Link address (e.g. https://example.com or /article.html?id=…):','https://')||'').trim();
+  if(!url||url==='https://')return;
+  if(/^www\./i.test(url))url='https://'+url;
+  if(!/^(https?:\/\/|mailto:|\/|#)/i.test(url)){toast('⚠️ Use a full address starting with https://');return;}
+  el.focus();if(rng){sel.removeAllRanges();sel.addRange(rng)}
+  if(rng&&!rng.collapsed)document.execCommand('createLink',false,url);
+  else document.execCommand('insertHTML',false,'<a href="'+esc(url)+'">'+esc(url.replace(/^https?:\/\//,''))+'</a>&nbsp;');
+  if(bodyId==='fbody')sPv();else pPv();
 }
 function getImgUrl(cb){
   if(confirm('OK = upload an image file.   Cancel = paste an image URL.')){
@@ -528,7 +544,7 @@ function vPageEdit(){
   h+='<div class="card"><div class="fl"><label>Title</label><input id="pt" value="'+esc(p.title)+'" oninput="pPv()"></div>'+
     '<div class="fl"><label>Subtitle</label><input id="psub" value="'+esc(p.subtitle)+'" oninput="pPv()"></div>'+
     (editSlug?'':'<div class="fl"><label>URL slug</label><input id="pslug" placeholder="e.g. our-mission"><div class="hint">Lowercase, no spaces. Leave blank to auto-generate.</div></div>')+
-    '<div class="fl"><label>Body</label><div class="rtb"><button class="rb" onclick="rc2(\'bold\')"><b>B</b></button><button class="rb" onclick="rc2(\'italic\')"><i>I</i></button><button class="rb" onclick="rb2(\'H3\')">H3</button><button class="rb" onclick="rb2(\'P\')">¶</button></div>'+
+    '<div class="fl"><label>Body</label><div class="rtb"><button class="rb" onclick="rc2(\'bold\')"><b>B</b></button><button class="rb" onclick="rc2(\'italic\')"><i>I</i></button><button class="rb" onclick="rb2(\'H3\')">H3</button><button class="rb" onclick="rb2(\'P\')">¶</button><button class="rb" onclick="rb2(\'BLOCKQUOTE\')">“Quote</button><button class="rb" onclick="rc2(\'insertUnorderedList\')">• List</button><button class="rb" onclick="iLink(\'pbody\')">&#128279; Link</button><button class="rb" onclick="iImg(\'pbody\')">&#128247; Image</button></div>'+
     '<div class="re" id="pbody" contenteditable="true" oninput="pPv()">'+(p.body||'<p>Start writing…</p>')+'</div></div>'+
     '<div class="toolbar" style="margin-top:14px"><button class="bt bp" onclick="savePage()">💾 Save page</button>'+(editSlug?'<button class="bt bd bsm" style="margin-left:auto" onclick="delPage(\''+editSlug+'\')">Delete</button>':'')+'</div></div>'+
     '<div class="pv"><div class="pvh">Preview</div><div class="pvb" id="ppv"></div></div>';
