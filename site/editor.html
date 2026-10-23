@@ -183,9 +183,68 @@ body.has-dirty .main{padding-bottom:80px}
 .restore .sp{flex:1}
 .status-pill{font-size:11px;font-weight:700;padding:4px 10px;border-radius:999px;text-transform:uppercase;letter-spacing:.4px}
 
+/* ---------- writing screen ---------- */
+/* A writing column set like the article, with the story's settings in a rail
+   beside it. Under 1000px the rail moves above the text and folds away. */
+.wrap.wide{max-width:1240px}
+.writer{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:22px;align-items:start}
+.wcol{background:var(--w);border:1px solid var(--g2);border-radius:var(--rad);box-shadow:var(--sh);padding:28px 40px 40px;min-width:0}
+.w-kick{font-size:11px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:var(--red);margin-bottom:10px}
+.w-hl,.w-dek{display:block;width:100%;border:none;outline:none;resize:none;overflow:hidden;background:none;font-family:var(--f);color:var(--bk);padding:0}
+.w-hl{font-size:34px;font-weight:700;line-height:1.15;margin-bottom:10px}
+.w-dek{font-size:19px;line-height:1.45;color:var(--g5);margin-bottom:18px}
+.w-hl::placeholder,.w-dek::placeholder{color:var(--g3)}
+.w-addr{font-size:12.5px;color:var(--g5);margin:-6px 0 18px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.w-addr code{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:var(--g1);padding:2px 6px;border-radius:5px;color:var(--g7);word-break:break-all}
+.w-addr input{font-family:ui-monospace,Menlo,monospace;font-size:12px;padding:3px 6px;border:1px solid var(--g2);border-radius:5px;min-width:160px;flex:1;max-width:340px}
+.w-tools{position:sticky;top:0;z-index:5;display:flex;gap:3px;flex-wrap:wrap;padding:7px 0;margin-bottom:6px;background:var(--w);border-bottom:1px solid var(--g1)}
+.w-tools .rb{border-color:transparent;background:none}.w-tools .rb:hover{background:var(--g1)}
+.w-tools .sep{width:1px;background:var(--g2);margin:3px 4px}
+.re.w-body{border:none;border-radius:0;padding:6px 0 0;min-height:52vh;max-height:none;overflow:visible;font-size:18.5px;line-height:1.75}
+.re.w-body:focus{border:none}
+.re.w-body:empty:before{content:attr(data-ph);color:var(--g3)}
+.re a{color:var(--red);text-decoration:underline}
+.wrail{position:sticky;top:12px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.rcard{background:var(--w);border:1px solid var(--g2);border-radius:var(--rad);padding:14px 16px}
+.rcard h3{font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--g5);margin-bottom:10px}
+.rcard .fl{margin-bottom:10px}.rcard .fl:last-child{margin-bottom:0}
+.rcard .fl input,.rcard .fl select{padding:8px 10px;font-size:14px}
+.rcard .toolbar{margin:0;gap:8px}
+.rcard .toolbar .bt{flex:1;justify-content:center}
+.ract-foot{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:10px;font-size:12.5px;color:var(--g5)}
+.linkish{border:none;background:none;color:var(--red);font-weight:600;font-size:13px;padding:0;text-decoration:underline}
+.linkish.muted{color:var(--g5)}
+.thumb{width:100%;aspect-ratio:16/10;border-radius:8px;background:var(--g1) center/cover no-repeat;border:1px dashed var(--g3);display:flex;align-items:center;justify-content:center;color:var(--g4);font-size:13px;cursor:pointer;margin-bottom:10px}
+.thumb.has{border-style:solid;border-color:var(--g2)}
+.rdet-tg{display:none}
+@media(max-width:1000px){
+  .writer{grid-template-columns:minmax(0,1fr)}
+  .wrail{position:static;order:-1}
+  .rdet-tg{display:flex;width:100%;justify-content:space-between;align-items:center;border:none;background:none;padding:0;font-size:14px;font-weight:700;color:var(--bk)}
+  .rdet:not(.open) .rdet-body{display:none}
+  .rdet.open .rdet-tg{margin-bottom:12px}
+  .wcol{padding:20px 18px 28px}
+  .w-hl{font-size:27px}.w-dek{font-size:17px}
+}
+/* floating toolbar over a text selection (mouse and trackpad only) */
+.selbar{position:absolute;z-index:120;display:none;gap:2px;background:#141414;border-radius:8px;padding:4px;box-shadow:0 6px 18px rgba(0,0,0,.25)}
+.selbar.on{display:flex}
+.selbar button{border:none;background:none;color:#fff;font-size:13px;font-weight:600;padding:6px 9px;border-radius:5px}
+.selbar button:hover{background:#3a3a3a}
+/* image panel */
+.imgpick{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px;max-height:220px;overflow-y:auto;margin:8px 0 4px}
+.imgpick button{padding:0;border:2px solid transparent;border-radius:6px;background:var(--g1);aspect-ratio:1;overflow:hidden}
+.imgpick button.on{border-color:var(--red)}
+.imgpick img{width:100%;height:100%;object-fit:cover;display:block}
+.ipv{width:100%;max-height:180px;object-fit:contain;background:var(--g1);border-radius:8px;display:block;margin-bottom:10px}
+.modal .fl label{margin-bottom:4px}
+.modal .fl input{padding:9px 11px}
+.req{color:var(--red)}
+.pvbanner{position:sticky;top:0;z-index:40}
+
 /* ---------- dialog ---------- */
 .modal-bg{position:fixed;inset:0;z-index:200;background:rgba(20,20,20,.45);display:flex;align-items:center;justify-content:center;padding:18px}
-.modal{width:100%;max-width:480px;max-height:calc(100dvh - 36px);overflow-y:auto;background:var(--w);border-radius:14px;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.modal{width:100%;max-width:520px;max-height:calc(100dvh - 36px);overflow-y:auto;background:var(--w);border-radius:14px;box-shadow:0 20px 60px rgba(0,0,0,.3)}
 .modal h2{font-size:18px;font-weight:800;padding:20px 22px 4px;line-height:1.3}
 .modal .mb{padding:4px 22px 16px;font-size:14px;color:var(--g6)}
 .modal .mf{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;padding:14px 22px;border-top:1px solid var(--g1);background:var(--g0)}
@@ -315,9 +374,11 @@ function modal(title,body,buttons){closeModal();var bg=document.createElement('d
   bg.innerHTML='<div class="modal" role="dialog" aria-modal="true" aria-labelledby="mTitle"><h2 id="mTitle">'+title+'</h2><div class="mb">'+body+'</div><div class="mf">'+
     buttons.map(function(b,i){return '<button class="bt '+(b.cls||'bs')+'" id="mBtn'+i+'"'+(b.disabled?' disabled style="opacity:.45;cursor:not-allowed"':'')+'>'+b.label+'</button>'}).join('')+'</div></div>';
   document.body.appendChild(bg);
-  buttons.forEach(function(b,i){$('mBtn'+i).onclick=function(){if(b.disabled)return;closeModal();if(b.run)b.run()}});
+  // run() gets the dialog's field values (by id), read before it closes.
+  buttons.forEach(function(b,i){$('mBtn'+i).onclick=function(){if(b.disabled)return;var v={};bg.querySelectorAll('input,textarea,select').forEach(function(f){if(f.id)v[f.id]=f.type==='checkbox'?f.checked:f.value});if(b.check&&!b.check(v))return;closeModal();if(b.run)b.run(v)}});
   bg.addEventListener('click',function(e){if(e.target===bg)closeModal()});
-  var f=buttons.length-1;while(f>0&&buttons[f].disabled)f--;$('mBtn'+f).focus();
+  var first=bg.querySelector('.mb input:not([type=hidden]),.mb textarea');if(first)first.focus();else{var f=buttons.length-1;while(f>0&&buttons[f].disabled)f--;$('mBtn'+f).focus();}
+  bg.addEventListener('keydown',function(e){if(e.key==='Enter'&&e.target.tagName==='INPUT'){e.preventDefault();var f=buttons.length-1;while(f>0&&buttons[f].disabled)f--;$('mBtn'+f).click()}});
 }
 function closeModal(){var m=$('modalBg');if(m)m.remove()}
 document.addEventListener('keydown',function(e){if(e.key==='Escape'&&$('modalBg'))closeModal()});
@@ -399,6 +460,48 @@ window.addEventListener('beforeunload',function(e){if(dirty){autosave();e.preven
 document.addEventListener('input',function(e){if($('view')&&$('view').contains(e.target))markDirty()});
 document.addEventListener('change',function(e){if($('view')&&$('view').contains(e.target)&&e.target.tagName==='SELECT')markDirty()});
 
+/* ---------- clean paste ---------- */
+// Text pasted from Google Docs, Word or a web page keeps paragraphs, bold,
+// italics, links, subheads, lists and quotes; fonts, colors and sizes go.
+var PASTE_KEEP={P:'p',BR:'br',STRONG:'strong',B:'strong',EM:'em',I:'em',A:'a',H1:'h3',H2:'h3',H3:'h3',H4:'h3',H5:'h3',H6:'h3',UL:'ul',OL:'ol',LI:'li',BLOCKQUOTE:'blockquote',DIV:'p'};
+function cleanHtml(html){var src=document.createElement('div');src.innerHTML=html;var out=document.createElement('div');
+  function walk(from,to){[].forEach.call(from.childNodes,function(n){
+    if(n.nodeType===3){to.appendChild(document.createTextNode(n.nodeValue.replace(/ /g,' ')));return}
+    if(n.nodeType!==1)return;var tag=n.tagName,st=n.getAttribute('style')||'';
+    if(/^(SCRIPT|STYLE|META|LINK|TITLE|O:P|XML)$/.test(tag))return;
+    var k=PASTE_KEEP[tag];
+    if(tag==='B'&&/font-weight:\s*normal/.test(st))k=null; // Google Docs wraps everything in <b style="font-weight:normal">
+    if(tag==='SPAN'||!k){var bold=/font-weight:\s*(bold|[6-9]00)/.test(st),ital=/font-style:\s*italic/.test(st),t=to;
+      if(bold){var b=document.createElement('strong');t.appendChild(b);t=b}if(ital){var i=document.createElement('em');t.appendChild(i);t=i}walk(n,t);return}
+    if(k==='p'&&to!==out&&to.tagName!=='LI'&&to.tagName!=='BLOCKQUOTE'){walk(n,to);to.appendChild(document.createElement('br'));return}
+    var e=document.createElement(k);
+    if(k==='a'){var h=normUrl(n.getAttribute('href'));if(!h){walk(n,to);return}e.setAttribute('href',h)}
+    to.appendChild(e);walk(n,e)})}
+  walk(src,out);
+  out.querySelectorAll('p,h3,li,strong,em').forEach(function(e){if(!e.textContent.trim()&&!e.querySelector('img'))e.remove()});
+  return out.innerHTML.replace(/(<br>)+(<\/p>)/g,'$2')}
+function textToHtml(t){return String(t||'').replace(/\r/g,'').split(/\n{2,}/).map(function(p){return p.trim()?'<p>'+esc(p.trim()).replace(/\n/g,'<br>')+'</p>':''}).join('')}
+document.addEventListener('paste',function(e){var el=e.target.closest&&e.target.closest('#fbody,#pbody');if(!el)return;var cd=e.clipboardData;if(!cd)return;
+  var html=cd.getData('text/html'),txt=cd.getData('text/plain');if(!html&&!txt)return;e.preventDefault();
+  var clean=html?cleanHtml(html):(/\n/.test(txt)?textToHtml(txt):esc(txt));document.execCommand('insertHTML',false,clean||esc(txt));sPvAny(el.id)});
+/* ---------- selection toolbar ---------- */
+// Select words in the story or page text to get Bold, Italic, Link, Subhead
+// and Quote right there. Touch screens keep their own selection menu.
+var selbar=null;
+function selbarFor(){var s=window.getSelection();if(!s.rangeCount||s.isCollapsed)return null;var el=(s.anchorNode.nodeType===1?s.anchorNode:s.anchorNode.parentNode).closest&&(s.anchorNode.nodeType===1?s.anchorNode:s.anchorNode.parentNode).closest('#fbody,#pbody');return el}
+document.addEventListener('selectionchange',function(){if(!window.matchMedia('(pointer:fine)').matches)return;
+  if(!selbar){selbar=document.createElement('div');selbar.className='selbar';selbar.setAttribute('role','toolbar');selbar.setAttribute('aria-label','Format selection');
+    selbar.innerHTML='<button data-c="bold"><b>B</b></button><button data-c="italic"><i>I</i></button><button data-c="link">Link</button><button data-c="H3">Subhead</button><button data-c="BLOCKQUOTE">Quote</button>';
+    selbar.addEventListener('mousedown',function(e){e.preventDefault()});
+    selbar.addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;var el=selbarFor();if(!el)return;var c=b.dataset.c;
+      if(c==='link')iLink(el.id);else if(c==='bold'||c==='italic')document.execCommand(c,false,null);else{var cur=document.queryCommandValue('formatBlock').toUpperCase();document.execCommand('formatBlock',false,'<'+(cur===c?'P':c)+'>')}
+      selbar.classList.remove('on');sPvAny(el.id);markDirty()});
+    document.body.appendChild(selbar)}
+  var el=selbarFor();if(!el||$('modalBg')){selbar.classList.remove('on');return}
+  var r=window.getSelection().getRangeAt(0).getBoundingClientRect();if(!r.width){selbar.classList.remove('on');return}
+  selbar.classList.add('on');var w=selbar.offsetWidth;selbar.style.left=Math.max(8,Math.min(window.innerWidth-w-8,r.left+r.width/2-w/2+window.scrollX))+'px';selbar.style.top=(r.top+window.scrollY-selbar.offsetHeight-8)+'px'});
+document.addEventListener('keydown',function(e){if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){var el=e.target.closest&&e.target.closest('#fbody,#pbody');if(el){e.preventDefault();iLink(el.id)}}});
+
 /* ---------- data refresh ---------- */
 function refreshAll(){
   api('GET','/api/admin/stories').then(function(r){return r.ok?r.json():null}).then(function(d){if(d&&d.stories){apiOk=true;var S=stories();var N={};d.stories.forEach(function(x){var old=S[x.id]||{};N[x.id]=x;if(!x.body&&old.body)N[x.id].body=old.body});s('utv_stories',N);if(curView==='dashboard')vDashboard();else if(curView==='stories')renderStoryList();}}).catch(function(){});
@@ -420,6 +523,7 @@ function goNow(v){if(!isAdmin()&&ADMIN_VIEWS.indexOf(v)>=0)v='dashboard';curView
 function render(){
   if(!isAdmin()&&ADMIN_VIEWS.indexOf(curView)>=0)curView='dashboard';
   var v=curView,nv=v==='story'?'stories':v==='page'?'pages':v;
+  if($('view'))$('view').parentNode.classList.toggle('wide',v==='story');if(v!=='story')previewOpen=false;
   document.querySelectorAll('.nav').forEach(function(n){n.classList.toggle('on',n.getAttribute('data-v')===nv)});
   if(!EDIT_VIEWS[v])clearDirty();
   if(v==='dashboard')return vDashboard();
@@ -537,37 +641,80 @@ function vStoryEdit(){
   if(!x)x={title:'',author:user()?user().name:'',region:'Global',summary:'',body:'',status:'draft',date:today(),read_time:''};
   var regions=['Global','The Americas','Europe','Asia-Pacific','Middle East','Africa','The Utah Lens','Analysis','Opinion','Data'];if(x.region&&regions.indexOf(x.region)<0)regions.push(x.region);
   var live=!!(editId&&x.status==='published');
+  var rt=x.read_time||x.readTime||'',body=x.body&&x.body!=='<p>Start writing…</p>'?x.body:'';
+  $('view').parentNode.classList.add('wide');
   var h=head((editId?'Edit story':'New story')+' <span class="status-pill badge '+(live?'live':'draft')+'">'+(live?'Live':editId?'Draft':'Not saved yet')+'</span>','<button class="bt bs" onclick="go(\'stories\')">&larr; Back</button>');
-  h+='<div class="card">'+
-    '<div class="row2"><div class="fl"><label>Headline</label><input id="ft" value="'+esc(x.title)+'" oninput="sPv()" placeholder="Story headline"></div>'+
-    '<div class="fl"><label>Author</label><input id="fa" value="'+esc(x.author)+'" oninput="sPv()"></div></div>'+
-    '<div class="row3"><div class="fl"><label>Region / section</label><select id="fr" onchange="sPv()">'+regions.map(function(r){return '<option'+sel(x.region,r)+'>'+r+'</option>'}).join('')+'</select></div>'+
-    '<div class="fl"><label>Date</label><input id="fd" type="date" value="'+esc(x.date||today())+'"></div>'+
-    '<div class="fl"><label>Read time</label><input id="frt" value="'+esc(x.read_time||x.readTime||'')+'" placeholder="e.g. 6 min"></div></div>'+
-    '<div class="fl"><label>Summary / dek</label><input id="fsum" value="'+esc(x.summary)+'" oninput="sPv()" placeholder="One-sentence summary"></div>'+
-    '<div class="fl"><label>Lead image</label><input id="fimg" value="'+esc(x.image_url||'')+'" placeholder="Image URL (or upload)" oninput="sPv()"><button class="bt bs bsm" style="margin-top:8px" onclick="uploadImage(\'fimg\')">&#8679; Upload image</button></div>'+
-    '<div class="row2"><div class="fl"><label>Image caption</label><input id="fcap" value="'+esc(x.image_caption||'')+'" placeholder="What the photo shows" oninput="sPv()"></div>'+
-    '<div class="fl"><label>Image credit</label><input id="fcred" value="'+esc(x.image_credit||'')+'" placeholder="Photo: Name / Source" oninput="sPv()"></div></div>'+
-    '<div class="fl"><label>Body</label>'+
-      '<div class="rtb">'+
-        '<button class="rb" onclick="rc(\'bold\')"><b>B</b></button><button class="rb" onclick="rc(\'italic\')"><i>I</i></button>'+
-        '<button class="rb" onclick="rb(\'H3\')">H3</button><button class="rb" onclick="rb(\'P\')">¶</button><button class="rb" onclick="rb(\'BLOCKQUOTE\')">“Quote</button>'+
-        '<button class="rb" onclick="rc(\'insertUnorderedList\')">• List</button><button class="rb" onclick="iLink(\'fbody\')">&#128279; Link</button><button class="rb" onclick="iImg()">&#128247; Image</button>'+
-      '</div>'+
-      '<div class="re" id="fbody" contenteditable="true" oninput="sPv()">'+(x.body||'<p>Start writing…</p>')+'</div></div>'+
-    '<div class="toolbar" style="margin:14px 0 0">'+
+  h+='<div class="writer">';
+  // ---- writing column: headline, summary, body, set like the article ----
+  h+='<div class="wcol">'+
+    '<div class="w-kick" id="wKick">'+esc(x.region||'Global')+'</div>'+
+    '<label class="sr" for="ft" style="position:absolute;left:-9999px">Headline</label><textarea id="ft" class="w-hl" rows="1" placeholder="Headline" oninput="sPv()">'+esc(x.title)+'</textarea>'+
+    '<label for="fsum" style="position:absolute;left:-9999px">Summary</label><textarea id="fsum" class="w-dek" rows="1" placeholder="One-sentence summary. It shows under the headline and in shares." oninput="sPv()">'+esc(x.summary)+'</textarea>'+
+    '<div class="w-addr" id="wAddr"></div>'+
+    '<div class="w-tools" role="toolbar" aria-label="Formatting">'+
+      '<button class="rb" title="Bold (Ctrl+B)" aria-label="Bold" onclick="rc(\'bold\')"><b>B</b></button><button class="rb" title="Italic (Ctrl+I)" aria-label="Italic" onclick="rc(\'italic\')"><i>I</i></button>'+
+      '<button class="rb" title="Link (Ctrl+K)" onclick="iLink(\'fbody\')">Link</button><span class="sep"></span>'+
+      '<button class="rb" title="Subheading" onclick="rb(\'H3\')">Subhead</button><button class="rb" title="Normal text" onclick="rb(\'P\')">Text</button><button class="rb" title="Pull quote" onclick="rb(\'BLOCKQUOTE\')">Quote</button>'+
+      '<button class="rb" title="Bulleted list" onclick="rc(\'insertUnorderedList\')">List</button><span class="sep"></span>'+
+      '<button class="rb" title="Add a photo" onclick="iImg()">Photo</button><button class="rb" title="Undo (Ctrl+Z)" aria-label="Undo" onclick="rc(\'undo\')">&#8630;</button>'+
+    '</div>'+
+    '<div class="re w-body" id="fbody" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Story text" data-ph="Start writing. Paste from Google Docs or Word and the formatting is cleaned up." oninput="sPv()">'+body+'</div>'+
+  '</div>';
+  // ---- rail: actions, details, photo ----
+  h+='<aside class="wrail" aria-label="Story settings">'+
+    '<div class="rcard"><div class="toolbar">'+
       // A live story is updated in place; it never drops back to draft by accident.
       (live?'<button class="bt bp" onclick="updateLive()">Update</button><button class="bt bs" onclick="askUnpublish()">Unpublish…</button>'
            :'<button class="bt bp" onclick="openPublish()">Publish…</button><button class="bt bs" onclick="saveFromForm(\'draft\')">Save draft</button>')+
-      (editId&&isAdmin()?'<button class="bt bd bsm" style="margin-left:auto" onclick="delStory(\''+editId+'\')">Delete</button>':'')+
+    '</div><div class="ract-foot"><button class="linkish" onclick="openPreview()">Preview the article &#8599;</button><span id="wCount"></span></div>'+
+    (editId&&isAdmin()?'<div class="ract-foot" style="justify-content:flex-end"><button class="linkish muted" onclick="delStory(\''+editId+'\')">Delete story</button></div>':'')+'</div>'+
+    '<div class="rcard rdet'+(editId?'':' open')+'" id="rdet"><button class="rdet-tg" onclick="$(\'rdet\').classList.toggle(\'open\')" aria-controls="rdetBody"><span>Story details</span><span class="su" id="rdetSum"></span></button><div class="rdet-body" id="rdetBody">'+
+      '<div class="fl"><label for="fr">Section</label><select id="fr" onchange="sPv()">'+regions.map(function(r){return '<option'+sel(x.region,r)+'>'+r+'</option>'}).join('')+'</select></div>'+
+      '<div class="fl"><label for="fa">Author <span class="req">*</span></label><input id="fa" value="'+esc(x.author)+'" oninput="sPv()"></div>'+
+      '<div class="row2"><div class="fl"><label for="fd">Date</label><input id="fd" type="date" value="'+esc(x.date||today())+'"></div>'+
+      '<div class="fl"><label for="frt">Read time</label><input id="frt" value="'+esc(rt)+'" placeholder="auto" data-auto="'+(rt&&rt!==autoRead(body)?'0':'1')+'" oninput="this.dataset.auto=this.value.trim()?\'0\':\'1\';sPv()"></div></div>'+
+      '<div class="fl" style="margin-top:4px"><label>Lead photo</label><div class="thumb" id="wThumb" onclick="pickLead()" role="button" tabindex="0" aria-label="Choose the lead photo">Add a photo</div>'+
+        '<div style="display:flex;gap:12px;margin:-2px 0 10px"><button class="linkish" onclick="pickLead()" id="wLeadBtn">Choose photo</button><button class="linkish muted" id="wLeadRm" onclick="$(\'fimg\').value=\'\';sPv();markDirty()">Remove</button></div>'+
+        '<input id="fimg" type="hidden" value="'+esc(x.image_url||'')+'"></div>'+
+      '<div class="fl"><label for="fcap">Photo caption</label><input id="fcap" value="'+esc(x.image_caption||'')+'" placeholder="What the photo shows" oninput="sPv()"></div>'+
+      '<div class="fl"><label for="fcred">Photo credit</label><input id="fcred" value="'+esc(x.image_credit||'')+'" placeholder="Photo: Name / Source" oninput="sPv()"></div>'+
     '</div></div>'+
-    '<div class="pv"><div class="pvh">Live preview</div><div class="pvb" id="spv"></div></div>';
+  '</aside></div>';
   $('view').innerHTML=h;sPv();
+  ['ft','fsum'].forEach(function(id){var t=$(id);t.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();(id==='ft'?$('fsum'):$('fbody')).focus()}})});
   offerRestore('utv_local_story_'+(editId||'new'),x,function(c){['title','author','region','date','read_time','summary','image_url','image_caption','image_credit'].forEach(function(f,i){var el=$(['ft','fa','fr','fd','frt','fsum','fimg','fcap','fcred'][i]);if(el&&c[f]!=null)el.value=c[f]});if(c.body!=null)$('fbody').innerHTML=c.body;sPv()});
 }
+// Reading time at about 230 words a minute.
+function autoRead(html){var d=document.createElement('div');d.innerHTML=html||'';var w=(d.textContent||'').trim().split(/\s+/).filter(Boolean).length;return w?Math.max(1,Math.round(w/230))+' min':''}
+function slugFrom(t){return String(t||'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').substring(0,60)}
+// Keep the rail in step with the text: section label, word count, automatic
+// read time, photo thumbnail, the story's web address, and an open preview.
+function sPv(){if(!$('fbody'))return;
+  ['ft','fsum'].forEach(function(id){var t=$(id);if(t){t.style.height='auto';t.style.height=t.scrollHeight+'px'}});
+  if($('wKick'))$('wKick').textContent=$('fr').value;
+  var w=wordCount();$('wCount').textContent=w?w.toLocaleString()+(w===1?' word':' words'):'';
+  var rt=$('frt');if(rt.dataset.auto==='1'){rt.value='';rt.placeholder=autoRead($('fbody').innerHTML)||'auto';}
+  var img=$('fimg').value.trim(),th=$('wThumb');th.classList.toggle('has',!!img);th.style.backgroundImage=img?'url("'+img.replace(/"/g,'%22')+'")':'';th.textContent=img?'':'Add a photo';
+  $('wLeadBtn').textContent=img?'Change photo':'Choose photo';$('wLeadRm').style.display=img?'':'none';
+  if($('rdetSum'))$('rdetSum').textContent=$('fr').value+' · '+($('fa').value||'no author');
+  var a=$('wAddr');if(a){if(editId)a.innerHTML='<span>Web address</span><code>theutahview.com/article?id='+esc(editId)+'</code>';
+    else{if(!$('fslug')){a.innerHTML='<label for="fslug">Web address</label><code>theutahview.com/article?id=</code><input id="fslug" placeholder="made from the headline" oninput="this.dataset.touched=this.value?1:\'\';this.value=slugFrom(this.value)||this.value.toLowerCase()">';}
+      var sl=$('fslug');if(!sl.dataset.touched)sl.value=slugFrom($('ft').value);}}
+  if(previewOpen)pushPreview();
+}
+// Preview opens the real article page with this unsaved version, and keeps it
+// up to date while you type. Only this browser sees it.
+var previewOpen=false,_pvT=null;
+function previewData(){var d=collectStory(storyIsLive()?'published':'draft');if(!d.read_time)d.read_time=d.readTime=autoRead(d.body);return d}
+function pushPreview(){clearTimeout(_pvT);_pvT=setTimeout(function(){try{localStorage.setItem('utv_preview',JSON.stringify(previewData()))}catch(e){}},300)}
+function openPreview(){if(!$('ft').value.trim()){toast('⚠️ Add a headline first, then preview.');fixField('ft');return;}
+  try{localStorage.setItem('utv_preview',JSON.stringify(previewData()))}catch(e){toast('⚠️ This browser blocked the preview.');return;}
+  previewOpen=true;window.open('article.html?preview=1','utvpreview');
+}
+function pickLead(){imagePanel({url:$('fimg').value.trim(),cap:$('fcap').value.trim(),cred:$('fcred').value.trim(),lead:true},function(v){$('fimg').value=v.url;$('fcap').value=v.cap;$('fcred').value=v.cred;sPv();markDirty()})}
 /* ---------- publish step ---------- */
-function wordCount(){var t=($('fbody')?$('fbody').innerText:'').replace(/Start writing…/,'').trim();return t?t.split(/\s+/).length:0}
-function fixField(id){var el=$(id);if(el){el.scrollIntoView({block:'center'});el.focus()}}
+function wordCount(){var t=($('fbody')?$('fbody').innerText:'').trim();return t?t.split(/\s+/).length:0}
+function fixField(id){if(id==='fimg'&&$('wLeadBtn'))id='wLeadBtn';var el=$(id);if(!el)return;var d=$('rdet');if(d&&d.contains(el))d.classList.add('open');el.scrollIntoView({block:'center'});el.focus()}
 // Publish opens a short checklist and says exactly what going live does,
 // because the first publish also notifies app readers and that can't be recalled.
 function openPublish(){
@@ -579,7 +726,7 @@ function openPublish(){
     [sum?'y':'w',sum?'Summary':'No summary. It shows under the headline on the front page and in shares.','fsum'],
     [img?'y':'w',img?'Lead photo':'No lead photo. The story shows without a picture.','fimg'],
     [!img||cred?'y':'w',!img?'Photo credit not needed':cred?'Photo credit: '+esc(cred):'The photo has no credit.','fcred'],
-    [w>=50?'y':'w',w+(w===1?' word':' words')+(w?' · about '+Math.max(1,Math.round(w/230))+' min read':''),'fbody']
+    [w>=50?'y':'w',w+(w===1?' word':' words')+(w?' · '+($('frt').value.trim()||autoRead($('fbody').innerHTML))+' read':''),'fbody']
   ];
   var blocked=!t||!a;
   var body='<ul class="chk">'+items.map(function(i){return '<li><span class="m '+i[0]+'">'+(i[0]==='y'?'✓':'!')+'</span><span style="flex:1">'+i[1]+'</span>'+(i[0]!=='y'&&i[2]?'<button class="lk" onclick="closeModal();fixField(\''+i[2]+'\')">'+(i[0]==='n'?'Add':'Fix')+'</button>':'')+'</li>'}).join('')+'</ul>'+
@@ -604,49 +751,77 @@ function checkFresh(next){
   }).catch(function(){next()});
 }
 function fmtTime(ts){try{var d=new Date(String(ts).replace(' ','T')+(/Z|[+-]\d\d:?\d\d$/.test(ts)?'':'Z'));return d.toLocaleString([],{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})}catch(e){return ts}}
-function rc(c){document.execCommand(c,false,null);$('fbody').focus()}
+function rc(c){$('fbody').focus();document.execCommand(c,false,null);sPv();if(c==='undo')markDirty()}
 function rb(t){document.execCommand('formatBlock',false,'<'+t+'>');$('fbody').focus()}
 // Insert an in-body image WITH its own caption + credit, wrapped in a
 // <figure>/<figcaption> so both show under the photo (every image is credited).
 function iImg(bodyId){bodyId=bodyId||'fbody';
-  // keep the cursor position: the upload/prompt steps take focus away
+  // keep the cursor position: the panel takes focus away
   var sel=window.getSelection(),rng=sel.rangeCount&&$(bodyId).contains(sel.anchorNode)?sel.getRangeAt(0):null;
-  getImgUrl(function(url){
-    var cap=(prompt('Caption for this image (what it shows) — optional:','')||'').trim();
-    var cred=(prompt('Credit — e.g. "Photo: Jane Doe / Source" — optional:','')||'').trim();
-    var fc=(cap||cred)?'<figcaption>'+esc(cap)+((cap&&cred)?' — ':'')+esc(cred)+'</figcaption>':'';
+  imagePanel({},function(v){
+    var fc=(v.cap||v.cred)?'<figcaption>'+esc(v.cap)+((v.cap&&v.cred)?' — ':'')+esc(v.cred)+'</figcaption>':'';
     $(bodyId).focus();if(rng){sel.removeAllRanges();sel.addRange(rng)}
-    document.execCommand('insertHTML',false,'<figure><img src="'+esc(url)+'" alt="'+esc(cap)+'">'+fc+'</figure><p><br></p>');
-    if(bodyId==='fbody')sPv();else pPv();
+    document.execCommand('insertHTML',false,'<figure><img src="'+esc(v.url)+'" alt="'+esc(v.alt||v.cap)+'">'+fc+'</figure><p><br></p>');
+    sPvAny(bodyId);markDirty();
   });
+}
+// One panel for every photo: upload a file, pick one already uploaded, or
+// paste an address; then caption, credit (required) and a description for
+// screen readers. done({url,cap,cred,alt}) runs on Insert.
+function imagePanel(cur,done){
+  var body='<img class="ipv" id="ipv" alt="" '+(cur.url?'src="'+esc(cur.url)+'"':'style="display:none"')+'>'+
+    '<input type="hidden" id="iUrl" value="'+esc(cur.url||'')+'">'+
+    '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><button class="bt bs bsm" id="iUp">&#8679; Upload from this device</button><span class="su" id="iMsg"></span></div>'+
+    '<div class="su" style="margin-top:12px">Or pick one already uploaded:</div><div class="imgpick" id="iLib"><p class="su">Loading…</p></div>'+
+    '<div class="fl" style="margin-top:8px"><label for="iAddr">Or paste an image address</label><input id="iAddr" placeholder="https://…" value=""></div>'+
+    '<div class="fl"><label for="iCap">Caption</label><input id="iCap" value="'+esc(cur.cap||'')+'" placeholder="What the photo shows"></div>'+
+    '<div class="fl"><label for="iCred">Credit <span class="req">*</span></label><input id="iCred" value="'+esc(cur.cred||'')+'" placeholder="Photo: Name / Source"></div>'+
+    (cur.lead?'':'<div class="fl"><label for="iAlt">Description for screen readers</label><input id="iAlt" placeholder="Leave blank to use the caption"></div>')+
+    '<p id="iErr" style="color:var(--red);font-size:13px"></p>';
+  modal(cur.lead?'Lead photo':'Add a photo',body,[{label:'Cancel'},{label:cur.lead?'Use this photo':'Insert photo',cls:'bp',
+    check:function(v){var u=(v.iAddr||'').trim()||v.iUrl;if(!u){$('iErr').textContent='Choose a photo first.';return false}if(!/^(https?:\/\/|\/)/i.test(u)){$('iErr').textContent='The image address should start with https://';return false}if(!(v.iCred||'').trim()){$('iErr').textContent='Add a credit. Every photo on the site is credited.';$('iCred').focus();return false}return true},
+    run:function(v){done({url:(v.iAddr||'').trim()||v.iUrl,cap:(v.iCap||'').trim(),cred:(v.iCred||'').trim(),alt:(v.iAlt||'').trim()})}}]);
+  function show(u){$('iUrl').value=u;var p=$('ipv');p.src=u;p.style.display=u?'':'none';document.querySelectorAll('#iLib button').forEach(function(b){b.classList.toggle('on',b.dataset.u===u)})}
+  $('iAddr').addEventListener('input',function(){var u=this.value.trim();if(/^https?:\/\//i.test(u))show(u)});
+  $('iUp').onclick=function(){var inp=document.createElement('input');inp.type='file';inp.accept='image/*';
+    inp.onchange=function(){var f=inp.files&&inp.files[0];if(!f)return;if(f.size>5*1024*1024){$('iErr').textContent='That file is over 5 MB. Choose a smaller one.';return;}var fd=new FormData();fd.append('file',f);$('iMsg').textContent='Uploading…';
+      fetch(API+'/api/upload',{method:'POST',headers:{'Authorization':'Bearer '+token()},body:fd}).then(function(r){return r.json()}).then(function(d){if(!$('iMsg'))return;if(d.url){$('iMsg').textContent='Uploaded.';$('iAddr').value='';show(d.url)}else{$('iMsg').textContent='';$('iErr').textContent='Upload failed: '+(d.error||'try again')}}).catch(function(){if($('iErr'))$('iErr').textContent='Upload failed. Check the connection and try again.'})};
+    inp.click()};
+  var fill=function(){var el=$('iLib');if(!el)return;if(!IMGS.length){el.innerHTML='<p class="su">No uploads yet.</p>';return;}
+    el.innerHTML=IMGS.slice(0,60).map(function(x){return '<button type="button" data-u="'+esc(x.url)+'" title="'+esc(String(x.uploaded||'').slice(0,10))+'"><img src="'+esc(x.url)+'" alt="" loading="lazy"></button>'}).join('');
+    el.querySelectorAll('button').forEach(function(b){b.onclick=function(){$('iAddr').value='';show(b.dataset.u)}});show($('iUrl').value)};
+  if(IMGS.length)fill();
+  else api('GET','/api/admin/images').then(function(r){if(!r.ok)throw r.status;return r.json()}).then(function(d){IMGS=(d.images||[]).sort(function(a,b){return String(b.uploaded||'').localeCompare(String(a.uploaded||''))});fill()}).catch(function(){if($('iLib'))$('iLib').innerHTML='<p class="su">Couldn’t load the image library.</p>'});
 }
 // Link the selected words (or insert the address itself when nothing is
 // selected). Only web, mail and site-relative links are allowed.
 function iLink(bodyId){
   var el=$(bodyId),sel=window.getSelection();
   var rng=sel.rangeCount&&el.contains(sel.anchorNode)?sel.getRangeAt(0).cloneRange():null;
-  var url=(prompt('Link address (e.g. https://example.com or /article.html?id=…):','https://')||'').trim();
-  if(!url||url==='https://')return;
-  if(/^www\./i.test(url))url='https://'+url;
-  if(!/^(https?:\/\/|mailto:|\/|#)/i.test(url)){toast('⚠️ Use a full address starting with https://');return;}
-  el.focus();if(rng){sel.removeAllRanges();sel.addRange(rng)}
-  if(rng&&!rng.collapsed)document.execCommand('createLink',false,url);
-  else document.execCommand('insertHTML',false,'<a href="'+esc(url)+'">'+esc(url.replace(/^https?:\/\//,''))+'</a>&nbsp;');
-  if(bodyId==='fbody')sPv();else pPv();
+  var node=rng&&rng.startContainer,a=node&&(node.nodeType===1?node:node.parentNode).closest&&(node.nodeType===1?node:node.parentNode).closest('a');if(a&&!el.contains(a))a=null;
+  var words=rng&&!rng.collapsed?rng.toString():'';
+  var btns=[{label:'Cancel'}];
+  if(a)btns.push({label:'Remove link',run:function(){var t=document.createTextNode(a.textContent);a.parentNode.replaceChild(t,a);sPvAny(bodyId);markDirty()}});
+  btns.push({label:a?'Save link':'Add link',cls:'bp',check:function(v){var u=normUrl(v.mUrl);if(!u){$('mErr').textContent='Use a full web address, like https://example.com, or a page on this site starting with /';return false}return true},
+    run:function(v){var url=normUrl(v.mUrl);el.focus();
+      if(a){a.setAttribute('href',url);}
+      else{if(rng){sel.removeAllRanges();sel.addRange(rng)}
+        if(rng&&!rng.collapsed)document.execCommand('createLink',false,url);
+        else document.execCommand('insertHTML',false,'<a href="'+esc(url)+'">'+esc((v.mText||'').trim()||url.replace(/^https?:\/\//,''))+'</a>&nbsp;');}
+      sPvAny(bodyId);markDirty()}});
+  modal(a?'Edit link':'Add a link',
+    (words?'<p style="margin-bottom:10px">Linking: <b>'+esc(words.length>80?words.slice(0,80)+'…':words)+'</b></p>':'')+
+    '<div class="fl"><label for="mUrl">Web address</label><input id="mUrl" value="'+esc(a?a.getAttribute('href'):'')+'" placeholder="https://… or /article.html?id=…"></div>'+
+    (!a&&!words?'<div class="fl"><label for="mText">Text to show (optional)</label><input id="mText" placeholder="Leave blank to show the address"></div>':'')+
+    '<p id="mErr" style="color:var(--red);font-size:13px;margin-top:4px"></p>',btns);
 }
-function getImgUrl(cb){
-  if(confirm('OK = upload an image file.   Cancel = paste an image URL.')){
-    var inp=document.createElement('input');inp.type='file';inp.accept='image/*';
-    inp.onchange=function(){var f=inp.files&&inp.files[0];if(!f)return;var fd=new FormData();fd.append('file',f);toast('Uploading…');
-      fetch(API+'/api/upload',{method:'POST',headers:{'Authorization':'Bearer '+token()},body:fd}).then(function(r){return r.json()}).then(function(d){if(d.url)cb(d.url);else toast('⚠️ '+(d.error||'Upload failed'))}).catch(function(){toast('⚠️ Upload failed')});};
-    inp.click();
-  }else{var u=prompt('Image URL:');if(u&&u.trim())cb(u.trim());}
-}
-function sPv(){var el=$('spv');if(!el)return;var img=$('fimg')?$('fimg').value.trim():'',cap=$('fcap')?$('fcap').value.trim():'',cred=$('fcred')?$('fcred').value.trim():'';var lead=img?'<img src="'+esc(img)+'" style="width:100%;border-radius:4px;display:block">'+((cap||cred)?'<div style="font-size:12px;color:#777;margin:6px 0 14px">'+esc(cap)+(cap&&cred?' — ':'')+esc(cred)+'</div>':'<div style="margin-bottom:14px"></div>'):'';el.innerHTML=lead+'<div class="pr">'+esc($('fr')?$('fr').value:'')+'</div><div class="pt">'+(esc($('ft').value)||'Untitled')+'</div><div class="ps">'+esc($('fsum')?$('fsum').value:'')+'</div><div class="pm">By <b>'+esc($('fa')?$('fa').value:'')+'</b></div><div class="pc">'+($('fbody')?$('fbody').innerHTML:'')+'</div>'}
+// Only web, mail and site-relative links are allowed; "www." gets https://.
+function normUrl(u){u=String(u||'').trim();if(!u||u==='https://')return '';if(/^www\./i.test(u))u='https://'+u;if(/^[a-z0-9-]+(\.[a-z0-9-]+)+(\/|$)/i.test(u))u='https://'+u;return /^(https?:\/\/[^\s]+|mailto:[^\s]+|\/[^\s]*|#[^\s]*)$/i.test(u)?u:''}
+function sPvAny(bodyId){if(bodyId==='fbody')sPv();else pPv()}
 function collectStory(status){
   var t=$('ft').value.trim(),a=$('fa').value.trim();
-  var id=editId||freeId(t.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').substring(0,60)||('story-'+Date.now()));
-  var rt=$('frt').value.trim();
+  var id=editId||freeId(slugFrom($('fslug')&&$('fslug').value)||slugFrom(t)||('story-'+Date.now()));
+  var rt=$('frt').value.trim()||autoRead($('fbody').innerHTML);
   return {id:id,title:t,author:a,region:$('fr').value,status:status,summary:$('fsum').value.trim(),
     body:$('fbody').innerHTML,read_time:rt,readTime:rt,date:$('fd').value||today(),
     image_url:$('fimg')?$('fimg').value.trim():'',image_caption:$('fcap')?$('fcap').value.trim():'',image_credit:$('fcred')?$('fcred').value.trim():''};
