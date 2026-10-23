@@ -143,7 +143,7 @@ function toggleDrop(e){e.stopPropagation();document.getElementById('uDrop').clas
 function updateAuth(){var u=getUser();document.getElementById('signInBtn').style.display=u?'none':'inline-flex';var pill=document.getElementById('userPill');if(u){pill.classList.add('active');document.getElementById('uAvatar').textContent=u.initial;document.getElementById('uName').textContent=u.name;document.getElementById('uEmail').textContent=u.email;document.getElementById('editorLink').style.display=(u.role==='admin'||u.role==='editor')?'block':'none'}else{pill.classList.remove('active')}loadArticle()}
 document.addEventListener('click',function(e){if(!e.target.closest('.user-pill'))document.getElementById('uDrop').classList.remove('open')});
 function toast(m){var t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(function(){t.classList.remove('show')},2500)}
-function toggleSave(id){var u=getUser();if(!u){signIn();return}var s=getSaved();if(s.includes(id)){s=s.filter(function(x){return x!==id});toast('Removed from saved')}else{s.push(id);toast('Story saved')}localStorage.setItem('utv_saved',JSON.stringify(s));loadArticle()}
+function toggleSave(id){var u=getUser();if(!u){signIn();return}var s=getSaved();if(s.includes(id)){s=s.filter(function(x){return x!==id});toast('Removed from saved')}else{s.push(id);toast('Story saved')}localStorage.setItem('utv_saved',JSON.stringify(s));if(window.utvPushSaved)utvPushSaved();loadArticle()}
 function loadArticle(){var ps=new URLSearchParams(window.location.search);var id=ps.get('id');if(!id){showNF();return}var u=getUser();fetch(API+'/api/stories/'+id).then(function(r){if(!r.ok)throw new Error('nf');return r.json()}).then(function(s){renderStory(id,s,u)}).catch(function(){var ls={};try{ls=JSON.parse(localStorage.getItem('utv_stories'))||{}}catch(e){}if(ls[id]){renderStory(id,ls[id],u)}else{showNF()}})}
 // The story's lead photo with its caption and credit (set in the editor).
 function escH(t){return String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
@@ -188,5 +188,6 @@ updateAuth();
 </script>
 <script src="/search.js" defer></script>
 <script src="/theme.js" defer></script>
+<script src="/saved-sync.js"></script>
 </body>
 </html>

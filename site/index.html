@@ -422,7 +422,7 @@ function go(){
   Promise.all([p1,p2,p3]).then(function(){
     renderFoot();
     if(va){var a=Object.entries(SC).sort(function(a,b){return(b[1].date||'').localeCompare(a[1].date||'')});renderList(a,'Archive','No published articles yet.')}
-    else if(vs){var si=[];try{si=JSON.parse(localStorage.getItem('utv_saved'))||[]}catch(e){}var sv=si.map(function(id){return SC[id]?[id,SC[id]]:null}).filter(Boolean);renderList(sv,'Saved Stories','No saved stories yet. Click <strong>Save</strong> on any article to bookmark it.')}
+    else if(vs){if(!go.synced&&window.utvSyncSaved){go.synced=1;utvSyncSaved(function(ch){if(ch)go()})}var si=[];try{si=JSON.parse(localStorage.getItem('utv_saved'))||[]}catch(e){}var sv=si.map(function(id){return SC[id]?[id,SC[id]]:null}).filter(Boolean);renderList(sv,'Saved Stories','No saved stories yet. Click <strong>Save</strong> on any article to bookmark it.')}
     else if(cat){document.querySelectorAll('#mainNav a').forEach(function(a){if(a.textContent===cat)a.classList.add('active')});var m=Object.entries(SC).filter(function(e){var s=e[1];if(cat==='Analysis'||cat==='Opinion'||cat==='Data')return s.region===cat||s.region==='Global'||s.region==='The Utah Lens';return s.region===cat});renderList(m,cat,'No stories in this category yet.')}
     else{renderHome()}
   });
@@ -431,5 +431,6 @@ go();
 </script>
 <script src="/search.js" defer></script>
 <script src="/theme.js" defer></script>
+<script src="/saved-sync.js"></script>
 </body>
 </html>
