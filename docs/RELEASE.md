@@ -75,28 +75,44 @@ organization if the seller should read "The Utah View" (that requires a
 D-U-N-S number); an individual enrollment shows your personal name.
 
 1. **App ID.** developer.apple.com → Certificates, IDs & Profiles →
-   Identifiers → `com.theutahview.app`. Enable **Associated Domains** (and
-   Push Notifications later, for Phase 2).
+   Identifiers → `com.theutahview.app`. Enable **Associated Domains** and
+   **Push Notifications**.
+   - **Push:** Keys → create an APNs key (.p8), then Firebase console
+     (project `theutahview`) → Project settings → Cloud Messaging → Apple app
+     → upload it with the Key ID and Team ID. Without it, iOS never gets
+     new-story notifications (the app still runs).
 2. **Signing.** `open ios/Runner.xcworkspace` → Runner target → Signing &
-   Capabilities → choose your Team (automatic signing).
-   Free "Personal Team" accounts can't use Associated Domains. If you must
-   build with one, temporarily remove `CODE_SIGN_ENTITLEMENTS` from the
-   Runner target.
+   Capabilities → choose your paid Team (automatic signing).
+   `ios/Runner/Runner.entitlements` is kept empty so a free "Personal Team"
+   can still install dev builds. For an App Store build, swap in the store
+   entitlements (push + universal links) first, and don't commit the swap:
+   ```sh
+   cp ios/Runner/Runner.appstore.entitlements ios/Runner/Runner.entitlements
+   flutter build ipa --release
+   git checkout ios/Runner/Runner.entitlements
+   ```
+   The app supports iOS 15 and later (the Runner target used to say 27.0,
+   which would have hidden it from anyone not on iOS 27).
 3. **App Store Connect → New App:** name "The Utah View", bundle id
    `com.theutahview.app`, SKU (e.g. `utahview-ios`), primary language English
    (U.S.), category **News**.
-4. **Listing:** subtitle, description, keywords, support URL, marketing URL
-   (https://theutahview.com), privacy policy URL
-   (https://theutahview.com/page.html?p=Privacy-Policy).
-5. **App Privacy:** the app collects one thing: an **email address**, only
-   when a reader subscribes to the newsletter, sent to `/api/subscribe`. No
-   tracking, no analytics, no ads. Bookmarks, settings and the offline cache
-   never leave the device.
+4. **Listing:** copy-paste from `docs/app-store/LISTING.md` (subtitle,
+   description, keywords, URLs, age rating, review notes).
+5. **App Privacy:** answers are in `docs/app-store/APP_PRIVACY.md` (email and
+   name for optional accounts, saved stories when signed in, the push token).
+   No tracking, no analytics, no ads.
+   **Sign in with Apple (guideline 4.8):** the app offers Google sign-in, so
+   App Review may require Sign in with Apple as an equal option (email/password
+   doesn't count, because it can't hide the reader's email). Either add Sign in
+   with Apple or hide the Google button on iOS before submitting.
 6. **Age rating:** answer the questionnaire for news content (war and
    political violence are covered as news).
 7. **Screenshots:** 6.9" iPhone (1320×2868). The app supports iPad (two-column
-   layout), so 13" iPad screenshots (2064×2752) are required too. Capture with
-   `xcrun simctl io booted screenshot shot.png`.
+   layout), so 13" iPad screenshots (2064×2752) are required too. Ready-made
+   ones are in `docs/app-store/screenshots/` (regenerate with
+   `flutter test tool/screenshots/app_screenshot_test.dart --plain-name "app store"`);
+   they show grey photo placeholders, so simulator captures with real photos
+   look better: `xcrun simctl io booted screenshot shot.png`.
 8. **Build and upload:**
    ```sh
    flutter build ipa --release
@@ -147,9 +163,16 @@ days before production; organization accounts (D-U-N-S) skip that.
    `build/app/outputs/bundle/release/app-release.aab`.
 3. **Create the app** with package `com.theutahview.app` and enroll in **Play
    App Signing**.
-4. **Store listing:** short description (≤80 chars), full description, 512×512
-   icon (resize `assets/brand/app_icon.png`), 1024×500 feature graphic, at
-   least two phone screenshots, plus 7" and 10" tablet screenshots.
+   **Then fix Google sign-in for Play installs:** Play re-signs the app with
+   its own key, so copy the **App signing key SHA-1** (Test and release →
+   App integrity) and create an Android OAuth client for it in Google Cloud
+   project `the-utah-view` (562818410025) → APIs & Services → Credentials,
+   package `com.theutahview.app`. Clients already exist for the upload key
+   (`A9:17:…:7E:28`) and the Spectre debug key.
+4. **Store listing:** copy-paste from `docs/play-store/LISTING.md`; icon,
+   feature graphic and phone screenshots are in `docs/play-store/`. Tablet
+   screenshots are optional (only needed to be featured on tablets).
+   Data safety answers: `docs/play-store/DATA_SAFETY.md`.
 5. **App content:** privacy policy URL; **Data safety** (email address,
    optional, for the newsletter, sent over HTTPS, not shared, no ads); target
    audience; content rating questionnaire; **News app declaration** (Play's
@@ -173,7 +196,10 @@ days before production; organization accounts (D-U-N-S) skip that.
    ]
    ```
    Check on a device: `adb shell pm get-app-links com.theutahview.app`.
-7. Ship to **Internal testing** first, then promote.
+7. Ship to **Internal testing** first, then promote. A *personal* developer
+   account (the current one is "Ryan Cheng") must run a **closed test with at
+   least 12 testers for 14 days in a row** before it can apply for production.
+   Start that closed test as early as possible; it's the longest wait.
 
 ## 6. Already prepared vs. still needed
 

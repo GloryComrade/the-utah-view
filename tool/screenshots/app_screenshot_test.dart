@@ -7,6 +7,11 @@
 // Play's maximum 2:1 aspect):
 //
 //   flutter test tool/screenshots/app_screenshot_test.dart --plain-name "play store"
+//
+// and the App Store screenshots in docs/app-store/screenshots/ (6.9" iPhone
+// 1320×2868 and 13" iPad 2064×2752, the two sizes App Store Connect requires):
+//
+//   flutter test tool/screenshots/app_screenshot_test.dart --plain-name "app store"
 
 import 'dart:convert';
 
@@ -23,6 +28,9 @@ import '../../test/support/test_harness.dart';
 const _phone = Size(402, 874);
 const _tablet = Size(1024, 1366);
 const _playStore = Size(402, 804);
+// App Store Connect's required sizes: 6.9" iPhone at 3× and 13" iPad at 2×.
+const _appStorePhone = Size(440, 956);
+const _appStoreTablet = Size(1032, 1376);
 
 Future<void> _shoot(
   WidgetTester tester, {
@@ -33,9 +41,10 @@ Future<void> _shoot(
   bool fullHeight = false,
   Future<void> Function()? before,
   String dir = 'docs/screenshots',
+  double ratio = 2,
 }) async {
   debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
-  setScreenSize(tester, size, ratio: 2);
+  setScreenSize(tester, size, ratio: ratio);
   final stores = seededStores();
   // One saved story so the Saved tab has something to show.
   final detail = parseStoryDetail(fixture('story_detail.json'));
@@ -141,6 +150,42 @@ void main() {
           location: location,
           dark: dark,
           size: _playStore,
+          dir: dir,
+        ),
+      );
+    }
+  });
+
+  group('app store', () {
+    const dir = 'docs/app-store/screenshots';
+    final shots = [
+      ('01-home', '/home', false),
+      ('02-home-dark', '/home', true),
+      ('03-sections', '/sections', false),
+      ('04-article', '/home/story/$fixtureLeadId', false),
+      ('05-more', '/more', false),
+    ];
+    for (final (name, location, dark) in shots) {
+      testWidgets(
+        'iphone $name',
+        (t) => _shoot(
+          t,
+          name: 'iphone-$name',
+          location: location,
+          dark: dark,
+          size: _appStorePhone,
+          ratio: 3,
+          dir: dir,
+        ),
+      );
+      testWidgets(
+        'ipad $name',
+        (t) => _shoot(
+          t,
+          name: 'ipad-$name',
+          location: location,
+          dark: dark,
+          size: _appStoreTablet,
           dir: dir,
         ),
       );
