@@ -1,6 +1,9 @@
+import 'dart:convert';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:utah_view/core/api/models/models.dart';
+import 'package:utah_view/core/api/news_repository.dart';
 import 'package:utah_view/core/api/parsers.dart';
 import 'package:utah_view/core/domain/story_filters.dart';
 import 'package:utah_view/core/domain/story_search.dart';
@@ -59,6 +62,35 @@ void main() {
       await settle(tester);
       expect(find.text(lead.title), findsOneWidget);
       expect(find.text('FROM THIS ISSUE'), findsOneWidget);
+    });
+
+    testWidgets('tablet layout skips sections the editor hid', (tester) async {
+      final stores = seededStores();
+      final hidden = fixture('layout.json') as Map<String, dynamic>;
+      final value = {
+        ...hidden['value'] as Map<String, dynamic>,
+        'hidden_sections': ['hero', 'editorial'],
+        'section_labels': {'featured': 'This Month'},
+      };
+      await stores.apiCache.write(
+        NewsRepository.layout.path,
+        jsonEncode({
+          't': DateTime(2026, 10, 6).millisecondsSinceEpoch,
+          'd': {'value': value},
+        }),
+      );
+      setScreenSize(tester, const Size(1024, 1366), ratio: 2);
+      await tester.pumpWidget(routerTestApp(location: '/home', stores: stores));
+      await settle(tester);
+      expect(find.text(lead.title), findsNothing);
+      expect(find.text('FROM THIS ISSUE'), findsNothing);
+      expect(find.text('EDITORIAL & OPINION'), findsNothing);
+      await tester.scrollUntilVisible(
+        find.text('THIS MONTH'),
+        400,
+        scrollable: _feed,
+      );
+      expect(find.text('THIS MONTH'), findsOneWidget);
     });
 
     testWidgets('survives 200% text without overflow', (tester) async {

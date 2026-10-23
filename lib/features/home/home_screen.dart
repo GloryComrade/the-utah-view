@@ -396,31 +396,39 @@ class _TabletFrontPage extends StatelessWidget {
         ),
     ];
 
+    // Like the website's wide grid: hidden sections are skipped and custom
+    // labels apply, but the grid order itself stays fixed.
+    final showFeatured = feed.featured.isNotEmpty && !feed.isHidden('featured');
+
     return ContentWidth(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(gutter, 28, gutter, 0),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(flex: 2, child: leadColumn),
-                if (feed.fromThisIssue.isNotEmpty) ...[
-                  const SizedBox(width: 28),
-                  Expanded(
-                    child: LeftRuled(
-                      child: FromThisIssueBlock(
-                        stories: feed.fromThisIssue,
-                        onOpen: onOpen,
-                        title: feed.labelFor('fromThisIssue', 'From This Issue'),
+          if (!feed.isHidden('hero'))
+            Padding(
+              padding: const EdgeInsets.fromLTRB(gutter, 28, gutter, 0),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(flex: 2, child: leadColumn),
+                  if (feed.fromThisIssue.isNotEmpty) ...[
+                    const SizedBox(width: 28),
+                    Expanded(
+                      child: LeftRuled(
+                        child: FromThisIssueBlock(
+                          stories: feed.fromThisIssue,
+                          onOpen: onOpen,
+                          title: feed.labelFor(
+                            'fromThisIssue',
+                            'From This Issue',
+                          ),
+                        ),
                       ),
                     ),
-                  ),
+                  ],
                 ],
-              ],
+              ),
             ),
-          ),
           if (feed.editorial.isNotEmpty && !feed.isHidden('editorial'))
             Padding(
               padding: const EdgeInsets.fromLTRB(
@@ -446,7 +454,7 @@ class _TabletFrontPage extends StatelessWidget {
                 title: feed.labelFor('regions', 'Around the World'),
               ),
             ),
-          if (feed.featured.isNotEmpty || sidebar.isNotEmpty)
+          if (showFeatured || sidebar.isNotEmpty)
             Padding(
               padding: const EdgeInsets.fromLTRB(
                 gutter,
@@ -459,7 +467,7 @@ class _TabletFrontPage extends StatelessWidget {
                 children: [
                   Expanded(
                     flex: 2,
-                    child: feed.featured.isEmpty || feed.isHidden('featured')
+                    child: !showFeatured
                         ? const SizedBox.shrink()
                         : InThisIssueBlock(
                             stories: feed.featured,
