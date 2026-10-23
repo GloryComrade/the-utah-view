@@ -491,9 +491,18 @@ export default {
         return new Response(JSON.stringify({ error: 'Title and author required' }), { status: 400, headers: corsHeaders() });
       }
       const id = data.id || data.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-+$/, '').substring(0, 60);
-      await env.DB.prepare(
-        'INSERT OR REPLACE INTO stories (id, title, author, region, status, summary, body, read_time, date, image_url, image_caption, image_credit, created_by, updated_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
-      ).bind(id, data.title, data.author, data.region || 'Global', data.status || 'draft', data.summary || '', data.body || '', data.read_time || '', data.date || new Date().toISOString().split('T')[0], data.image_url || '', data.image_caption || '', data.image_credit || '', user.email, user.email).run();
+      // Never create over an existing story (the editor picks the next free id
+      // on 409). Updates go through PUT /api/admin/stories/:id.
+      const taken = () => new Response(JSON.stringify({ error: 'A story with this id already exists', id }), { status: 409, headers: corsHeaders() });
+      if (await env.DB.prepare('SELECT id FROM stories WHERE id = ?').bind(id).first()) return taken();
+      try {
+        await env.DB.prepare(
+          'INSERT INTO stories (id, title, author, region, status, summary, body, read_time, date, image_url, image_caption, image_credit, created_by, updated_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+        ).bind(id, data.title, data.author, data.region || 'Global', data.status || 'draft', data.summary || '', data.body || '', data.read_time || '', data.date || new Date().toISOString().split('T')[0], data.image_url || '', data.image_caption || '', data.image_credit || '', user.email, user.email).run();
+      } catch (e) {
+        if (/UNIQUE|constraint/i.test(String(e && e.message))) return taken();
+        throw e;
+      }
       await auditLog(env, user.email, 'create', 'story', id, JSON.stringify({ title: data.title }), ip);
       if ((data.status || 'draft') === 'published') {
         ctx.waitUntil(maybeNotifyNewStory(env, id, data));
