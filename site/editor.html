@@ -403,7 +403,7 @@ function editStory(id){editId=id;curView='story';render();
 function togglePub(id){var S=stories();var x=S[id];if(!x)return;var ns=x.status==='published'?'draft':'published';x.status=ns;s('utv_stories',S);
   saveStory(x,true).then(function(){toast(ns==='published'?'✅ Published':'Moved to draft');render()});
 }
-function dupStory(id){var S=stories();var x=S[id];if(!x)return;dupSeed={title:(x.title||'Untitled')+' (copy)',author:x.author||'',region:x.region||'Global',summary:x.summary||'',body:x.body||'',read_time:x.read_time||x.readTime||'',status:'draft',date:today()};editId=null;curView='story';render();}
+function dupStory(id){var S=stories();var x=S[id];if(!x)return;dupSeed={title:(x.title||'Untitled')+' (copy)',author:x.author||'',region:x.region||'Global',summary:x.summary||'',body:x.body||'',read_time:x.read_time||x.readTime||'',image_url:x.image_url||'',image_caption:x.image_caption||'',image_credit:x.image_credit||'',status:'draft',date:today()};editId=null;curView='story';render();}
 var dupSeed=null;
 function delStory(id){if(!confirm('Delete this story? This cannot be undone.'))return;var S=stories();delete S[id];s('utv_stories',S);if(curView==='story')go('stories');else render();
   if(apiOk)api('DELETE','/api/admin/stories/'+id).then(function(r){toast(r.ok?'Deleted':'⚠️ Not authorized to delete')}).catch(function(){toast('⚠️ Network error')});
