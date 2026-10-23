@@ -411,7 +411,7 @@ function delStory(id){if(!confirm('Delete this story? This cannot be undone.'))r
 function vStoryEdit(){
   var x=editId?stories()[editId]:(dupSeed||null);dupSeed=null;
   if(!x)x={title:'',author:user()?user().name:'',region:'Global',summary:'',body:'',status:'draft',date:today(),read_time:''};
-  var regions=['Global','The Americas','Europe','Asia-Pacific','Middle East','Africa','The Utah Lens'];
+  var regions=['Global','The Americas','Europe','Asia-Pacific','Middle East','Africa','The Utah Lens','Analysis','Opinion','Data'];if(x.region&&regions.indexOf(x.region)<0)regions.push(x.region);
   var h=head(editId?'Edit story':'New story','<button class="bt bs" onclick="go(\'stories\')">&larr; Back</button>');
   h+='<div class="card">'+
     '<div class="row2"><div class="fl"><label>Headline</label><input id="ft" value="'+esc(x.title)+'" oninput="sPv()" placeholder="Story headline"></div>'+
