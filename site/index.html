@@ -427,6 +427,11 @@ function renderList(stories,title,empty){
 }
 updateAuth();
 var up=new URLSearchParams(window.location.search),cat=up.get('cat'),vs=up.get('view')==='saved',va=up.get('view')==='archive';
+var PV=up.get('preview')==='1'&&!cat&&!vs&&!va;
+function pvBanner(ok){if(!document.querySelector('meta[name=robots]')){var m=document.createElement('meta');m.name='robots';m.content='noindex';document.head.appendChild(m)}
+  var b=document.getElementById('pvBanner');if(!b){b=document.createElement('div');b.id='pvBanner';b.setAttribute('role','status');b.style.cssText='position:sticky;top:0;z-index:300;background:#C4352A;color:#fff;font:600 14px Helvetica,Arial,sans-serif;text-align:center;padding:8px 12px';document.body.insertBefore(b,document.body.firstChild)}
+  b.textContent=ok?'Front-page preview, not launched. This page updates as you edit in the editor.':'Nothing to preview. Open the preview from the editor\'s Homepage screen.'}
+if(PV)window.addEventListener('storage',function(e){if(e.key==='utv_preview_layout')go()});
 function go(){
   // Sections, archive and saved views get list-shaped placeholders instead.
   if(cat||vs||va)document.getElementById('dynamicContent').innerHTML='<div class="container sk-wrap" aria-busy="true" aria-label="Loading stories" style="padding-top:32px"><div class="sk sk-line" style="width:25%;height:24px;margin-bottom:24px"></div><div class="sk sk-line" style="width:70%;height:20px"></div><div class="sk sk-line" style="width:100%;height:12px"></div><div class="sk sk-line" style="width:45%;height:10px;margin-bottom:26px"></div><div class="sk sk-line" style="width:70%;height:20px"></div><div class="sk sk-line" style="width:100%;height:12px"></div><div class="sk sk-line" style="width:45%;height:10px;margin-bottom:26px"></div><div class="sk sk-line" style="width:70%;height:20px"></div><div class="sk sk-line" style="width:100%;height:12px"></div><div class="sk sk-line" style="width:45%;height:10px;margin-bottom:26px"></div><div class="sk sk-line" style="width:70%;height:20px"></div><div class="sk sk-line" style="width:100%;height:12px"></div><div class="sk sk-line" style="width:45%;height:10px;margin-bottom:26px"></div><div class="sk sk-line" style="width:70%;height:20px"></div><div class="sk sk-line" style="width:100%;height:12px"></div><div class="sk sk-line" style="width:45%;height:10px;margin-bottom:26px"></div></div>';
@@ -434,6 +439,8 @@ function go(){
   var p2=fetch(API+'/api/config/layout').then(function(r){return r.json()}).then(function(d){LC=d.value||{}}).catch(function(){try{LC=JSON.parse(localStorage.getItem('utv_layout'))||{}}catch(e){}});
   var p3=fetch(API+'/api/config/site').then(function(r){return r.json()}).then(function(d){FC=d.value||{}}).catch(function(){try{FC=JSON.parse(localStorage.getItem('utv_site'))||{}}catch(e){}});
   Promise.all([p1,p2,p3]).then(function(){
+    // ?preview=1: show the editor's unlaunched front-page draft from this browser
+    if(PV){var pl=null;try{pl=JSON.parse(localStorage.getItem('utv_preview_layout'))}catch(e){}if(pl)LC=pl;pvBanner(!!pl)}
     renderFoot();
     // links from other pages to /#subscribe-section arrive before the footer exists
     if(location.hash==='#subscribe-section')setTimeout(function(){var t=document.getElementById('subscribe-section');if(t)t.scrollIntoView()},50);
