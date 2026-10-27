@@ -4,15 +4,14 @@ import 'app_colors.dart';
 
 /// Font families bundled in `assets/fonts` (see pubspec.yaml).
 ///
-/// Two faces, by design: **Archivo Black** for the "THE UTAH VIEW" wordmark
-/// (a heavy neutral grotesque standing in for Arial Black, which can't be
-/// legally bundled) and **Newsreader** for every other piece of text —
+/// Two faces, by design: **Playfair Display Black Italic** for "The Utah View"
+/// wordmark (the same face as the website masthead) and **Newsreader** for every other piece of text —
 /// headlines, body, dates, image credits, section labels and UI chrome. The
 /// `sans`/`body` aliases below now resolve to Newsreader too, so the whole
 /// interface reads in the one editorial serif.
 abstract final class AppFonts {
-  /// The wordmark / display face. Only "THE UTAH VIEW".
-  static const display = 'ArchivoBlack';
+  /// The wordmark / display face. Only "The Utah View".
+  static const display = 'PlayfairDisplay';
 
   /// Newsreader (variable opsz,wght). Deks and summaries (often italic).
   static const serif = 'Newsreader';
@@ -32,13 +31,8 @@ abstract final class AppFonts {
   /// The text aliases are serif now, so they fall back to a serif too.
   static const sansFallback = <String>['Georgia', 'Times New Roman', 'serif'];
 
-  /// The wordmark falls back to a heavy neutral grotesque.
-  static const displayFallback = <String>[
-    'Arial Black',
-    'Helvetica Neue',
-    'Arial',
-    'sans-serif',
-  ];
+  /// The wordmark falls back to a heavy serif, as on the website.
+  static const displayFallback = <String>['Georgia', 'Times New Roman', 'serif'];
 }
 
 /// The editorial type scale. Read it with `context.news` (see
@@ -147,12 +141,14 @@ class NewsTextStyles extends ThemeExtension<NewsTextStyles> {
     );
 
     return NewsTextStyles(
-      // The one display face: Archivo Black, set tight with no tracking.
+      // The one display face: Playfair Display Black Italic, as on the
+      // website masthead, set tight with no tracking.
       wordmark: TextStyle(
         fontFamily: AppFonts.display,
         fontFamilyFallback: AppFonts.displayFallback,
         fontSize: 20,
-        fontWeight: FontWeight.w400,
+        fontWeight: FontWeight.w900,
+        fontStyle: FontStyle.italic,
         color: p.ink,
         letterSpacing: 0,
         height: 1.05,
@@ -193,7 +189,7 @@ class NewsTextStyles extends ThemeExtension<NewsTextStyles> {
     );
   }
 
-  /// "THE UTAH VIEW" wordmark (Inter ExtraBold, tracked out).
+  /// "The Utah View" wordmark (Playfair Display Black Italic).
   final TextStyle wordmark;
 
   /// "EVERY REGION · EVERY MONTH".

@@ -46,8 +46,8 @@ standalone **admin editor** at `site/editor.html`.
   `site/*.html` come from that one vector. Pipeline: `tool/brand_assets/vectorize_logo.py`.
 
 ## App design system (2026 red/white redesign — Flutter app only)
-- **Two fonts only.** `ArchivoBlack` for the "THE UTAH VIEW" wordmark (an
-  Arial Black stand-in — Arial can't be bundled); **Newsreader** for everything
+- **Two fonts only.** `PlayfairDisplay` (Black Italic) for "The Utah View"
+  wordmark, matching the website masthead; **Newsreader** for everything
   else. `AppFonts.sans`/`body` deliberately alias to Newsreader, so all UI chrome
   is the one serif. Don't add a third family without asking.
 - **Color.** White background, `#CE1126` fills, `#A11121` accent text/links,
