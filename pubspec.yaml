@@ -88,11 +88,14 @@ flutter:
     - assets/licenses/
 
   fonts:
-    # Archivo Black (SIL OFL) — the "THE UTAH VIEW" wordmark ONLY. A heavy
-    # neutral grotesque standing in for Arial Black, which can't be bundled.
-    - family: ArchivoBlack
+    # Playfair Display Black Italic (SIL OFL) — "The Utah View" wordmark ONLY,
+    # the same face as the website masthead. A static wght=900 instance of the
+    # Google Fonts variable italic.
+    - family: PlayfairDisplay
       fonts:
-        - asset: assets/fonts/ArchivoBlack-Regular.ttf
+        - asset: assets/fonts/PlayfairDisplay-BlackItalic.ttf
+          weight: 900
+          style: italic
     # Newsreader (variable opsz,wght) — the one text face: headlines, body,
     # dates, image credits, section labels and all UI chrome.
     - family: Newsreader

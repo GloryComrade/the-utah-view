@@ -40,13 +40,13 @@ Future<void> main() async {
   unawaited(push.initialize());
 }
 
-/// Newsreader and Archivo Black are SIL OFL fonts; list them on the licenses
+/// Newsreader and Playfair Display are SIL OFL fonts; list them on the licenses
 /// page.
 void _registerFontLicenses() {
   LicenseRegistry.addLicense(() async* {
     for (final (family, file) in [
       ('Newsreader', 'OFL-Newsreader.txt'),
-      ('Archivo Black', 'ArchivoBlack-OFL.txt'),
+      ('Playfair Display', 'PlayfairDisplay-OFL.txt'),
     ]) {
       final text = await rootBundle.loadString('assets/licenses/$file');
       yield LicenseEntryWithLineBreaks([family], text);

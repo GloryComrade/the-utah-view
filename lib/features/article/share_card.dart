@@ -51,10 +51,11 @@ class StoryShareCard {
     }
 
     final wordmark = _painter(
-      'THE UTAH VIEW',
+      'The Utah View',
       const TextStyle(
-        fontFamily: 'ArchivoBlack',
-        fontWeight: FontWeight.w400,
+        fontFamily: 'PlayfairDisplay',
+        fontWeight: FontWeight.w900,
+        fontStyle: FontStyle.italic,
         fontSize: 36,
         color: _ink,
         letterSpacing: 0,

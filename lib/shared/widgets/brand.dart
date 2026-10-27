@@ -95,7 +95,7 @@ class UtvLogoPainter extends CustomPainter {
       oldDelegate.color != color || oldDelegate.innerColor != innerColor;
 }
 
-/// "THE UTAH VIEW". Treated as a logo, so it doesn't grow with dynamic type.
+/// "The Utah View", set like the website masthead. Treated as a logo, so it doesn't grow with dynamic type.
 class Wordmark extends StatelessWidget {
   const Wordmark({super.key, this.fontSize = 20, this.color});
 
@@ -105,7 +105,7 @@ class Wordmark extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Text(
-      'THE UTAH VIEW',
+      'The Utah View',
       semanticsLabel: 'The Utah View',
       maxLines: 1,
       softWrap: false,
