@@ -314,7 +314,7 @@ function signIn() {
     var u = { email: p.email.toLowerCase(), name: p.name, initial: p.name.charAt(0).toUpperCase() };
     localStorage.setItem('utv_user', JSON.stringify(u));
     fetch(API+'/api/me',{headers:{'Authorization':'Bearer '+r.credential}}).then(function(x){return x.json()}).then(function(d){if(d.role){u.role=d.role;localStorage.setItem('utv_user',JSON.stringify(u))}updateAuth()}).catch(function(){updateAuth()});
-    toast('Signed in as '+p.email);
+    utvAfterSignIn(r.credential, p.email);
   }});
   utvShowSignIn();
 }

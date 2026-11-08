@@ -367,6 +367,74 @@ async function unsubLinks(env, email) {
 function unsubHeaders(links) {
   return { 'List-Unsubscribe': `<${links.oneClick}>`, 'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click' };
 }
+// Welcome email for a new newsletter subscriber (form or sign-in).
+async function sendWelcome(env, clean) {
+  if (env.RESEND_API_KEY) {
+    const siteUrl = env.SITE_URL || 'https://theutahview.com';
+    try {
+      const links = await unsubLinks(env, clean);
+      await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          from: env.FROM_EMAIL || 'The Utah View <newsletter@theutahview.com>',
+          to: [clean],
+          subject: 'Welcome to The Utah View',
+          headers: unsubHeaders(links),
+          html: `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#f5f5f5;font-family:Georgia,serif">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f5f5;padding:24px 0"><tr><td align="center">
+<table width="600" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:4px;max-width:600px">
+<tr><td style="background:#C4352A;padding:28px 32px;text-align:center">
+<p style="font-family:Helvetica,sans-serif;font-size:24px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:#fff;margin:0">THE UTAH VIEW</p>
+<p style="font-family:Helvetica,sans-serif;font-size:11px;letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,0.7);margin:6px 0 0">Every Region · Every Month</p>
+</td></tr>
+<tr><td style="padding:32px">
+<h1 style="font-family:Georgia,serif;font-size:24px;color:#121212;margin:0 0 16px">Welcome aboard.</h1>
+<p style="font-size:16px;line-height:1.6;color:#333;margin:0 0 16px">You've subscribed to The Utah View — independent analysis of global politics, delivered monthly from Salt Lake City.</p>
+<p style="font-size:16px;line-height:1.6;color:#333;margin:0 0 16px">Every issue covers five regions — The Americas, Europe, Asia-Pacific, the Middle East, and Africa — with the depth of a journal and the clarity of a briefing.</p>
+<p style="font-size:16px;line-height:1.6;color:#333;margin:0 0 24px">Your first briefing arrives on the 1st of next month.</p>
+<a href="${siteUrl}" style="display:inline-block;padding:12px 32px;background:#C4352A;color:#fff;font-family:Helvetica,sans-serif;font-size:14px;font-weight:700;text-decoration:none;border-radius:4px">Read the Current Issue</a>
+</td></tr>
+<tr><td style="padding:20px 32px;border-top:1px solid #e5e5e5;text-align:center">
+<p style="font-family:Helvetica,sans-serif;font-size:12px;color:#999;margin:0">© ${new Date().getFullYear()} The Utah View. Salt Lake City, Utah.</p>
+<p style="font-family:Helvetica,sans-serif;font-size:12px;color:#999;margin:8px 0 0"><a href="${links.page}" style="color:#999">Unsubscribe</a></p>
+</td></tr>
+</table></td></tr></table></body></html>`,
+        }),
+      });
+    } catch (e) { console.error('Welcome email failed:', e); }
+  }
+}
+
+// ── Newsletter signup on reader sign-in ──
+// Readers who sign in (email/password, Google or Apple) join the newsletter,
+// as the sign-in screens say. It happens once per address: a KV marker
+// remembers it, so someone who unsubscribes is never added back by a later
+// sign-in. Clients ask for it (newsletter: true, or POST /api/me/newsletter)
+// only where they show the notice; the editor's sign-in never does.
+// Apple "Hide My Email" addresses are skipped until theutahview.com is
+// registered with Apple's private email relay (then set APPLE_RELAY_MAIL=on).
+async function autoSubscribe(env, ctx, email, source, ip) {
+  try { return await autoSubscribeOnce(env, ctx, email, source, ip); } catch (e) {
+    console.error('Newsletter signup on sign-in failed:', e); // never blocks sign-in
+    return 'skipped';
+  }
+}
+async function autoSubscribeOnce(env, ctx, email, source, ip) {
+  const clean = String(email || '').toLowerCase().trim();
+  if (!clean.includes('@') || !env.UTV_DATA) return 'skipped';
+  if (clean.endsWith('@privaterelay.appleid.com') && env.APPLE_RELAY_MAIL !== 'on') return 'skipped';
+  const mark = 'nl_auto:' + clean;
+  if (await env.UTV_DATA.get(mark)) return 'done_before';
+  await env.UTV_DATA.put(mark, JSON.stringify({ source, at: new Date().toISOString() }));
+  const existing = await env.DB.prepare('SELECT email FROM subscribers WHERE email = ?').bind(clean).first();
+  if (existing) return 'already';
+  await env.DB.prepare('INSERT INTO subscribers (email) VALUES (?)').bind(clean).run();
+  await auditLog(env, clean, 'subscribe', 'subscriber', clean, 'signin:' + source, ip);
+  ctx.waitUntil(sendWelcome(env, clean));
+  return 'subscribed';
+}
+
 // Emails a signed unsubscribe link to an address that asked to leave without
 // one (the apps' Unsubscribe form). Only for addresses on the list, and at most
 // once an hour per address, so it can't be used to spam anyone.
@@ -463,42 +531,7 @@ export default {
       await env.DB.prepare('INSERT INTO subscribers (email) VALUES (?)').bind(clean).run();
       await auditLog(env, clean, 'subscribe', 'subscriber', clean, null, ip);
 
-      // Send welcome email
-      if (env.RESEND_API_KEY) {
-        const siteUrl = env.SITE_URL || 'https://theutahview.com';
-        try {
-          const links = await unsubLinks(env, clean);
-          await fetch('https://api.resend.com/emails', {
-            method: 'POST',
-            headers: { 'Authorization': `Bearer ${env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              from: env.FROM_EMAIL || 'The Utah View <newsletter@theutahview.com>',
-              to: [clean],
-              subject: 'Welcome to The Utah View',
-              headers: unsubHeaders(links),
-              html: `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#f5f5f5;font-family:Georgia,serif">
-<table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f5f5;padding:24px 0"><tr><td align="center">
-<table width="600" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:4px;max-width:600px">
-<tr><td style="background:#C4352A;padding:28px 32px;text-align:center">
-<p style="font-family:Helvetica,sans-serif;font-size:24px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:#fff;margin:0">THE UTAH VIEW</p>
-<p style="font-family:Helvetica,sans-serif;font-size:11px;letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,0.7);margin:6px 0 0">Every Region · Every Month</p>
-</td></tr>
-<tr><td style="padding:32px">
-<h1 style="font-family:Georgia,serif;font-size:24px;color:#121212;margin:0 0 16px">Welcome aboard.</h1>
-<p style="font-size:16px;line-height:1.6;color:#333;margin:0 0 16px">You've subscribed to The Utah View — independent analysis of global politics, delivered monthly from Salt Lake City.</p>
-<p style="font-size:16px;line-height:1.6;color:#333;margin:0 0 16px">Every issue covers five regions — The Americas, Europe, Asia-Pacific, the Middle East, and Africa — with the depth of a journal and the clarity of a briefing.</p>
-<p style="font-size:16px;line-height:1.6;color:#333;margin:0 0 24px">Your first briefing arrives on the 1st of next month.</p>
-<a href="${siteUrl}" style="display:inline-block;padding:12px 32px;background:#C4352A;color:#fff;font-family:Helvetica,sans-serif;font-size:14px;font-weight:700;text-decoration:none;border-radius:4px">Read the Current Issue</a>
-</td></tr>
-<tr><td style="padding:20px 32px;border-top:1px solid #e5e5e5;text-align:center">
-<p style="font-family:Helvetica,sans-serif;font-size:12px;color:#999;margin:0">© ${new Date().getFullYear()} The Utah View. Salt Lake City, Utah.</p>
-<p style="font-family:Helvetica,sans-serif;font-size:12px;color:#999;margin:8px 0 0"><a href="${links.page}" style="color:#999">Unsubscribe</a></p>
-</td></tr>
-</table></td></tr></table></body></html>`,
-            }),
-          });
-        } catch (e) { console.error('Welcome email failed:', e); }
-      }
+      await sendWelcome(env, clean);
 
       return new Response(JSON.stringify({ message: 'Subscribed' }), { headers: corsHeaders() });
     }
@@ -581,7 +614,7 @@ export default {
     // ── Reader accounts + saved stories (added) ──
 
     if (path === '/api/account/signup' && method === 'POST') {
-      const { email, password, name } = await request.json();
+      const { email, password, name, newsletter } = await request.json();
       if (!email || !email.includes('@') || !password || password.length < 8) {
         return json({ error: 'Email and an 8+ character password are required' }, 400);
       }
@@ -593,25 +626,27 @@ export default {
       await env.DB.prepare('INSERT INTO accounts (id, email, password_hash, password_salt, name, provider) VALUES (?, ?, ?, ?, ?, ?)').bind(id, clean, hashHex, saltHex, name || '', 'password').run();
       await auditLog(env, clean, 'signup', 'account', id, null, ip);
       const token = await createSession(env, id);
-      return json({ token, email: clean, name: name || '' });
+      const nl = newsletter === true ? await autoSubscribe(env, ctx, clean, 'password', ip) : 'skipped';
+      return json({ token, email: clean, name: name || '', newsletter: nl });
     }
 
     if (path === '/api/account/login' && method === 'POST') {
-      const { email, password } = await request.json();
+      const { email, password, newsletter } = await request.json();
       const clean = (email || '').toLowerCase().trim();
       const acct = await env.DB.prepare('SELECT id, email, name, password_hash, password_salt FROM accounts WHERE email = ?').bind(clean).first();
       if (!acct || !acct.password_hash) return json({ error: 'Invalid email or password' }, 401);
       const { hashHex } = await hashPassword(password, acct.password_salt);
       if (!timingSafeEqual(hashHex, acct.password_hash)) return json({ error: 'Invalid email or password' }, 401);
       const token = await createSession(env, acct.id);
-      return json({ token, email: acct.email, name: acct.name || '' });
+      const nl = newsletter === true ? await autoSubscribe(env, ctx, acct.email, 'password', ip) : 'skipped';
+      return json({ token, email: acct.email, name: acct.name || '', newsletter: nl });
     }
 
     // Sign in with Apple: verify Apple's identity token, then find or create
     // the reader account (matched by Apple's user id, else by email) and
     // return an ordinary session, like /api/account/login.
     if (path === '/api/account/apple' && method === 'POST') {
-      const { identityToken, authorizationCode, name } = await request.json();
+      const { identityToken, authorizationCode, name, newsletter } = await request.json();
       let apple;
       try { apple = await verifyAppleToken(identityToken); } catch (e) {
         return json({ error: 'Sign in with Apple failed' }, 401);
@@ -635,7 +670,8 @@ export default {
         await auditLog(env, acct.email, 'signup', 'account', acct.id, 'apple', ip);
       }
       const token = await createSession(env, acct.id);
-      return json({ token, email: acct.email, name: acct.name });
+      const nl = newsletter === true ? await autoSubscribe(env, ctx, acct.email, 'apple', ip) : 'skipped';
+      return json({ token, email: acct.email, name: acct.name, newsletter: nl });
     }
 
     if (path === '/api/account/logout' && method === 'POST') {
@@ -674,8 +710,18 @@ export default {
         stmts.push(env.DB.prepare('DELETE FROM accounts WHERE id = ?').bind(acctRow.id));
       }
       await env.DB.batch(stmts);
+      if (env.UTV_DATA) await env.UTV_DATA.delete('nl_auto:' + email);
       await auditLog(env, 'deleted-account', 'delete_account', 'account', acctRow ? acctRow.id : '', null, ip);
       return json({ message: 'Account and associated data deleted' });
+    }
+
+    // POST /api/me/newsletter — called right after a reader's Google sign-in
+    // (website and app), with the Google ID token or a session token. Joins
+    // the newsletter once per address; see autoSubscribe().
+    if (path === '/api/me/newsletter' && method === 'POST') {
+      const id = await resolveSavedIdentity(request, env);
+      if (!id) return json({ error: 'Authentication required' }, 401);
+      return json({ newsletter: await autoSubscribe(env, ctx, id.email, 'google', ip) });
     }
 
     if (path === '/api/me/saved' && method === 'GET') {

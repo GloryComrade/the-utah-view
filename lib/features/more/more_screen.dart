@@ -592,6 +592,14 @@ class _SignInSectionState extends ConsumerState<_SignInSection> {
               icon: const Icon(Icons.login_rounded),
               label: const Text('Continue with Google'),
             ),
+          Padding(
+            padding: const EdgeInsets.only(top: 10),
+            child: Text(
+              'Signing in also subscribes you to our free monthly newsletter. '
+              'You can unsubscribe anytime under Newsletter below, or from any email.',
+              style: context.news.meta,
+            ),
+          ),
         ],
       ),
     );

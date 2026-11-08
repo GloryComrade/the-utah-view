@@ -8,6 +8,7 @@
     '.si-box h2{font-family:var(--serif,Georgia,serif);font-size:22px;margin:0 0 6px}' +
     '.si-box p{font-family:var(--sans,Helvetica,Arial,sans-serif);font-size:13px;color:var(--gray-500,#666);margin:0 0 18px;line-height:1.5}' +
     '.si-btn{display:flex;justify-content:center;min-height:44px}' +
+    '.si-nl{font-size:12px!important;margin:14px 0 0!important}.si-nl a{color:inherit}' +
     '.si-x{margin-top:16px;background:none;border:none;font-family:var(--sans,Helvetica,Arial,sans-serif);font-size:13px;color:var(--gray-500,#666);cursor:pointer;text-decoration:underline}';
   function ensureCss() {
     if (document.getElementById('si-css')) return;
@@ -27,12 +28,28 @@
     var ov = document.createElement('div'); ov.className = 'si-ov'; ov.id = 'si-ov';
     ov.innerHTML = '<div class="si-box" role="dialog" aria-modal="true" aria-labelledby="si-h"><h2 id="si-h">Sign in</h2>' +
       '<p>Use your Google account to save stories and pick up where you left off in the app.</p>' +
-      '<div class="si-btn" id="si-btn"></div><button class="si-x" type="button">Not now</button></div>';
+      '<div class="si-btn" id="si-btn"></div>' +
+      '<p class="si-nl">Signing in also subscribes you to our free monthly newsletter. <a href="/unsubscribe.html">Unsubscribe</a> anytime.</p>' +
+      '<button class="si-x" type="button">Not now</button></div>';
     ov.addEventListener('click', function (e) { if (e.target === ov) window.utvCloseSignIn(); });
     ov.querySelector('.si-x').addEventListener('click', window.utvCloseSignIn);
     document.body.appendChild(ov);
     document.addEventListener('keydown', onKey);
     var dark = document.documentElement.getAttribute('data-theme') === 'dark';
     google.accounts.id.renderButton(document.getElementById('si-btn'), { type: 'standard', theme: dark ? 'filled_black' : 'outline', size: 'large', text: 'signin_with', shape: 'rectangular', width: 280 });
+  };
+  // After a reader's Google sign-in: join the newsletter (once per address,
+  // as the dialog says), then confirm the sign-in in a toast.
+  window.utvAfterSignIn = function (credential, email) {
+    var said = false;
+    function say(nl) {
+      if (said) return; said = true;
+      if (window.toast) toast(nl === 'subscribed' ? 'Signed in as ' + email + '. You\u2019re on the newsletter list.' : 'Signed in as ' + email);
+    }
+    fetch('https://api.theutahview.com/api/me/newsletter', { method: 'POST', headers: { 'Authorization': 'Bearer ' + credential } })
+      .then(function (r) { return r.ok ? r.json() : {}; })
+      .then(function (d) { say(d && d.newsletter); })
+      .catch(function () { say(); });
+    setTimeout(say, 2500);
   };
 })();
