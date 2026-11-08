@@ -52,11 +52,13 @@ class ReaderAccountController extends Notifier<ReaderAccount?> {
   /// Returns null on success, or a reader-facing error message.
   Future<String?> signUp(String email, String password, String name) => _auth(
     '/api/account/signup',
-    {'email': email, 'password': password, 'name': name},
+    {'email': email, 'password': password, 'name': name, 'newsletter': true},
   );
 
-  Future<String?> logIn(String email, String password) =>
-      _auth('/api/account/login', {'email': email, 'password': password});
+  Future<String?> logIn(String email, String password) => _auth(
+    '/api/account/login',
+    {'email': email, 'password': password, 'newsletter': true},
+  );
 
   /// Sign in with Apple (iOS). The Worker verifies Apple's identity token and
   /// returns an ordinary reader session, so sync and account deletion work the
@@ -86,6 +88,7 @@ class ReaderAccountController extends Notifier<ReaderAccount?> {
       'identityToken': cred.identityToken,
       'authorizationCode': cred.authorizationCode,
       'name': name,
+      'newsletter': true,
     }, unauthorized: 'Couldn’t sign in with Apple. Please try again.');
   }
 

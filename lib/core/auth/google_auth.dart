@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
@@ -5,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
+import '../api/providers.dart';
 import 'auth_service.dart';
 
 /// Reactive Google Sign-In (Phase 2 groundwork).
@@ -83,11 +85,26 @@ class AuthController extends AsyncNotifier<AuthUser?> {
       return "Google sign-in isn't available on this device.";
     }
     try {
-      await signIn.authenticate();
+      final account = await signIn.authenticate();
+      unawaited(_joinNewsletter(account.authentication.idToken));
       return null;
     } catch (e) {
       debugPrint('Google sign-in: $e');
       return googleSignInErrorMessage(e);
+    }
+  }
+
+  /// Signing in also joins the newsletter, as the sign-in section says. The
+  /// Worker does it once per address, so a reader who unsubscribed is never
+  /// added back. Best effort: never blocks or fails the sign-in.
+  Future<void> _joinNewsletter(String? idToken) async {
+    if (idToken == null || idToken.isEmpty) return;
+    try {
+      await ref
+          .read(apiClientProvider)
+          .postAuthed('/api/me/newsletter', const {}, idToken);
+    } on Object catch (e) {
+      debugPrint('Newsletter signup after Google sign-in: $e');
     }
   }
 

@@ -259,7 +259,15 @@ void main() {
       expect(find.text('Our Mission'), findsOneWidget);
       // The CMS's internal "Home Page" entry is hidden.
       expect(find.text('Home Page'), findsNothing);
+      // Signing in joins the newsletter, and the sign-in section says so.
+      expect(
+        find.textContaining('subscribes you to our free monthly newsletter'),
+        findsOneWidget,
+      );
 
+      // The sign-in section sits above it, so scroll it into view first.
+      await tester.ensureVisible(find.text('Our Mission'));
+      await settle(tester);
       await tester.tap(find.text('Our Mission'));
       await settle(tester);
       expect(
